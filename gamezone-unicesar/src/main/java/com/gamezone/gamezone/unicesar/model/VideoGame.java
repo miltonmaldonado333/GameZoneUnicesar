@@ -13,7 +13,8 @@ public class VideoGame extends Product {
     public VideoGame() {
     }
 
-    public VideoGame(String platform, String genre, String ageRating) {
+    public VideoGame(String platform, String genre, String ageRating, String id, String title, double price, int stock) {
+        super(id, title, price, stock);
         this.platform = platform;
         this.genre = genre;
         this.ageRating = ageRating;
@@ -42,12 +43,10 @@ public class VideoGame extends Product {
     public void setAgeRating(String ageRating) {
         this.ageRating = ageRating;
     }
-   
+ 
     @Override
     public String getFullDescription(){
-        return String.format("Console: [ID %s, Title: %s, price: $%.2f, Stock: %d, Brand: %s,Model: %s, Generation: %s] ",getId(), getTitle(), getPrice(), getStock(), platform, genre, ageRating);
-    }
-   
-    
+       return String.format("VideoGame: [ID: %s, Title: %s, Price: $%.2f, Stock: %d, Platform: %s, Genre: %s, Age Rating: %s]",getId(), getTitle(), getPrice(), getStock(), platform, genre, ageRating);
+    } 
     
 }
