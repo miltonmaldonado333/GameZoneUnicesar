@@ -10,14 +10,19 @@ public class Sale {
     private List<Double> productPrices; 
     private double total;
 
-    public Sale(int id, String date, String customerName, String sellerName, List<Double> productPrices) {
-        this.id = id;
-        this.date = date;
-        this.customerName = customerName;
-        this.sellerName = sellerName;
-        this.productPrices = productPrices;
-        this.total = calculateTotal();
+    public Sale() {
     }
+    
+    
+
+  public Sale(int id, String date, String customerName, String sellerName, double total) {
+    this.id = id;
+    this.date = date;
+    this.customerName = customerName;
+    this.sellerName = sellerName;
+    this.total = total;
+}
+
 
     /**
      * Calculates the total price by summing all product prices.
