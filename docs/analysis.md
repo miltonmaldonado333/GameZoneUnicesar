@@ -1,10 +1,10 @@
-# 📝 System Analysis & Architecture
+# System Analysis & Architecture
 
 This document answers the mandatory project analysis questions, outlining the domain rules, architectural decisions, and object-oriented principles applied to the **GameZoneUnicesar** system.
 
 ---
 
-## 👥 1. Regarding the People in the System
+##  1. Regarding the People in the System
 
 ### Q1. What attributes are common to all people who interact with the store, and which are specific to each particular type of person? How is this distinction reflected in a class hierarchy?
 **Solution:**
@@ -22,7 +22,7 @@ No, a generic `Person` class without a specific role shouldn't be instantiable, 
 
 ---
 
-## 📦 2. Regarding the System Products
+## 2. Regarding the System Products
 
 ### Q3. What characteristics do all the products sold by the store have in common, regardless of their type? What characteristics are specific to each type of product?
 **Solution:**
@@ -38,7 +38,7 @@ No, a generic `Person` class without a specific role shouldn't be instantiable, 
 
 ---
 
-## 🛒 3. Sales and Entity Relationships
+## 3. Sales and Entity Relationships
 
 ### Q5. A sale involves a customer, a salesperson, and one or more products. What types of relationships exist between the class representing the sale and the other classes in the system?
 **Solution:**
@@ -55,7 +55,7 @@ Yes, the `Sale` class should calculate its own total.
 
 ---
 
-## 🛡️ 4. Business Restrictions
+## 4. Business Restrictions
 
 ### Q7. How does the design ensure that a sale cannot be recorded without at least one product? At what point in the system should this rule be validated?
 **Solution:**
@@ -74,7 +74,7 @@ The automatic inventory update is reflected in the design through **service-laye
 
 ---
 
-## 🏗️ 5. Layered Organization
+## 5. Layered Organization
 
 ### Q9. The system must be organized into four layers: model, persistence, services, and user interface. What types of classes belong to each layer? What criterion determines placement?
 **Solution:**
