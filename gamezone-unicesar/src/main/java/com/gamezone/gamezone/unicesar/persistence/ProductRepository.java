@@ -1,13 +1,16 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.gamezone.gamezone.unicesar.persistence;
 
+import com.gamezone.gamezone.unicesar.model.Product;
+import java.util.List;
+
 /**
- *
- * @author HP
+ * Interface defining persistence operations for products
+ * @author Jesus
  */
-public class ProductRepository {
-    
+
+ public interface ProductRepository {
+    List<Product>loadProducts();
+    void saveProducts(List<Product> products);
 }
+
