@@ -33,7 +33,7 @@ public class SaleRepository {
         File file = new File(FILE_NAME);
         
         if (!file.exists()) {
-            return sales; // Retorna lista vacía si el archivo aún no existe
+            return sales; 
         }
 
         try (Scanner scanner = new Scanner(file)) {
