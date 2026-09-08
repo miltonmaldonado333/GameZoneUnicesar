@@ -1,4 +1,5 @@
 package com.gamezone.ui;
+import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 //import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
@@ -6,6 +7,7 @@ import com.gamezone.service.SaleService;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GameZoneUI {
@@ -30,7 +32,7 @@ public class GameZoneUI {
         do{
           displayMainMenu();
           option=readOption();
-          processMainMenuOption();
+          processMainMenuOption(option);
         }while(option != 0);
         System.out.println("Exiting GameZone system... Goodbye!");
         
@@ -114,6 +116,10 @@ public class GameZoneUI {
        
    }
    
+   private void handlePersonMenu(){
+       
+   }
+   
    private void handleSalesMenu() {
         int option = -1;
         do {
@@ -129,9 +135,50 @@ public class GameZoneUI {
             try {
                 switch (option) {
                     case 7:
-                        System.out.println("Enter sale details (Interaction logic goes here)...");
+                        System.out.print("Enter Sale ID (number): ");
+                        int saleId = Integer.parseInt(reader.readLine());
+                        
+                        System.out.print("Enter Date (YYYY-MM-DD): ");
+                        String date = reader.readLine();
+                        
+                        System.out.print("Enter Client ID: ");
+                        String clientId = reader.readLine();
+                        Client client = new Client();
+                        client.setId(clientId);
+                        
+                        System.out.print("Enter Seller ID: ");
+                        String sellerId = reader.readLine();
+                        Seller seller = new Seller();
+                        seller.setId(sellerId);
+                        
+                        List<Product> products = new ArrayList<>();
+                        String addMore;
+                        do {
+                            System.out.print("Enter Product ID to add: ");
+                            String prodId = reader.readLine();
+                            System.out.print("Enter Product Price: ");
+                            double prodPrice = Double.parseDouble(reader.readLine());
+                            
+                            Product p = new Product() {
+                                @Override
+                                public String getFullDescription() {
+                                    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+                                }
+                            };
+                            p.setId(prodId);
+                            p.setPrice(prodPrice);
+                            p.setStock(10); 
+                            products.add(p);
+                            
+                            System.out.print("Add another product? (y/n): ");
+                            addMore = reader.readLine();
+                        } while (addMore.equalsIgnoreCase("y"));
+                        
+                        Sale newSale = new Sale(saleId, date, client, seller, products);
                         saleService.registerSale(newSale);
+                        System.out.println("Sale registered successfully!");
                         break;
+                        
                     case 8:
                         List<Sale> allSales = saleService.getAllSales();
                         System.out.println("\n--- COMPLETE SALES HISTORY ---");
@@ -143,24 +190,27 @@ public class GameZoneUI {
                             }
                         }
                         break;
+                        
                     case 9:
                         System.out.print("Enter Client ID: ");
-                        String clientId = reader.readLine();
-                        List<Sale> clientSales = saleService.getSalesByClient(clientId);
+                        String searchClientId = reader.readLine();
+                        List<Sale> clientSales = saleService.getSalesByClient(searchClientId);
                         System.out.println("\n--- CLIENT PURCHASE HISTORY ---");
                         for (Sale s : clientSales) {
                             System.out.println("Sale ID: " + s.getId() + " | Total: $" + s.getTotal());
                         }
                         break;
+                        
                     case 10:
                         System.out.print("Enter Seller ID: ");
-                        String sellerId = reader.readLine();
-                        List<Sale> sellerSales = saleService.getSalesBySeller(sellerId);
+                        String searchSellerId = reader.readLine();
+                        List<Sale> sellerSales = saleService.getSalesBySeller(searchSellerId);
                         System.out.println("\n--- SELLER SALES HISTORY ---");
                         for (Sale s : sellerSales) {
                             System.out.println("Sale ID: " + s.getId() + " | Total: $" + s.getTotal());
                         }
                         break;
+                        
                     case 0:
                         break;
                     default:
@@ -172,6 +222,3 @@ public class GameZoneUI {
         } while (option != 0);
     }
 }
-    
-    
-

@@ -5,82 +5,52 @@ import java.util.List;
 public class Sale {
     private int id;
     private String date;
-    private String customerName;
-    private String sellerName;
-    private List<Double> productPrices; 
+    private Client client;
+    private Seller seller;
+    private List<Product> products; 
     private double total;
 
     public Sale() {
     }
-    
-    
 
-  public Sale(int id, String date, String customerName, String sellerName, double total) {
-    this.id = id;
-    this.date = date;
-    this.customerName = customerName;
-    this.sellerName = sellerName;
-    this.total = total;
-}
+    public Sale(int id, String date, Client client, Seller seller, List<Product> products) {
+        this.id = id;
+        this.date = date;
+        this.client = client;
+        this.seller = seller;
+        this.products = products;
+        this.total = calculateTotal();
+    }
 
-
-    /**
-     * Calculates the total price by summing all product prices.
-     * @return the calculated total
-     */
     public double calculateTotal() {
         double sum = 0.0;
-        if (productPrices != null) {
-            for (double price : productPrices) {
-                sum += price;
+        if (products != null) {
+            for (Product product : products) {
+                // Asumiendo que Product tiene un método getPrice()
+                sum += product.getPrice();
             }
         }
         this.total = sum;
         return this.total;
     }
 
-    public int getId() {
-        return id;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
 
-    public String getDate() {
-        return date;
-    }
+    public Client getClient() { return client; }
+    public void setClient(Client client) { this.client = client; }
 
-    public void setDate(String date) {
-        this.date = date;
-    }
+    public Seller getSeller() { return seller; }
+    public void setSeller(Seller seller) { this.seller = seller; }
 
-    public String getCustomerName() {
-        return customerName;
-    }
-
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
-
-    public String getSellerName() {
-        return sellerName;
-    }
-
-    public void setSellerName(String sellerName) {
-        this.sellerName = sellerName;
-    }
-
-    public List<Double> getProductPrices() {
-        return productPrices;
-    }
-
-    public void setProductPrices(List<Double> productPrices) {
-        this.productPrices = productPrices;
+    public List<Product> getProducts() { return products; }
+    public void setProducts(List<Product> products) {
+        this.products = products;
         this.total = calculateTotal(); 
     }
 
-    public double getTotal() {
-        return total;
-    }
+    public double getTotal() { return total; }
 }

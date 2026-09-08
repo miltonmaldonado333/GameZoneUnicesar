@@ -49,7 +49,7 @@ public class SaleService {
         }
 
         for (Product product : purchasedProducts) {
-            productService.decreaseStock(product.getId(), 1); 
+            productService.updateStock(product.getId(), 1);
         }
 
         saleRepository.save(sale);

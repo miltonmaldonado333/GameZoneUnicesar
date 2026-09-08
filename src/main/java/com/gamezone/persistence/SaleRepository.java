@@ -22,12 +22,10 @@ public class SaleRepository {
      */
     public void save(Sale sale) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_NAME, true))) {
-            // Nota: Aquí deberías iterar sobre la lista de productos de la venta 
-            // para guardar también sus IDs en el archivo.
-            writer.println(sale.getId() + ";" + sale.getDate() + ";" + sale.getCustomerName() + ";" + sale.getSellerName() + ";" + sale.getTotal());
+          
+            writer.println(sale.getId() + ";" + sale.getDate() + ";" + sale.getClient()+ ";" + sale.getSeller() + ";" + sale.getTotal());
         } catch (IOException e) {
-            // Se lanza la excepción para respetar la arquitectura en capas.
-            // La capa UI (el menú) deberá atrapar esto e imprimir el mensaje.
+            
             throw new RuntimeException("Error saving sale to file: " + e.getMessage(), e);
         }
     }
@@ -50,7 +48,7 @@ public class SaleRepository {
                 String line = scanner.nextLine();
                 String[] parts = line.split(";");
                 
-                // Si decides guardar los productos, el length será mayor a 5
+                
                 if (parts.length >= 5) {
                     int id = Integer.parseInt(parts[0]);
                     String date = parts[1];
@@ -59,13 +57,12 @@ public class SaleRepository {
                     double total = Double.parseDouble(parts[4]);
                     
                     Sale sale = new Sale(id, date, customer, seller, total);
-                    // Nota: Aquí deberías reconstruir la lista de productos 
-                    // leyendo los IDs que guardaste y añadiéndolos al objeto Sale.
+               
                     sales.add(sale);
                 }
             }
         } catch (IOException e) {
-            // Se lanza la excepción en lugar de imprimir en consola.
+            
             throw new RuntimeException("Error reading sales from file: " + e.getMessage(), e);
         }
         
