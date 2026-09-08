@@ -9,10 +9,14 @@ public class VideoGame extends Product {
    private String platform;
    private String genre;
    private String ageRating;
-
+    /**
+     * Default constructor.
+     */
     public VideoGame() {
     }
-
+    /**
+     * Parameterized constructor initializing base product attributes and video game properties.
+     */
     public VideoGame(String platform, String genre, String ageRating, String id, String title, double price, int stock) {
         super(id, title, price, stock);
         this.platform = platform;
