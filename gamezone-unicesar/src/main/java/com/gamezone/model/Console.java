@@ -1,15 +1,22 @@
 
 package com.gamezone.model;
 
-
+/**
+ * Model class representing a gaming console product.
+ * Extends base Product class with console-specific attributes.
+ */
 public class Console extends Product {
    private String brand;
    private String model;
    private String generation;
-
+     /**
+     * Default constructor.
+     */
     public Console() {
     }
-
+    /**
+     * Parameterized constructor initializing base product attributes and console properties.
+     */
     public Console(String brand, String model, String generation, String id, String title, double price, int stock) {
         super(id, title, price, stock);
         this.brand = brand;
