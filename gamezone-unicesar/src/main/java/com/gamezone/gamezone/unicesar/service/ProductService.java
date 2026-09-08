@@ -14,7 +14,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final List<Product> products;
-
+   // Constructor: Receives the repository and loads saved products into memory
     public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
         this.products = productRepository.loadProducts();
@@ -31,7 +31,7 @@ public class ProductService {
         }
         return null;
     }
-
+    // Registers a new video game if the ID is unique and saves to file
     public boolean registerVideoGame(String platform, String genre, String ageRating, String id, String title, double price, int stock) {
         if (findProductById(id) != null) {
             return false; // ID ALREADY EXIST
@@ -41,7 +41,7 @@ public class ProductService {
         productRepository.saveProducts(products);
         return true;
     }
-
+    // Registers a new console if the ID is unique and saves to file
     public boolean registerConsole(String brand, String model, String generation, String id, String title, double price, int stock) {
         if (findProductById(id) != null) {
             return false; //ID ALREADY EXIST
@@ -51,14 +51,12 @@ public class ProductService {
         productRepository.saveProducts(products);
         return true;
     }
-
+    // Returns a copy of the complete product list
     public List<Product> getAllProducts() {
         return new ArrayList<>(products);
     }
 
-    /**
-     * Updates product stock after a sale if sufficient stock is available.
-     */
+    // Deducts sold quantity from product stock and saves to file
     public void updateStock(String productId, int quantitySold) {
         Product product = findProductById(productId);
         if (product != null) {
