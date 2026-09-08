@@ -25,15 +25,18 @@ public class FileProductRepository implements ProductRepository {
     private static final String FILE_PATH = "products.txt";
 
     @Override
+    // Reads products from the file and returns them in a list
     public List<Product> loadProducts() {
         List<Product> products = new ArrayList();
         File file = new File(FILE_PATH);
+        // If the file does not exist, return an empty list
         if (!file.exists()) {
             return products;
         }
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
+                // Skip empty lines
                 if (line.trim().isEmpty()) {
                     continue;
                 }
@@ -67,6 +70,7 @@ public class FileProductRepository implements ProductRepository {
 
     }
 
+    // Overwrites the file with the current list of products
     @Override
     public void saveProducts(List<Product> products) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
