@@ -1,7 +1,7 @@
 
-package com.gamezone.gamezone.unicesar.persistence;
+package com.gamezone.persistence;
 
-import com.gamezone.gamezone.unicesar.model.Product;
+import com.gamezone.model.Product;
 import java.util.List;
 
 /**

@@ -1,5 +1,5 @@
 
-package com.gamezone.gamezone.unicesar.model;
+package com.gamezone.model;
 
 
 public class Console extends Product {

@@ -1,5 +1,5 @@
 
-package com.gamezone.gamezone.unicesar.model;
+package com.gamezone.model;
 
 
 public abstract class Product {

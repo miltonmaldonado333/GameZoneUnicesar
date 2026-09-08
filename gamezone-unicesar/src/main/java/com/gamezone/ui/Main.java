@@ -1,6 +1,6 @@
 
 
-package com.gamezone.gamezone.unicesar.ui;
+package com.gamezone.ui;
 
 
 public class Main {

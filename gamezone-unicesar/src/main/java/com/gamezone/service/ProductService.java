@@ -1,9 +1,9 @@
-package com.gamezone.gamezone.unicesar.service;
+package com.gamezone.service;
 
-import com.gamezone.gamezone.unicesar.model.Console;
-import com.gamezone.gamezone.unicesar.model.Product;
-import com.gamezone.gamezone.unicesar.model.VideoGame;
-import com.gamezone.gamezone.unicesar.persistence.ProductRepository;
+import com.gamezone.model.Console;
+import com.gamezone.model.Product;
+import com.gamezone.model.VideoGame;
+import com.gamezone.persistence.ProductRepository;
 import java.util.ArrayList;
 import java.util.List;
 

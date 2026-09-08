@@ -1,8 +1,8 @@
-package com.gamezone.gamezone.unicesar.persistence;
+package com.gamezone.persistence;
 
-import com.gamezone.gamezone.unicesar.model.Console;
-import com.gamezone.gamezone.unicesar.model.Product;
-import com.gamezone.gamezone.unicesar.model.VideoGame;
+import com.gamezone.model.Console;
+import com.gamezone.model.Product;
+import com.gamezone.model.VideoGame;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;

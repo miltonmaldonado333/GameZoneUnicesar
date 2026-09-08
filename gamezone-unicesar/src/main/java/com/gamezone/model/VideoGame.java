@@ -1,5 +1,5 @@
 
-package com.gamezone.gamezone.unicesar.model;
+package com.gamezone.model;
 /**
  * a class representing a VideoGame Product
  * @author JESUS
