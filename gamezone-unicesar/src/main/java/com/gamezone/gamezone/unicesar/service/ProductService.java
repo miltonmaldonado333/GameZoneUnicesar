@@ -7,11 +7,11 @@ import com.gamezone.gamezone.unicesar.persistence.ProductRepository;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * Service class handling product business logic.
  */
 public class ProductService {
+
     private final ProductRepository productRepository;
     private final List<Product> products;
 
@@ -20,22 +20,9 @@ public class ProductService {
         this.products = productRepository.loadProducts();
     }
 
-    public void registerVideoGame(String platform, String genre, String ageRating, String id, String title, double price, int stock) {
-        VideoGame game = new VideoGame(platform,genre,ageRating,id,title,price,stock);
-        products.add(game);
-        productRepository.saveProducts(products);
-    }
-
-    public void registerConsole(String brand, String model, String generation, String id, String title, double price, int stock) {
-        Console console = new Console(brand,model,generation,id,title,price,stock);
-        products.add(console);
-        productRepository.saveProducts(products);
-    }
-
-    public List<Product> getAllProducts() {
-        return new ArrayList<>(products);
-    }
-
+    /**
+     * Finds a product by its unique ID.
+     */
     public Product findProductById(String id) {
         for (Product product : products) {
             if (product.getId().equalsIgnoreCase(id)) {
@@ -45,6 +32,33 @@ public class ProductService {
         return null;
     }
 
+    public boolean registerVideoGame(String platform, String genre, String ageRating, String id, String title, double price, int stock) {
+        if (findProductById(id) != null) {
+            return false; // ID ALREADY EXIST
+        }
+        VideoGame game = new VideoGame(platform, genre, ageRating, id, title, price, stock);
+        products.add(game);
+        productRepository.saveProducts(products);
+        return true;
+    }
+
+    public boolean registerConsole(String brand, String model, String generation, String id, String title, double price, int stock) {
+        if (findProductById(id) != null) {
+            return false; //ID ALREADY EXIST
+        }
+        Console console = new Console(brand, model, generation, id, title, price, stock);
+        products.add(console);
+        productRepository.saveProducts(products);
+        return true;
+    }
+
+    public List<Product> getAllProducts() {
+        return new ArrayList<>(products);
+    }
+
+    /**
+     * Updates product stock after a sale if sufficient stock is available.
+     */
     public void updateStock(String productId, int quantitySold) {
         Product product = findProductById(productId);
         if (product != null) {
