@@ -4,10 +4,13 @@ import com.gamezone.gamezone.unicesar.model.Console;
 import com.gamezone.gamezone.unicesar.model.Product;
 import com.gamezone.gamezone.unicesar.model.VideoGame;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +69,24 @@ public class FileProductRepository implements ProductRepository {
 
     @Override
     public void saveProducts(List<Product> products) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Product product : products) {
+                if (product instanceof VideoGame) {
+                    VideoGame game = (VideoGame) product;
+                    writer.write(String.format("VideoGame;%s;%s;%s;%s;%s;%.2f;%d", game.getPlatform(), game.getGenre(), game.getAgeRating(), game.getId(), game.getTitle(), game.getPrice(), game.getStock()));
+
+                } else if (product instanceof Console) {
+                    Console console = (Console) product;
+                    writer.write(String.format("Console;%s;%s;%s;%s;%s;%.2f;%d", console.getBrand(), console.getModel(), console.getGeneration(), console.getId(), console.getTitle(), console.getPrice(), console.getStock()));
+
+                }
+                writer.newLine();
+
+            }
+        } catch (IOException ex) {
+            System.err.println("Error writing products file: " + ex.getMessage());
+        }
+
     }
 
 }
