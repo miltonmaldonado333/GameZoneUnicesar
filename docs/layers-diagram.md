@@ -2,7 +2,7 @@
 
 This diagram shows the four architectural layers of the system, the classes that belong to each layer, and the allowed dependencies between them.
 
-\```mermaid
+```mermaid
 flowchart TB
 
     subgraph UI["UI Layer"]
@@ -39,7 +39,7 @@ flowchart TB
     Service --> Persistence
     Service --> Model
     Persistence --> Model
-\```
+```
 
 ## Dependency rules
 
