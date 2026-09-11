@@ -1,2 +1,0 @@
-VideoGame;PC;Action;18+;VG-01;Dark Souls III;39.99;4
-Console;Sony;PlayStation 5;9th;CS-01;PS5 Slim;499.99;5

@@ -13,14 +13,12 @@ public class Seller extends Person {
     /**
      * Creates a new Seller with the given information.
      *
-     * @param name           the seller's full name
-     * @param identification the seller's identification number
-     * @param phone          the seller's contact phone number
-     * @param employeeCode   the seller's employee code
-     * @param workShift      the seller's assigned work shift
+     * @param name         the seller's full name
+     * @param employeeCode the seller's employee code
+     * @param workShift    the seller's assigned work shift
      */
-    public Seller(String name, String identification, String phone, String employeeCode, String workShift) {
-        super(name, identification, phone);
+    public Seller(String name, String employeeCode, String workShift) {
+        super(name, employeeCode, "N/A"); // Pasa valores por defecto o ajusta según Person
         this.employeeCode = employeeCode;
         this.workShift = workShift;
     }
