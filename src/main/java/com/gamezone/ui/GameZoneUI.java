@@ -220,19 +220,22 @@ public class GameZoneUI {
     }
 
     // Registers a new seller entity
-    private void registerSeller() {
-        try {
-            System.out.println("\n--- REGISTER SELLER ---");
-            System.out.print("Name: "); String name = reader.readLine();
-            System.out.print("Employee Code: "); String employeeCode = reader.readLine();
-            System.out.print("Work Shift: "); String workShift = reader.readLine();
+   // Registers a new seller entity
+private void registerSeller() {
+    try {
+        System.out.println("\n--- REGISTER SELLER ---");
+        System.out.print("Name: "); String name = reader.readLine();
+        System.out.print("Identification: "); String identification = reader.readLine();
+        System.out.print("Phone: "); String phone = reader.readLine();
+        System.out.print("Employee Code: "); String employeeCode = reader.readLine();
+        System.out.print("Work Shift: "); String workShift = reader.readLine();
 
-            personService.registerSeller(name, employeeCode, workShift);
-            System.out.println("Seller registered successfully!");
-        } catch (Exception e) {
-            System.out.println("Error registering seller: " + e.getMessage());
-        }
+        personService.registerSeller(name, identification, phone, employeeCode, workShift);
+        System.out.println("Seller registered successfully!");
+    } catch (Exception e) {
+        System.out.println("Error registering seller: " + e.getMessage());
     }
+}
 
     // Prints all registered clients
     private void listClients() {

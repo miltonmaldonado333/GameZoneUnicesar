@@ -44,6 +44,21 @@ public class PersonService {
     }
 
     /**
+     * Registers a new seller and persists the updated list.
+     * 
+     * @param name           the seller's full name
+     * @param identification the seller's identification number
+     * @param phone          the seller's contact phone number
+     * @param employeeCode   the seller's employee code
+     * @param workShift      the seller's work shift
+     */
+    public void registerSeller(String name, String identification, String phone, String employeeCode, String workShift) {
+        Seller seller = new Seller(name, identification, phone, employeeCode, workShift);
+        persons.add(seller);
+        personRepository.savePersons(persons);
+    }
+
+    /**
      * Returns all registered clients.
      *
      * @return a list containing only the clients
