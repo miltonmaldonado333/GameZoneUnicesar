@@ -1,7 +1,7 @@
 package com.gamezone.service;
 
-import com.gamezone.model.Sale;
 import com.gamezone.model.Product;
+import com.gamezone.model.Sale;
 import com.gamezone.persistence.SaleRepository;
 
 import java.util.ArrayList;
@@ -67,15 +67,15 @@ public class SaleService {
     /**
      * Retrieves the purchase history of a specific client.
      *
-     * @param clientId The ID of the client.
+     * @param clientIdentification The identification of the client.
      * @return A list of sales made by the specified client.
      */
-    public List<Sale> getSalesByClient(String clientId) {
+    public List<Sale> getSalesByClient(String clientIdentification) {
         List<Sale> allSales = saleRepository.findAll();
         List<Sale> clientSales = new ArrayList<>();
         
         for (Sale sale : allSales) {
-            if (sale.getClient().getId().equals(clientId)) {
+            if (sale.getClient().getIdentification().equals(clientIdentification)) {
                 clientSales.add(sale);
             }
         }
@@ -85,15 +85,15 @@ public class SaleService {
     /**
      * Retrieves the sales history attended by a specific seller.
      *
-     * @param sellerId The ID of the seller.
+     * @param employeeCode The employee code of the seller.
      * @return A list of sales attended by the specified seller.
      */
-    public List<Sale> getSalesBySeller(String sellerId) {
+    public List<Sale> getSalesBySeller(String employeeCode) {
         List<Sale> allSales = saleRepository.findAll();
         List<Sale> sellerSales = new ArrayList<>();
         
         for (Sale sale : allSales) {
-            if (sale.getSeller().getId().equals(sellerId)) {
+            if (sale.getSeller().getEmployeeCode().equals(employeeCode)) {
                 sellerSales.add(sale);
             }
         }

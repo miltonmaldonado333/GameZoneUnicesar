@@ -1,0 +1,2 @@
+VideoGame;ps5;action;18+;1;gat vI;100.00;99
+Console;sony;2022;action;11;super;1000.00;15
