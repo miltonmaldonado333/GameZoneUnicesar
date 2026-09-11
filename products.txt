@@ -1,0 +1,7 @@
+VideoGame;ps5;action;18+;1;gat vI;100.00;99
+Console;sony;2022;action;11;super;1000.00;15
+VideoGame;ps5/xbox;action/adventure;16+;2;readRedemption;150.00;56
+VideoGame;ps5;kids;10+;soul;soulnight;190.00;89
+VideoGame;PS5/XBOX/NINTENDO;violence;18+;GTA V;GTA V;100.00;18
+Console;XBOX;2020;4;12;new;100.00;7
+Console;NINTENDO;2026;ultimate;13;Nintendo;1900.00;78
