@@ -13,12 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
+/*
  * Concrete implementation of ProductRepository handling file-based persistence.
  */
 public class FileProductRepository implements ProductRepository {
 
-    private static final String FILE_PATH = System.getProperty("user.dir") + java.io.File.separator + "products.txt";
+    private static final String FILE_PATH = "products.txt";
 
     @Override
     public List<Product> loadProducts() {
