@@ -1,21 +1,31 @@
-
 package com.gamezone.model;
+
 /**
- * a class representing a VideoGame Product
+ * Represents a video game product extending the base Product class.
  * @author JESUS
  */
-
 public class VideoGame extends Product {
-   private String platform;
-   private String genre;
-   private String ageRating;
+    // Video game specific attributes
+    private String platform;
+    private String genre;
+    private String ageRating;
+    
     /**
      * Default constructor.
      */
     public VideoGame() {
     }
+    
     /**
      * Parameterized constructor initializing base product attributes and video game properties.
+     * 
+     * @param platform the platform the game runs on
+     * @param genre the genre of the game
+     * @param ageRating the age restriction rating
+     * @param id unique product identifier
+     * @param title video game title
+     * @param price unit price
+     * @param stock available stock quantity
      */
     public VideoGame(String platform, String genre, String ageRating, String id, String title, double price, int stock) {
         super(id, title, price, stock);
@@ -24,6 +34,7 @@ public class VideoGame extends Product {
         this.ageRating = ageRating;
     }
 
+    // Getters and setters
     public String getPlatform() {
         return platform;
     }
@@ -48,9 +59,15 @@ public class VideoGame extends Product {
         this.ageRating = ageRating;
     }
  
+    /**
+     * Returns a formatted full description of the video game.
+     * 
+     * @return string containing all details of the video game
+     */
     @Override
     public String getFullDescription(){
-       return String.format("VideoGame: [ID: %s, Title: %s, Price: $%.2f, Stock: %d, Platform: %s, Genre: %s, Age Rating: %s]",getId(), getTitle(), getPrice(), getStock(), platform, genre, ageRating);
+       return String.format("VideoGame: [ID: %s, Title: %s, Price: $%.2f, Stock: %d, Platform: %s, Genre: %s, Age Rating: %s]",
+               getId(), getTitle(), getPrice(), getStock(), platform, genre, ageRating);
     } 
     
 }
