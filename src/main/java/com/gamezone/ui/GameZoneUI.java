@@ -1,11 +1,9 @@
 package com.gamezone.ui;
 
 import com.gamezone.model.Client;
-import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
-import com.gamezone.model.VideoGame;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
@@ -24,11 +22,13 @@ import java.util.List;
  */
 public class GameZoneUI {
     
+    // Service and input dependencies
     private final BufferedReader reader;
     private final SaleService saleService;
     private final ProductService productService;
     private final PersonService personService;
 
+    // Initializes the UI with required services
     public GameZoneUI(SaleService saleService, ProductService productService, PersonService personService) {
         this.reader = new BufferedReader(new InputStreamReader(System.in));
         this.saleService = saleService;
@@ -36,6 +36,7 @@ public class GameZoneUI {
         this.personService = personService;
     }
     
+    // Starts the application main execution loop
     public void start() {
         int option = -1;
         
@@ -43,6 +44,7 @@ public class GameZoneUI {
         System.out.println("        WELCOME TO GAMEZONE SYSTEM         ");
         System.out.println("===========================================");
         
+        // Main menu loop
         do {
             displayMainMenu();
             option = readOption();
@@ -51,6 +53,7 @@ public class GameZoneUI {
         
         System.out.println("Exiting GameZone system... Goodbye!");
         
+        // Close the input reader safely
         try {
             reader.close();
         } catch (IOException e) {
@@ -58,6 +61,7 @@ public class GameZoneUI {
         }
     }
     
+    // Displays the top-level options
     private void displayMainMenu() {
         System.out.println("\n---------------- MAIN MENU ----------------");
         System.out.println("1. Product Management");
@@ -67,6 +71,7 @@ public class GameZoneUI {
         System.out.print("Select an option: ");
     }
     
+    // Reads and parses numeric user input securely
     private int readOption() {
         try {
             String input = reader.readLine();
@@ -80,6 +85,7 @@ public class GameZoneUI {
         }
     }
     
+    // Routes input to the appropriate submenu handler
     private void processMainMenuOption(int option) {
         switch (option) {
             case 1 -> handleProductMenu();
@@ -113,6 +119,7 @@ public class GameZoneUI {
         } while (option != 0);
     }
 
+    // Collects data and registers a new video game
     private void registerVideoGame() {
         try {
             System.out.println("\n--- REGISTER VIDEO GAME ---");
@@ -135,6 +142,7 @@ public class GameZoneUI {
         }
     }
 
+    // Collects data and registers a new console
     private void registerConsole() {
         try {
             System.out.println("\n--- REGISTER CONSOLE ---");
@@ -157,6 +165,7 @@ public class GameZoneUI {
         }
     }
 
+    // Prints the full inventory list
     private void listProducts() {
         System.out.println("\n--- INVENTORY ---");
         List<Product> products = productService.getAllProducts();
@@ -194,6 +203,7 @@ public class GameZoneUI {
         } while (option != 0);
     }
 
+    // Registers a new client entity
     private void registerClient() {
         try {
             System.out.println("\n--- REGISTER CLIENT ---");
@@ -209,6 +219,7 @@ public class GameZoneUI {
         }
     }
 
+    // Registers a new seller entity
     private void registerSeller() {
         try {
             System.out.println("\n--- REGISTER SELLER ---");
@@ -223,6 +234,7 @@ public class GameZoneUI {
         }
     }
 
+    // Prints all registered clients
     private void listClients() {
         System.out.println("\n--- CLIENT LIST ---");
         List<Client> clients = personService.getAllClients();
@@ -235,6 +247,7 @@ public class GameZoneUI {
         }
     }
 
+    // Prints all registered sellers
     private void listSellers() {
         System.out.println("\n--- SELLER LIST ---");
         List<Seller> sellers = personService.getAllSellers();
@@ -272,12 +285,14 @@ public class GameZoneUI {
         } while (option != 0);
     }
 
+    // Handles the complete workflow of registering a new sale
     private void registerSale() {
         try {
             System.out.println("\n--- REGISTER NEW SALE ---");
             System.out.print("Enter Sale ID (integer): ");
             int saleId = Integer.parseInt(reader.readLine());
             
+            // Validate client existence
             System.out.print("Enter Client ID: ");
             String clientId = reader.readLine();
             Client client = personService.findClientById(clientId);
@@ -286,6 +301,7 @@ public class GameZoneUI {
                 return;
             }
             
+            // Validate seller existence
             System.out.print("Enter Seller Employee Code: ");
             String sellerCode = reader.readLine();
             Seller seller = personService.findSellerByCode(sellerCode);
@@ -294,6 +310,7 @@ public class GameZoneUI {
                 return;
             }
             
+            // Add products to cart loop
             List<Product> products = new ArrayList<>();
             String addMore;
             do {
@@ -312,6 +329,7 @@ public class GameZoneUI {
                 addMore = reader.readLine();
             } while (addMore.equalsIgnoreCase("y"));
             
+            // Ensure cart is not empty
             if (products.isEmpty()) {
                 System.out.println("Error: Sale aborted. At least one product is required.");
                 return;
@@ -332,12 +350,14 @@ public class GameZoneUI {
         }
     }
 
+    // Lists all recorded sales in the system
     private void listAllSales() {
         System.out.println("\n--- COMPLETE SALES HISTORY ---");
         List<Sale> allSales = saleService.getAllSales();
         printSalesList(allSales);
     }
 
+    // Lists sales associated with a specific client ID
     private void listSalesByClient() {
         try {
             System.out.print("Enter Client Identification: ");
@@ -350,6 +370,7 @@ public class GameZoneUI {
         }
     }
 
+    // Lists sales attended by a specific seller code
     private void listSalesBySeller() {
          try {
             System.out.print("Enter Seller Employee Code: ");
@@ -362,6 +383,7 @@ public class GameZoneUI {
         }
     }
 
+    // Helper method to print formatted lists of sales
     private void printSalesList(List<Sale> sales) {
         if (sales == null || sales.isEmpty()) {
             System.out.println("No sales records found.");

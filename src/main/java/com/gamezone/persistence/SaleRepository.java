@@ -19,6 +19,7 @@ import java.util.Scanner;
  * Handles text file persistence operations for sales transactions.
  */
 public class SaleRepository {
+    // File name used for storing sales records
     private static final String FILE_NAME = "sales.txt";
     private PersonService personService;
     private ProductService productService;
@@ -41,6 +42,7 @@ public class SaleRepository {
      * @param sale the sale object to be saved
      */
     public void save(Sale sale) {
+        // Open file writer in append mode
         try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_NAME, true))) {
             StringBuilder sb = new StringBuilder();
             
@@ -75,6 +77,7 @@ public class SaleRepository {
             return sales; 
         }
 
+        // Read records line by line using a scanner
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();

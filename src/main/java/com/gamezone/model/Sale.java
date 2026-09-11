@@ -2,7 +2,11 @@ package com.gamezone.model;
 
 import java.util.List;
 
+/**
+ * Represents a sale transaction in the GameZone system.
+ */
 public class Sale {
+    // Sale attributes
     private int id;
     private String date;
     private Client client;
@@ -10,9 +14,11 @@ public class Sale {
     private List<Product> products; 
     private double total;
 
+    // Default constructor
     public Sale() {
     }
 
+    // Parameterized constructor that initializes the sale and computes the total
     public Sale(int id, String date, Client client, Seller seller, List<Product> products) {
         this.id = id;
         this.date = date;
@@ -22,11 +28,11 @@ public class Sale {
         this.total = calculateTotal();
     }
 
+    // Calculates the total price by summing up all products in the sale
     public double calculateTotal() {
         double sum = 0.0;
         if (products != null) {
             for (Product product : products) {
-                // Asumiendo que Product tiene un método getPrice()
                 sum += product.getPrice();
             }
         }
@@ -34,6 +40,7 @@ public class Sale {
         return this.total;
     }
 
+    // Getters and setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
