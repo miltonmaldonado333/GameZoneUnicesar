@@ -1,0 +1,3 @@
+VideoGame;PS5;Action;16+;1;GTA V;100.00;39
+VideoGame;xbox;action;19+;2;ReadRedRedemption;178.00;67
+Console;xbox;2020;2020;11;new;1789.00;56
