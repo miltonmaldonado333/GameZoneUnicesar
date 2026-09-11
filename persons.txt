@@ -1,2 +1,6 @@
 CLIENT;Milton Maldonado;1065129957;3107174052;mmaldonadosalcedo@gmail.com
-SELLER;Jesus Martinez;220;Seller
+SELLER;Jesus Martinez;220;1
+SELLER;Milton Maldonado;221;1
+SELLER;Luis Corzo;Seller;1
+CLIENT;Andrea Mendez;1090897654;328987654;andreamendes25@gmail.com
+CLIENT;Luis Zarcosa;1098765432;310987654;luiszarco@gmail.com
