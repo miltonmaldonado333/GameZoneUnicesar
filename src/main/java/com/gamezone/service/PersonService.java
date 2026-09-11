@@ -9,8 +9,9 @@ import com.gamezone.model.Seller;
 import com.gamezone.persistence.PersonRepository;
 
 /**
- * Provides the business rules for managing clients and sellers. Acts as the
- * intermediary between the user interface and the person persistence layer.
+ * Provides the business rules for managing clients and sellers.
+ * Acts as the intermediary between the user interface and the
+ * person persistence layer.
  */
 public class PersonService {
 
@@ -18,8 +19,8 @@ public class PersonService {
     private List<Person> persons;
 
     /**
-     * Creates a PersonService backed by the given repository. Loads any
-     * previously stored persons immediately.
+     * Creates a PersonService backed by the given repository.
+     * Loads any previously stored persons immediately.
      *
      * @param personRepository the repository used to persist person data
      */
@@ -31,27 +32,14 @@ public class PersonService {
     /**
      * Registers a new client and persists the updated list.
      *
-     * @param name the client's full name
+     * @param name           the client's full name
      * @param identification the client's identification number
-     * @param phone the client's contact phone number
-     * @param email the client's email address
+     * @param phone          the client's contact phone number
+     * @param email          the client's email address
      */
     public void registerClient(String name, String identification, String phone, String email) {
         Client client = new Client(name, identification, phone, email);
         persons.add(client);
-        personRepository.savePersons(persons);
-    }
-
-    /**
-     * Registers a new seller and persists the updated list.
-     *
-     * @param name the seller's full name
-     * @param employeeCode the seller's employee code
-     * @param workShift the seller's work shift
-     */
-    public void registerSeller(String name, String employeeCode, String workShift) {
-        Seller seller = new Seller(name, employeeCode, workShift);
-        persons.add(seller);
         personRepository.savePersons(persons);
     }
 
