@@ -1,3 +1,4 @@
+```mermaid
 classDiagram
 direction TB
 
@@ -58,3 +59,4 @@ direction TB
     Accessory <|-- Controller
     Accessory <|-- Cable
     Accessory <|-- Memory
+```
