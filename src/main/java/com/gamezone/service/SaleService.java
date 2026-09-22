@@ -26,6 +26,7 @@ public class SaleService {
         this.saleRepository = saleRepository;
         this.productService = productService;
     }
+    
 
     /**
      * Registers a new sale after applying business validations.

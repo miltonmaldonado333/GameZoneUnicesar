@@ -40,6 +40,7 @@ public class Sale {
         return this.total;
     }
 
+
     // Getters and setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -60,4 +61,5 @@ public class Sale {
     }
 
     public double getTotal() { return total; }
+    
 }
