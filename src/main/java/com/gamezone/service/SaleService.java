@@ -1,126 +1,138 @@
 package com.gamezone.service;
+
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Client;
-import com.gamezone.model.Seller;
 import com.gamezone.model.Product;
+import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
+import com.gamezone.model.Seller;
 import com.gamezone.persistence.SaleRepository;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service handling sale transactions, stock validation, and inventory
- * delegation. Integrated to handle both standard products and accessories.
+ * Service handling sales transaction business logic, stock validation,
+ * automatic inventory updates, and promotion discount evaluation.
  */
 public class SaleService {
 
     private final SaleRepository saleRepository;
     private final ProductService productService;
-    private final AccesoryService accesoryService;
+    private final AccessoryService accessoryService;
+    private final PromotionService promotionService;
 
     /**
-     * Constructs a SaleService with the required dependencies.
+     * Constructs a SaleService with all required dependencies.
      *
-     * @param saleRepository The repository used to persist sales.
-     * @param productService The service used to manage product inventory.
-     * @param accesoryService the service managing accessories
+     * @param saleRepository   the persistence repository for sales
+     * @param productService   the service managing products
+     * @param accessoryService the service managing accessories
+     * @param promotionService the service evaluating active promotions
      */
-    public SaleService(SaleRepository saleRepository, ProductService productService, AccesoryService accesoryService) {
+    public SaleService(SaleRepository saleRepository, ProductService productService, 
+                       AccessoryService accessoryService, PromotionService promotionService) {
         this.saleRepository = saleRepository;
         this.productService = productService;
-        this.accesoryService = accesoryService;
+        this.accessoryService = accessoryService;
+        this.promotionService = promotionService;
     }
 
     /**
-     * Registers a new sale transaction in the system. Validates stock
-     * availability, updates inventory across appropriate services, and persists
-     * the transaction.
+     * Registers a new sale transaction. Evaluates stock availability, deducts inventory,
+     * applies the best active promotion, and persists the sale record.
      *
-     * @param client the customer making the purchase
-     * @param seller the employee handling the transaction
-     * @param items the list of products/accessories being purchased
-     * @return the created Sale instance
-     * @throws IllegalArgumentException if items list is empty or stock is
-     * insufficient
+     * @param client   the purchasing customer
+     * @param seller   the attending salesperson
+     * @param items    the list of products and accessories included in the sale
+     * @return the processed and registered Sale instance
+     * @throws IllegalArgumentException if items list is empty or stock is insufficient
      */
     public Sale registerSale(Client client, Seller seller, List<Product> items) {
+        // Business Rule: A sale must contain at least one item
         if (items == null || items.isEmpty()) {
-            throw new IllegalArgumentException("A sale must contain at least one item.");
+            throw new IllegalArgumentException("A sale must contain at least one product or accessory.");
         }
 
-        // 1. Validate stock for all items prior to transaction
+        // Validate stock for all items prior to transaction processing
         for (Product item : items) {
-            if (item.getStock()< 1) { // Cambiar a getStock() si tu atributo en Product es stock
-                throw new IllegalArgumentException("Insufficient stock for product: " + item.getTitle());
+            if (item.getStock() <= 0) {
+                throw new IllegalArgumentException("Insufficient stock for item: " + item.getTitle());
             }
         }
 
-        // 2. Update stock using productService while accesoryService is integrated
-        for (Product item : items) {
-            int newQuantity = item.getStock()- 1;
-            if (item instanceof Accessory && accesoryService != null) {
-                accesoryService.updateStock(item.getId(), newQuantity);
-            } else {
-                productService.updateStock(item.getId(), newQuantity);
-            }
-        }
-        
-        // 3. Generate Sale ID and persist
-        int saleId = saleRepository.findAll().size() + 1;
+        // Generate unique Sale ID and capture current transaction date
+        int nextId = saleRepository.findAll().size() + 1;
         String currentDate = LocalDate.now().toString();
 
-        Sale newSale = new Sale(saleId, currentDate, client, seller, items);
-        newSale.calculateTotal();
+        // Instantiate initial Sale entity
+        Sale sale = new Sale(nextId, currentDate, client, seller, items);
 
-        saleRepository.save(newSale);
+        // Evaluate and apply active promotions (Requirement 2)
+        if (promotionService != null) {
+            Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
+            if (bestPromotion != null) {
+                double discount = bestPromotion.calculateDiscount(sale);
+                if (discount > 0) {
+                    sale.setAppliedPromotionName(bestPromotion.getName());
+                    sale.setDiscountAmount(discount);
+                    // Adjust final total: Subtotal minus Discount
+                    sale.setTotal(sale.getSubtotal() - discount);
+                }
+            }
+        }
 
-        return newSale;
+        // Deduct inventory for sold items
+        for (Product item : items) {
+            if (item instanceof Accessory) {
+                accessoryService.updateStock(item.getId(), item.getStock() - 1);
+            } else {
+                productService.updateStock(item.getId(), item.getStock() - 1);
+            }
+        }
+
+        // Persist the completed sale
+        saleRepository.save(sale);
+
+        return sale;
     }
 
     /**
-     * Retrieves the complete history of registered sales.
+     * Retrieves all recorded sales in the system.
      *
-     * @return A list containing all sales.
+     * @return list of all sales
      */
     public List<Sale> getAllSales() {
         return saleRepository.findAll();
     }
 
     /**
-     * Retrieves the purchase history of a specific client.
+     * Retrieves sales associated with a specific client identification.
      *
-     * @param clientIdentification The identification of the client.
-     * @return A list of sales made by the specified client.
+     * @param clientId the customer identification
+     * @return list of sales matching the client
      */
-    public List<Sale> getSalesByClient(String clientIdentification) {
-        List<Sale> allSales = saleRepository.findAll();
-        List<Sale> clientSales = new ArrayList<>();
-
-        for (Sale sale : allSales) {
-            if (sale.getClient().getIdentification().equals(clientIdentification)) {
-                clientSales.add(sale);
-            }
-        }
-        return clientSales;
+  /**
+     * Retrieves sales associated with a specific client identification.
+     *
+     * @param clientId the customer identification
+     * @return list of sales matching the client
+     */
+    public List<Sale> getSalesByClient(String clientId) {
+        return saleRepository.findAll().stream()
+                .filter(sale -> sale.getClient().getIdentification().equalsIgnoreCase(clientId))
+                .toList();
     }
 
     /**
-     * Retrieves the sales history attended by a specific seller.
+     * Retrieves sales attended by a specific seller employee code.
      *
-     * @param employeeCode The employee code of the seller.
-     * @return A list of sales attended by the specified seller.
+     * @param sellerCode the seller employee code
+     * @return list of sales matching the seller
      */
-    public List<Sale> getSalesBySeller(String employeeCode) {
-        List<Sale> allSales = saleRepository.findAll();
-        List<Sale> sellerSales = new ArrayList<>();
-
-        for (Sale sale : allSales) {
-            if (sale.getSeller().getEmployeeCode().equals(employeeCode)) {
-                sellerSales.add(sale);
-            }
-        }
-        return sellerSales;
+    public List<Sale> getSalesBySeller(String sellerCode) {
+        return saleRepository.findAll().stream()
+                .filter(sale -> sale.getSeller().getEmployeeCode().equalsIgnoreCase(sellerCode))
+                .toList();
     }
 }
