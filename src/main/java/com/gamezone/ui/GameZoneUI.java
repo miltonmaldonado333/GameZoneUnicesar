@@ -4,21 +4,22 @@ import com.gamezone.model.Client;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
+import com.gamezone.model.Accessory;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
+import com.gamezone.service.AccessoryService;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Handles the interactive console user interface for the GameZone system.
  * It provides menus to execute all required operations,
- * grouping them into Product, Person, and Sales management.
+ * grouping them into Product, Person, Sales, and Accessory management.
  */
 public class GameZoneUI {
     
@@ -27,13 +28,15 @@ public class GameZoneUI {
     private final SaleService saleService;
     private final ProductService productService;
     private final PersonService personService;
+    private final AccessoryService accessoryService;
 
     // Initializes the UI with required services
-    public GameZoneUI(SaleService saleService, ProductService productService, PersonService personService) {
+    public GameZoneUI(SaleService saleService, ProductService productService, PersonService personService, AccessoryService accessoryService) {
         this.reader = new BufferedReader(new InputStreamReader(System.in));
         this.saleService = saleService;
         this.productService = productService;
         this.personService = personService;
+        this.accessoryService = accessoryService;
     }
     
     // Starts the application main execution loop
@@ -64,9 +67,10 @@ public class GameZoneUI {
     // Displays the top-level options
     private void displayMainMenu() {
         System.out.println("\n---------------- MAIN MENU ----------------");
-        System.out.println("1. Product Management");
+        System.out.println("1. Product Management (Consoles and Video Games)");
         System.out.println("2. Person Management");
         System.out.println("3. Sales Management");
+        System.out.println("4. Accessory Management");
         System.out.println("0. Exit");
         System.out.print("Select an option: ");
     }
@@ -91,6 +95,7 @@ public class GameZoneUI {
             case 1 -> handleProductMenu();
             case 2 -> handlePersonMenu();
             case 3 -> handleSalesMenu();
+            case 4 -> handleAccessoryMenu();
             case 0, -1 -> { }
             default -> System.out.println("Invalid option. Please try again.");
         }
@@ -102,7 +107,7 @@ public class GameZoneUI {
         int option = -1;
         do {
             System.out.println("\n============= PRODUCT MANAGEMENT ==============");
-            System.out.println("1. Register a new videogame");
+            System.out.println("1. Register a new video game");
             System.out.println("2. Register a new console");
             System.out.println("3. List all available products in inventory");
             System.out.println("0. Return to Main Menu");
@@ -119,7 +124,6 @@ public class GameZoneUI {
         } while (option != 0);
     }
 
-    // Collects data and registers a new video game
     private void registerVideoGame() {
         try {
             System.out.println("\n--- REGISTER VIDEO GAME ---");
@@ -142,7 +146,6 @@ public class GameZoneUI {
         }
     }
 
-    // Collects data and registers a new console
     private void registerConsole() {
         try {
             System.out.println("\n--- REGISTER CONSOLE ---");
@@ -165,9 +168,8 @@ public class GameZoneUI {
         }
     }
 
-    // Prints the full inventory list
     private void listProducts() {
-        System.out.println("\n--- INVENTORY ---");
+        System.out.println("\n--- PRODUCT INVENTORY ---");
         List<Product> products = productService.getAllProducts();
         if (products == null || products.isEmpty()) {
             System.out.println("Inventory is empty.");
@@ -203,7 +205,6 @@ public class GameZoneUI {
         } while (option != 0);
     }
 
-    // Registers a new client entity
     private void registerClient() {
         try {
             System.out.println("\n--- REGISTER CLIENT ---");
@@ -219,25 +220,22 @@ public class GameZoneUI {
         }
     }
 
-    // Registers a new seller entity
-   // Registers a new seller entity
-private void registerSeller() {
-    try {
-        System.out.println("\n--- REGISTER SELLER ---");
-        System.out.print("Name: "); String name = reader.readLine();
-        System.out.print("Identification: "); String identification = reader.readLine();
-        System.out.print("Phone: "); String phone = reader.readLine();
-        System.out.print("Employee Code: "); String employeeCode = reader.readLine();
-        System.out.print("Work Shift: "); String workShift = reader.readLine();
+    private void registerSeller() {
+        try {
+            System.out.println("\n--- REGISTER SELLER ---");
+            System.out.print("Name: "); String name = reader.readLine();
+            System.out.print("Identification: "); String identification = reader.readLine();
+            System.out.print("Phone: "); String phone = reader.readLine();
+            System.out.print("Employee Code: "); String employeeCode = reader.readLine();
+            System.out.print("Work Shift: "); String workShift = reader.readLine();
 
-        personService.registerSeller(name, identification, phone, employeeCode, workShift);
-        System.out.println("Seller registered successfully!");
-    } catch (Exception e) {
-        System.out.println("Error registering seller: " + e.getMessage());
+            personService.registerSeller(name, identification, phone, employeeCode, workShift);
+            System.out.println("Seller registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error registering seller: " + e.getMessage());
+        }
     }
-}
 
-    // Prints all registered clients
     private void listClients() {
         System.out.println("\n--- CLIENT LIST ---");
         List<Client> clients = personService.getAllClients();
@@ -250,7 +248,6 @@ private void registerSeller() {
         }
     }
 
-    // Prints all registered sellers
     private void listSellers() {
         System.out.println("\n--- SELLER LIST ---");
         List<Seller> sellers = personService.getAllSellers();
@@ -260,6 +257,125 @@ private void registerSeller() {
             for (Seller s : sellers) {
                 System.out.println("Code: " + s.getEmployeeCode() + " | Name: " + s.getName() + " | Shift: " + s.getWorkShift());
             }
+        }
+    }
+
+    // ================= ACCESSORY SUBMENU =================
+
+    private void handleAccessoryMenu() {
+        int option = -1;
+        do {
+            System.out.println("\n============= ACCESSORY MANAGEMENT ==============");
+            System.out.println("1. Register a new controller");
+            System.out.println("2. Register a new cable");
+            System.out.println("3. Register a new memory");
+            System.out.println("4. List all accessories");
+            System.out.println("5. List accessories by type");
+            System.out.println("6. Consult compatible accessories for a console");
+            System.out.println("0. Return to Main Menu");
+            System.out.print("Select an option: ");
+            
+            option = readOption();
+            switch (option) {
+                case 1 -> registerController();
+                case 2 -> registerCable();
+                case 3 -> registerMemory();
+                case 4 -> listAllAccessories();
+                case 5 -> listAccessoriesByType();
+                case 6 -> consultCompatibleAccessories();
+                case 0 -> { }
+                default -> System.out.println("Invalid option.");
+            }
+        } while (option != 0);
+    }
+
+    private void registerController() {
+        try {
+            System.out.println("\n--- REGISTER CONTROLLER ---");
+            System.out.print("ID: "); String id = reader.readLine();
+            System.out.print("Title: "); String title = reader.readLine();
+            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Connection Type (wireless/wired): "); String connection = reader.readLine();
+            
+            accessoryService.registerController(id, title, price, stock, connection);
+            System.out.println("Controller registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void registerCable() {
+        try {
+            System.out.println("\n--- REGISTER CABLE ---");
+            System.out.print("ID: "); String id = reader.readLine();
+            System.out.print("Title: "); String title = reader.readLine();
+            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Length (meters): "); double length = Double.parseDouble(reader.readLine());
+            System.out.print("Connector Type (e.g., HDMI, USB): "); String type = reader.readLine();
+            
+            accessoryService.registerCable(id, title, price, stock, length, type);
+            System.out.println("Cable registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void registerMemory() {
+        try {
+            System.out.println("\n--- REGISTER MEMORY ---");
+            System.out.print("ID: "); String id = reader.readLine();
+            System.out.print("Title: "); String title = reader.readLine();
+            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Capacity (GB): "); int capacity = Integer.parseInt(reader.readLine());
+            System.out.print("Memory Type (e.g., SD, microSD): "); String type = reader.readLine();
+            
+            accessoryService.registerMemory(id, title, price, stock, capacity, type);
+            System.out.println("Memory registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void listAllAccessories() {
+        System.out.println("\n--- ALL ACCESSORIES ---");
+        List<Accessory> accessories = accessoryService.listAllAccessories();
+        if (accessories == null || accessories.isEmpty()) {
+            System.out.println("No accessories registered.");
+        } else {
+            accessories.forEach(a -> System.out.println(a.getFullDescription()));
+        }
+    }
+
+    private void listAccessoriesByType() {
+        try {
+            System.out.print("Enter accessory type (Controller/Cable/Memory): ");
+            String type = reader.readLine();
+            List<Accessory> accessories = accessoryService.listAccessoriesByType(type);
+            if (accessories == null || accessories.isEmpty()) {
+                System.out.println("No accessories of that type found.");
+            } else {
+                accessories.forEach(a -> System.out.println(a.getFullDescription()));
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void consultCompatibleAccessories() {
+        try {
+            System.out.print("Enter Console ID to check compatibility: ");
+            String consoleId = reader.readLine();
+            List<Accessory> accessories = accessoryService.findAccessoriesCompatibleWith(consoleId);
+            if (accessories == null || accessories.isEmpty()) {
+                System.out.println("No compatible accessories found.");
+            } else {
+                accessories.forEach(a -> System.out.println(a.getFullDescription()));
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -288,12 +404,9 @@ private void registerSeller() {
         } while (option != 0);
     }
 
-    // Handles the complete workflow of registering a new sale
     private void registerSale() {
         try {
             System.out.println("\n--- REGISTER NEW SALE ---");
-            System.out.print("Enter Sale ID (integer): ");
-            int saleId = Integer.parseInt(reader.readLine());
             
             // Validate client existence
             System.out.print("Enter Client ID: ");
@@ -313,54 +426,55 @@ private void registerSeller() {
                 return;
             }
             
-            // Add products to cart loop
+            // Add products and accessories to cart loop
             List<Product> products = new ArrayList<>();
             String addMore;
             do {
-                System.out.print("Enter Product ID to add: ");
-                String prodId = reader.readLine();
-                Product p = productService.findProductById(prodId);
+                System.out.print("Enter Product or Accessory ID to add: ");
+                String itemId = reader.readLine();
                 
-                if (p != null) {
-                    products.add(p);
-                    System.out.println("Product added to cart.");
-                } else {
-                    System.out.println("Error: Product not found.");
+                // Buscar primero en productos regulares
+                Product item = productService.findProductById(itemId);
+                
+                // Si no se encuentra, buscar en accesorios
+                if (item == null) {
+                    item = accessoryService.findById(itemId);
                 }
                 
-                System.out.print("Add another product? (y/n): ");
+                if (item != null) {
+                    products.add(item);
+                    System.out.println("Item added to cart.");
+                } else {
+                    System.out.println("Error: Product or Accessory not found.");
+                }
+                
+                System.out.print("Add another item? (y/n): ");
                 addMore = reader.readLine();
             } while (addMore.equalsIgnoreCase("y"));
             
             // Ensure cart is not empty
             if (products.isEmpty()) {
-                System.out.println("Error: Sale aborted. At least one product is required.");
+                System.out.println("Error: Sale aborted. At least one item is required.");
                 return;
             }
             
-            String date = LocalDate.now().toString();
-            Sale newSale = new Sale(saleId, date, client, seller, products);
-            
-            saleService.registerSale(newSale);
-            System.out.println("Sale registered successfully!");
+            // Delegate creation to service
+            Sale registeredSale = saleService.registerSale(client, seller, products);
+            System.out.println("Sale registered successfully with ID: " + registeredSale.getId());
 
-        } catch (NumberFormatException e) {
-            System.out.println("Error: Invalid numeric input.");
         } catch (IllegalArgumentException e) {
-            System.out.println(e.getMessage());
+            System.out.println("Validation Error: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("Error registering sale: " + e.getMessage());
         }
     }
 
-    // Lists all recorded sales in the system
     private void listAllSales() {
         System.out.println("\n--- COMPLETE SALES HISTORY ---");
         List<Sale> allSales = saleService.getAllSales();
         printSalesList(allSales);
     }
 
-    // Lists sales associated with a specific client ID
     private void listSalesByClient() {
         try {
             System.out.print("Enter Client Identification: ");
@@ -373,7 +487,6 @@ private void registerSeller() {
         }
     }
 
-    // Lists sales attended by a specific seller code
     private void listSalesBySeller() {
          try {
             System.out.print("Enter Seller Employee Code: ");
