@@ -1,10 +1,8 @@
 ```mermaid
 classDiagram
-direction TB
+    direction TB
 
-    %% ==========================================
-    %% 1. MODEL LAYER (com.gamezone.model)
-    %% ==========================================
+   
     namespace com.gamezone.model {
         class Person {
             <<abstract>>
@@ -14,12 +12,12 @@ direction TB
             +getId() String
             +getName() String
         }
-
+        
         class Client {
             -String email
             -List~Sale~ purchaseHistory
         }
-
+        
         class Seller {
             -String employeeId
             -String shift
@@ -80,13 +78,41 @@ direction TB
             -String id
             -String date
             -double total
+            -String appliedPromotionName
+            -double discountAmount
             +calculateTotal() double
+            +generateReceipt() String
+        }
+
+        class Promotion {
+            <<abstract>>
+            -String id
+            -String name
+            -LocalDate startDate
+            -LocalDate endDate
+            +isActive(date) boolean
+            +calculateDiscount(Sale)* double
+        }
+
+        class PercentageDiscount {
+            -double percentage
+            +calculateDiscount(Sale) double
+        }
+
+        class CategoryDiscount {
+            -double percentage
+            -String targetCategory
+            +calculateDiscount(Sale) double
+        }
+
+        class BulkPurchaseDiscount {
+            -int minQuantity
+            -double percentage
+            +calculateDiscount(Sale) double
         }
     }
 
-    %% ==========================================
-    %% 2. PERSISTENCE LAYER (com.gamezone.persistence)
-    %% ==========================================
+    
     namespace com.gamezone.persistence {
         class PersonRepository {
             <<interface>>
@@ -110,11 +136,13 @@ direction TB
             +saveAll(List~Accessory~)
             +loadAll() List~Accessory~
         }
+        class PromotionRepository {
+            +saveAll(List~Promotion~)
+            +loadAll() List~Promotion~
+        }
     }
 
-    %% ==========================================
-    %% 3. SERVICE LAYER (com.gamezone.service)
-    %% ==========================================
+   
     namespace com.gamezone.service {
         class PersonService {
             +registerClient(Client)
@@ -135,26 +163,32 @@ direction TB
             +findCompatibleWith(consoleId)
             +updateStock(id, quantity)
         }
+        class PromotionService {
+            +registerPercentageDiscount(...)
+            +registerCategoryDiscount(...)
+            +registerBulkPurchaseDiscount(...)
+            +listAllPromotions()
+            +listActivePromotions()
+            +findBestPromotionFor(Sale) Promotion
+            +findById(id) Promotion
+        }
         class SaleService {
             +registerSale(Client, Seller, items)
             +listAllSales()
         }
     }
 
-    %% ==========================================
-    %% 4. USER INTERFACE LAYER (com.gamezone.ui)
-    %% ==========================================
+   
     namespace com.gamezone.ui {
         class GameZoneUI {
             +start()
             -showMainMenu()
             -showAccessoryMenu()
+            -showPromotionMenu()
         }
     }
 
-    %% ==========================================
-    %% STRUCTURAL AND INHERITANCE RELATIONSHIPS
-    %% ==========================================
+    
     Person <|-- Client
     Person <|-- Seller
 
@@ -166,38 +200,41 @@ direction TB
     Accessory <|-- Cable
     Accessory <|-- Memory
 
+    Promotion <|-- PercentageDiscount
+    Promotion <|-- CategoryDiscount
+    Promotion <|-- BulkPurchaseDiscount
+
     PersonRepository <|.. FilePersonRepository
     ProductRepository <|.. FileProductRepository
 
-    %% ==========================================
-    %% DOMAIN RELATIONSHIPS (Association/Aggregation)
-    %% ==========================================
+   
     Sale o-- Client : "places"
     Sale o-- Seller : "handles"
     Sale o-- Product : "contains"
 
-    %% ==========================================
-    %% ARCHITECTURAL DEPENDENCIES (Layer Rules)
-    %% ==========================================
-    %% 1. UI interacts with Services
+   
     GameZoneUI ..> PersonService
     GameZoneUI ..> ProductService
     GameZoneUI ..> SaleService
     GameZoneUI ..> AccessoryService
+    GameZoneUI ..> PromotionService
 
-    %% 2. Services interact with each other and Persistence
+   
     SaleService ..> PersonService : "validates"
     SaleService ..> ProductService : "updates stock"
     SaleService ..> AccessoryService : "updates stock"
+    SaleService ..> PromotionService : "calculates discount"
     SaleService ..> SaleRepository
 
     PersonService ..> FilePersonRepository
     ProductService ..> FileProductRepository
     AccessoryService ..> AccessoryRepository
+    PromotionService ..> PromotionRepository
 
-    %% 3. Persistence injects into Model
+
     FilePersonRepository ..> Person
     FileProductRepository ..> Product
     AccessoryRepository ..> Accessory
+    PromotionRepository ..> Promotion
     SaleRepository ..> Sale
 ```
