@@ -45,39 +45,44 @@ public class SaleService {
      * @throws IllegalArgumentException if items list is empty or stock is
      * insufficient
      */
-    public Sale registerSale(Client client, Seller seller, List<Product> items) {
-        if (items == null || items.isEmpty()) {
-            throw new IllegalArgumentException("A sale must contain at least one item.");
-        }
-
-        // 1. Validate stock for all items prior to transaction
-        for (Product item : items) {
-            if (item.getStock()< 1) { // Cambiar a getStock() si tu atributo en Product es stock
-                throw new IllegalArgumentException("Insufficient stock for product: " + item.getTitle());
-            }
-        }
-
-        // 2. Update stock using productService while AccessoryService is integrated
-        for (Product item : items) {
-            int newQuantity = item.getStock()- 1;
-            if (item instanceof Accessory && AccessoryService != null) {
-                AccessoryService.updateStock(item.getId(), newQuantity);
-            } else {
-                productService.updateStock(item.getId(), newQuantity);
-            }
-        }
-        
-        // 3. Generate Sale ID and persist
-        int saleId = saleRepository.findAll().size() + 1;
-        String currentDate = LocalDate.now().toString();
-
-        Sale newSale = new Sale(saleId, currentDate, client, seller, items);
-        newSale.calculateTotal();
-
-        saleRepository.save(newSale);
-
-        return newSale;
+  public Sale registerSale(Client client, Seller seller, List<Product> items) {
+    if (items == null || items.isEmpty()) {
+        throw new IllegalArgumentException("A sale must contain at least one item.");
     }
+
+    // 1. Validar que haya stock suficiente para todos los ítems antes de la transacción
+    for (Product item : items) {
+        if (item.getStock() < 1) { 
+            throw new IllegalArgumentException("Insufficient stock for product: " + item.getTitle());
+        }
+    }
+
+    // 2. Actualizar el stock restando únicamente la cantidad vendida (por defecto 1 unidad por ítem en la lista)
+    int quantitySold = 1; 
+
+    for (Product item : items) {
+        if (item instanceof Accessory && AccessoryService != null) {
+            // Se pasa la cantidad a restar (1), no el stock restante
+            boolean updated = AccessoryService.updateStock(item.getId(), quantitySold);
+            if (!updated) {
+                throw new IllegalArgumentException("Could not update stock for accessory: " + item.getTitle());
+            }
+        } else {
+            productService.updateStock(item.getId(), quantitySold);
+        }
+    }
+    
+    // 3. Generar ID de venta y persistir
+    int saleId = saleRepository.findAll().size() + 1;
+    String currentDate = LocalDate.now().toString();
+
+    Sale newSale = new Sale(saleId, currentDate, client, seller, items);
+    newSale.calculateTotal();
+
+    saleRepository.save(newSale);
+
+    return newSale;
+}
 
     /**
      * Retrieves the complete history of registered sales.

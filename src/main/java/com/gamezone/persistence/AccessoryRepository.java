@@ -77,15 +77,23 @@ public AccessoryRepository(String filePath) {
      * @param accessories the list of accessories to save
      */
     public void saveAll(List<Accessory> accessories) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            for (Accessory accessory : accessories) {
-                writer.write(toLine(accessory));
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("Error writing accessory data: " + e.getMessage());
-        }
+    File file = new File(filePath);
+    File parentDir = file.getParentFile();
+    
+    // Crear la carpeta 'data' (o la ruta especificada) si no existe
+    if (parentDir != null && !parentDir.exists()) {
+        parentDir.mkdirs();
     }
+
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        for (Accessory accessory : accessories) {
+            writer.write(toLine(accessory));
+            writer.newLine();
+        }
+    } catch (IOException e) {
+        System.out.println("Error writing accessory data: " + e.getMessage());
+    }
+}
 
     /**
      * Converts a single accessory into its CSV line representation.
