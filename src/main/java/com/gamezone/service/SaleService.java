@@ -1,6 +1,5 @@
 package com.gamezone.service;
-
-import com.gamezone.model.Accesory;
+import com.gamezone.model.Accessory;
 import com.gamezone.model.Client;
 import com.gamezone.model.Seller;
 import com.gamezone.model.Product;
@@ -10,11 +9,10 @@ import com.gamezone.persistence.SaleRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
- * Service handling sale transactions, stock validation, and inventory delegation.
- * Integrated to handle both standard products and accessories.
+ * Service handling sale transactions, stock validation, and inventory
+ * delegation. Integrated to handle both standard products and accessories.
  */
 public class SaleService {
 
@@ -27,63 +25,60 @@ public class SaleService {
      *
      * @param saleRepository The repository used to persist sales.
      * @param productService The service used to manage product inventory.
-     * @param accessoryService the service managing accessories
+     * @param accesoryService the service managing accessories
      */
-    public SaleService(SaleRepository saleRepository, ProductService productService,  AccesoryService accesoryService) {
+    public SaleService(SaleRepository saleRepository, ProductService productService, AccesoryService accesoryService) {
         this.saleRepository = saleRepository;
         this.productService = productService;
         this.accesoryService = accesoryService;
     }
 
     /**
-     * Registers a new sale transaction in the system.
-     * Validates stock availability, updates inventory across appropriate services,
-     * and persists the transaction.
+     * Registers a new sale transaction in the system. Validates stock
+     * availability, updates inventory across appropriate services, and persists
+     * the transaction.
      *
      * @param client the customer making the purchase
      * @param seller the employee handling the transaction
-     * @param items  the list of products/accessories being purchased
+     * @param items the list of products/accessories being purchased
      * @return the created Sale instance
-     * @throws IllegalArgumentException if items list is empty or stock is insufficient
+     * @throws IllegalArgumentException if items list is empty or stock is
+     * insufficient
      */
-    private Sale registerSale(Client client,Seller seller, List<Product> items){
-        if(items == null || items.isEmpty()){
-            throw new IllegalArgumentException("A sale must containt at least one item.");
+    public Sale registerSale(Client client, Seller seller, List<Product> items) {
+        if (items == null || items.isEmpty()) {
+            throw new IllegalArgumentException("A sale must contain at least one item.");
         }
-        
-        //1.Validate stock for all items prior to transaction
-        for(Product item : items){
-            if(item.getQuantity() < 1){
-              throw new IllegalArgumentException("Insufficient stock");
-            }
-        }
-        
+
+        // 1. Validate stock for all items prior to transaction
         for (Product item : items) {
-            int newQuantity= item.getQuantity() -1;
-            if(item instanceof Accesory){
-                accesoryService.updateStick(item.getId(), newQuantity);
-            }else{
-                 accesoryService.updateStick(item.getId(), newQuantity);
+            if (item.getStock()< 1) { // Cambiar a getStock() si tu atributo en Product es stock
+                throw new IllegalArgumentException("Insufficient stock for product: " + item.getTitle());
+            }
+        }
+
+        // 2. Update stock using productService while accesoryService is integrated
+        for (Product item : items) {
+            int newQuantity = item.getStock()- 1;
+            if (item instanceof Accessory && accesoryService != null) {
+                accesoryService.updateStock(item.getId(), newQuantity);
+            } else {
+                productService.updateStock(item.getId(), newQuantity);
             }
         }
         
-       String saleId = "SALE-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // 3. Generate Sale ID and persist
+        int saleId = saleRepository.findAll().size() + 1;
         String currentDate = LocalDate.now().toString();
 
         Sale newSale = new Sale(saleId, currentDate, client, seller, items);
         newSale.calculateTotal();
 
-        List<Sale> currentSales = saleRepository.loadAll();
-        if (currentSales == null) {
-            currentSales = new ArrayList<>();
-        }
-        currentSales.add(newSale);
-        saleRepository.saveAll(currentSales);
+        saleRepository.save(newSale);
 
         return newSale;
     }
-    
-    
+
     /**
      * Retrieves the complete history of registered sales.
      *
@@ -102,7 +97,7 @@ public class SaleService {
     public List<Sale> getSalesByClient(String clientIdentification) {
         List<Sale> allSales = saleRepository.findAll();
         List<Sale> clientSales = new ArrayList<>();
-        
+
         for (Sale sale : allSales) {
             if (sale.getClient().getIdentification().equals(clientIdentification)) {
                 clientSales.add(sale);
@@ -120,7 +115,7 @@ public class SaleService {
     public List<Sale> getSalesBySeller(String employeeCode) {
         List<Sale> allSales = saleRepository.findAll();
         List<Sale> sellerSales = new ArrayList<>();
-        
+
         for (Sale sale : allSales) {
             if (sale.getSeller().getEmployeeCode().equals(employeeCode)) {
                 sellerSales.add(sale);
