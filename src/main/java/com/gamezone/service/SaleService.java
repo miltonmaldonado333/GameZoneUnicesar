@@ -1,6 +1,6 @@
 package com.gamezone.service;
 
-//import com.gamezone.model.Accesory;
+import com.gamezone.model.Accesory;
 import com.gamezone.model.Client;
 import com.gamezone.model.Seller;
 import com.gamezone.model.Product;
