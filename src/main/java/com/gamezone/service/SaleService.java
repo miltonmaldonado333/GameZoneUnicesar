@@ -1,14 +1,14 @@
 package com.gamezone.service;
-import com.gamezone.model.Accessory;
-import com.gamezone.model.Client;
-import com.gamezone.model.Seller;
-import com.gamezone.model.Product;
-import com.gamezone.model.Sale;
-import com.gamezone.persistence.SaleRepository;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.gamezone.model.Accessory;
+import com.gamezone.model.Client;
+import com.gamezone.model.Product;
+import com.gamezone.model.Sale;
+import com.gamezone.model.Seller;
+import com.gamezone.persistence.SaleRepository;
 
 /**
  * Service handling sale transactions, stock validation, and inventory
@@ -18,19 +18,19 @@ public class SaleService {
 
     private final SaleRepository saleRepository;
     private final ProductService productService;
-    private final AccesoryService accesoryService;
+    private final AccessoryService AccessoryService;
 
     /**
      * Constructs a SaleService with the required dependencies.
      *
      * @param saleRepository The repository used to persist sales.
      * @param productService The service used to manage product inventory.
-     * @param accesoryService the service managing accessories
+     * @param AccessoryService the service managing accessories
      */
-    public SaleService(SaleRepository saleRepository, ProductService productService, AccesoryService accesoryService) {
+    public SaleService(SaleRepository saleRepository, ProductService productService, AccessoryService AccessoryService) {
         this.saleRepository = saleRepository;
         this.productService = productService;
-        this.accesoryService = accesoryService;
+        this.AccessoryService = AccessoryService;
     }
 
     /**
@@ -57,11 +57,11 @@ public class SaleService {
             }
         }
 
-        // 2. Update stock using productService while accesoryService is integrated
+        // 2. Update stock using productService while AccessoryService is integrated
         for (Product item : items) {
             int newQuantity = item.getStock()- 1;
-            if (item instanceof Accessory && accesoryService != null) {
-                accesoryService.updateStock(item.getId(), newQuantity);
+            if (item instanceof Accessory && AccessoryService != null) {
+                AccessoryService.updateStock(item.getId(), newQuantity);
             } else {
                 productService.updateStock(item.getId(), newQuantity);
             }
