@@ -91,4 +91,3 @@
   - Direct dependency from UI to Persistence (bypassing Services)[cite: 2].
   - Dependencies pointing upwards or backwards (e.g., Model referencing Persistence or UI)[cite: 2].
 - **Justification:** Unidirectional downward dependencies ensure loose coupling, high cohesion, and strict separation of concerns, allowing layers to be tested, maintained, or replaced independently without cascading side effects[cite: 2].
-
