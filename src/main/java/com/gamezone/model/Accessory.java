@@ -5,6 +5,8 @@ import java.util.ArrayList;
 
 /**
  * Abstract class representing a generic accessory in the inventory.
+ * Extends the basic Product class to include specific features such as
+ * compatibility with different consoles.
  */
 public abstract class Accessory extends Product {
 
@@ -14,8 +16,9 @@ public abstract class Accessory extends Product {
      * Constructs a new Accessory.
      */
     public Accessory(List<String> compatibleConsoleIds, String id, String title, double price, int stock) {
+
         super(id, title, price, stock);
-        // Evitamos errores si la lista llega nula
+
         this.compatibleConsoleIds = (compatibleConsoleIds != null) ? compatibleConsoleIds : new ArrayList<>();
     }
     
@@ -41,9 +44,11 @@ public abstract class Accessory extends Product {
      
     /**
      * Returns a detailed description of the accessory.
+     * Concrete subclasses must implement this method to include their specific attributes.
      *
      * @return The formatted description string.
      */
-    public abstract String getDescription();
+    @Override
+    public abstract String getFullDescription();
     
 }
