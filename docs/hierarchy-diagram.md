@@ -1,3 +1,4 @@
+```mermaid
 classDiagram
 direction TB
 
@@ -78,3 +79,4 @@ direction TB
     Promotion <|-- PercentageDiscount
     Promotion <|-- CategoryDiscount
     Promotion <|-- BulkPurchaseDiscount
+```
