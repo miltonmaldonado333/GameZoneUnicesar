@@ -17,8 +17,8 @@ import com.gamezone.model.Memory;
 
 /**
  * File-based repository for Accessory objects (Controller, Cable, Memory).
- * Persists all accessories in a single CSV file using a type discriminator
- * to distinguish between the three concrete subtypes.
+ * Persists all accessories in a single CSV file using a type discriminator to
+ * distinguish between the three concrete subtypes.
  */
 public class AccessoryRepository {
 
@@ -29,15 +29,15 @@ public class AccessoryRepository {
      *
      * @param filePath the path of the CSV file used to store accessory data
      */
-   private static final String DEFAULT_FILE_PATH = "data/accessories.csv";
+    private static final String DEFAULT_FILE_PATH = "data/accessories.csv";
 
-public AccessoryRepository() {
-    this(DEFAULT_FILE_PATH);
-}
+    public AccessoryRepository() {
+        this(DEFAULT_FILE_PATH);
+    }
 
-public AccessoryRepository(String filePath) {
-    this.filePath = filePath;
-}
+    public AccessoryRepository(String filePath) {
+        this.filePath = filePath;
+    }
 
     /**
      * Loads all accessories stored in the file. If the file does not exist yet,
@@ -72,28 +72,29 @@ public AccessoryRepository(String filePath) {
     }
 
     /**
-     * Saves the given list of accessories to the file, overwriting any previous content.
+     * Saves the given list of accessories to the file, overwriting any previous
+     * content.
      *
      * @param accessories the list of accessories to save
      */
     public void saveAll(List<Accessory> accessories) {
-    File file = new File(filePath);
-    File parentDir = file.getParentFile();
-    
-    // Crear la carpeta 'data' (o la ruta especificada) si no existe
-    if (parentDir != null && !parentDir.exists()) {
-        parentDir.mkdirs();
-    }
+        File file = new File(filePath);
+        File parentDir = file.getParentFile();
 
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-        for (Accessory accessory : accessories) {
-            writer.write(toLine(accessory));
-            writer.newLine();
+        // Crear la carpeta 'data' (o la ruta especificada) si no existe
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs();
         }
-    } catch (IOException e) {
-        System.out.println("Error writing accessory data: " + e.getMessage());
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            for (Accessory accessory : accessories) {
+                writer.write(toLine(accessory));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error writing accessory data: " + e.getMessage());
+        }
     }
-}
 
     /**
      * Converts a single accessory into its CSV line representation.
@@ -130,7 +131,7 @@ public AccessoryRepository(String filePath) {
                     memory.getTitle(),
                     String.valueOf(memory.getPrice()),
                     String.valueOf(memory.getStock()),
-                    String.valueOf(memory.getCapacity()),
+                    String.valueOf(memory.getCapacityGB()),
                     memory.getStorageType(),
                     compatibleConsoles);
         }
@@ -141,7 +142,8 @@ public AccessoryRepository(String filePath) {
      * Parses a single CSV line back into the corresponding Accessory subtype.
      *
      * @param line the text line to parse
-     * @return the resulting Accessory, or null if the line has an unknown format
+     * @return the resulting Accessory, or null if the line has an unknown
+     * format
      */
     private Accessory parseLine(String line) {
         String[] fields = line.split(";", -1);
@@ -166,7 +168,7 @@ public AccessoryRepository(String filePath) {
             int capacity = Integer.parseInt(fields[5]);
             String storageType = fields[6];
             compatibleConsoles = parseConsoleIds(fields[7]);
-            return new Memory(compatibleConsoles, id, title, price, stock, capacity, storageType);
+            return new Memory(capacity, storageType, id, title, price, stock, compatibleConsoles);
         }
 
         return null;
