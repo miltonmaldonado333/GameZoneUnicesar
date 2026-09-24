@@ -120,7 +120,35 @@ public class ReturnService {
         return matching;
     }
 
-    private Product findProductInSale(Sale sale, String productId) {
+    /**
+     * Generates the net monthly balance for the given month and year, calculated
+     * as the total sales minus the total returns recorded within that period.
+     *
+     * @param month the month to evaluate (1-12)
+     * @param year  the year to evaluate
+     * @return the net balance (total sales minus total returns) for that period
+     */
+    public double generateMonthlyBalance(int month, int year) {
+        double totalSales = 0.0;
+        for (Sale sale : saleService.getAllSales()) {
+            LocalDate saleDate = LocalDate.parse(sale.getDate());
+            if (saleDate.getMonthValue() == month && saleDate.getYear() == year) {
+                totalSales += sale.getTotal();
+            }
+        }
+
+        double totalReturns = 0.0;
+        for (Return returnRecord : returnRepository.loadAll()) {
+            LocalDate returnDate = returnRecord.getDate();
+            if (returnDate.getMonthValue() == month && returnDate.getYear() == year) {
+                totalReturns += returnRecord.getRefundAmount();
+            }
+        }
+
+        return totalSales - totalReturns;
+    }
+
+        private Product findProductInSale(Sale sale, String productId) {
         for (Product product : sale.getProducts()) {
             if (product.getId().equalsIgnoreCase(productId)) {
                 return product;
@@ -129,4 +157,5 @@ public class ReturnService {
         return null;
     }
 }
+
 
