@@ -5,43 +5,47 @@ import com.gamezone.persistence.FilePersonRepository;
 import com.gamezone.persistence.FileProductRepository;
 import com.gamezone.persistence.PersonRepository;
 import com.gamezone.persistence.ProductRepository;
+import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
+import com.gamezone.service.PromotionService;
 import com.gamezone.service.SaleService;
 import com.gamezone.ui.GameZoneUI;
 
 /**
- * Main application entry point for the GameZone Unicesar system.
- * Initializes the layered architecture and starts the console interface.
+ * Punto de entrada principal para el sistema GameZone Unicesar.
+ * Inicializa la arquitectura por capas e inicia la interfaz de consola.
  */
 public class main {
-    
+
     /**
-     * Main method that boots up the application.
-     * Initializes repositories, services, and the user interface.
+     * Método principal que arranca la aplicación.
+     * Inicializa repositorios, servicios y la interfaz de usuario.
      *
-     * @param args command line arguments
+     * @param args argumentos de línea de comandos
      */
     public static void main(String[] args) {
-        
-        // Initialize the persistence layer (Repositories)
+
+        // 1. Inicializar la capa de persistencia (Repositorios)
         ProductRepository productRepo = new FileProductRepository();
         PersonRepository personRepo = new FilePersonRepository("persons.txt"); 
         AccessoryRepository accessoryRepo = new AccessoryRepository();
-        
-        // Initialize the service layer (Business Logic)
+        PromotionRepository promotionRepo = new PromotionRepository();
+
+        // 2. Inicializar la capa de negocio (Servicios)
         ProductService productService = new ProductService(productRepo);
         PersonService personService = new PersonService(personRepo);
         AccessoryService accessoryService = new AccessoryService(accessoryRepo);
-        
-        // Initialize the sales module with required dependencies
-        SaleRepository saleRepo = new SaleRepository(personService, productService);
-        SaleService saleService = new SaleService(saleRepo, productService, accessoryService);
+        PromotionService promotionService = new PromotionService(promotionRepo);
 
-        // Initialize and start the presentation layer (UI)
-        GameZoneUI ui = new GameZoneUI(saleService, productService, personService, accessoryService);
+        // 3. Inicializar el módulo de ventas con sus dependencias
+        SaleRepository saleRepo = new SaleRepository(personService, productService);
+        SaleService saleService = new SaleService(saleRepo, productService, accessoryService, promotionService);
+
+        // 4. Inicializar y arrancar la capa de presentación (UI)
+        GameZoneUI ui = new GameZoneUI(saleService, productService, personService, accessoryService, promotionService);
         ui.start();
     }
 }

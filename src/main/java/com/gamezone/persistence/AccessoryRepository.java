@@ -130,7 +130,7 @@ public AccessoryRepository(String filePath) {
                     memory.getTitle(),
                     String.valueOf(memory.getPrice()),
                     String.valueOf(memory.getStock()),
-                    String.valueOf(memory.getCapacity()),
+                    String.valueOf(memory.getCapacityGB()),
                     memory.getStorageType(),
                     compatibleConsoles);
         }
@@ -166,7 +166,7 @@ public AccessoryRepository(String filePath) {
             int capacity = Integer.parseInt(fields[5]);
             String storageType = fields[6];
             compatibleConsoles = parseConsoleIds(fields[7]);
-            return new Memory(compatibleConsoles, id, title, price, stock, capacity, storageType);
+            return new Memory(capacity, storageType, id, title, price, stock, compatibleConsoles);
         }
 
         return null;

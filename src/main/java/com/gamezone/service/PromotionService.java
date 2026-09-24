@@ -1,4 +1,4 @@
-﻿package com.gamezone.service;
+package com.gamezone.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -12,36 +12,39 @@ import com.gamezone.model.Sale;
 import com.gamezone.persistence.PromotionRepository;
 
 /**
- * Handles the business logic for managing promotions.
+ * Service class handling the business logic for managing promotions and discounts.
  */
 public class PromotionService {
 
-    private PromotionRepository promotionRepository;
+    private final PromotionRepository promotionRepository;
 
     public PromotionService(PromotionRepository promotionRepository) {
         this.promotionRepository = promotionRepository;
     }
 
     public void registerPercentageDiscount(String id, String name, LocalDate startDate,
-                                            LocalDate endDate, double percentage) {
-        List<Promotion> promotions = promotionRepository.loadAll();
-        promotions.add(new PercentageDiscount(percentage, id, name, startDate, endDate));
-        promotionRepository.saveAll(promotions);
-    }
+                                        LocalDate endDate, double percentage) {
+    List<Promotion> promotions = promotionRepository.loadAll();
+    // model: (percentage, id, name, startDate, endDate)
+    promotions.add(new PercentageDiscount(percentage, id, name, startDate, endDate));
+    promotionRepository.saveAll(promotions);
+}
 
-    public void registerCategoryDiscount(String id, String name, LocalDate startDate,
-                                          LocalDate endDate, double percentage, String targetCategory) {
-        List<Promotion> promotions = promotionRepository.loadAll();
-        promotions.add(new CategoryDiscount(percentage, targetCategory, id, name, startDate, endDate));
-        promotionRepository.saveAll(promotions);
-    }
+public void registerCategoryDiscount(String id, String name, LocalDate startDate,
+                                      LocalDate endDate, double percentage, String targetCategory) {
+    List<Promotion> promotions = promotionRepository.loadAll();
+    //  model: (percentage, targetCategory, id, name, startDate, endDate)
+    promotions.add(new CategoryDiscount(percentage, targetCategory, id, name, startDate, endDate));
+    promotionRepository.saveAll(promotions);
+}
 
-    public void registerBulkPurchaseDiscount(String id, String name, LocalDate startDate,
-                                              LocalDate endDate, int minQuantity, double percentage) {
-        List<Promotion> promotions = promotionRepository.loadAll();
-        promotions.add(new BulkPurchaseDiscount(minQuantity, percentage, id, name, startDate, endDate));
-        promotionRepository.saveAll(promotions);
-    }
+public void registerBulkPurchaseDiscount(String id, String name, LocalDate startDate,
+                                          LocalDate endDate, int minQuantity, double percentage) {
+    List<Promotion> promotions = promotionRepository.loadAll();
+    // model: (minQuantity, percentage, id, name, startDate, endDate)
+    promotions.add(new BulkPurchaseDiscount(minQuantity, percentage, id, name, startDate, endDate));
+    promotionRepository.saveAll(promotions);
+}
 
     public List<Promotion> listAllPromotions() {
         return promotionRepository.loadAll();
@@ -82,6 +85,3 @@ public class PromotionService {
         return null;
     }
 }
-
-
-
