@@ -1,13 +1,8 @@
-﻿# Arquitectura por Capas - GameZone Unicesar
-
-````mermaid
-graph TD
-    subgraph UI["Capa de Presentacion (UI)"]
 # Arquitectura por Capas - GameZone Unicesar
 
 ```mermaid
 graph TD
-    subgraph UI["Capa de Presentación (UI)"]
+    subgraph UI["Capa de Presentacion (UI)"]
         GameZoneUI[GameZoneUI.java]
         MainClass[Main.java]
     end
@@ -17,10 +12,7 @@ graph TD
         AccessoryService[AccessoryService.java]
         PersonService[PersonService.java]
         PromotionService[PromotionService.java]
-    subgraph Service["Capa de Servicio (Lógica de Negocio)"]
-        SaleService[SaleService.java]
-        AccessoryService[AccessoryService.java]
-        PersonService[PersonService.java]
+        ReturnService[ReturnService.java]
     end
 
     subgraph Persistence["Capa de Persistencia"]
@@ -28,6 +20,7 @@ graph TD
         PersonRepository[PersonRepository.java]
         SaleRepository[SaleRepository.java]
         PromotionRepository[PromotionRepository.java]
+        ReturnRepository[ReturnRepository.java]
     end
 
     subgraph Model["Capa de Modelo (Entidades)"]
@@ -42,6 +35,7 @@ graph TD
         PercentageDiscount[PercentageDiscount.java]
         CategoryDiscount[CategoryDiscount.java]
         BulkPurchaseDiscount[BulkPurchaseDiscount.java]
+        Return[Return.java]
     end
 
     MainClass --> GameZoneUI
@@ -52,6 +46,7 @@ graph TD
     GameZoneUI --> AccessoryService
     GameZoneUI --> PersonService
     GameZoneUI --> PromotionService
+    GameZoneUI --> ReturnService
 
     SaleService --> AccessoryService
     SaleService --> PromotionService
@@ -59,18 +54,14 @@ graph TD
     AccessoryService --> AccessoryRepository
     PersonService --> PersonRepository
     PromotionService --> PromotionRepository
+    ReturnService --> ReturnRepository
+    ReturnService --> SaleService
+    ReturnService --> ProductService
 
     AccessoryRepository --> Accessory
     PersonRepository --> Person
     PromotionRepository --> Promotion
-
-    SaleService --> AccessoryService
-
-    AccessoryService --> AccessoryRepository
-    PersonService --> PersonRepository
-
-    AccessoryRepository --> Accessory
-    PersonRepository --> Person
+    ReturnRepository --> Return
 
     Controller --> Accessory
     Cable --> Accessory
@@ -81,33 +72,38 @@ graph TD
     CategoryDiscount --> Promotion
     BulkPurchaseDiscount --> Promotion
 
+    Return --> Sale
+
     PromotionService -.->|calculateDiscount| Sale
     CategoryDiscount -.->|filters by type| Product
     SaleService -.->|applies best promotion| Sale
+    ReturnService -.->|restoreStock| ProductService
+    ReturnService -.->|canBeReturned| Sale
 
     style UI fill:#2d3748,color:#fff
     style Service fill:#2c5282,color:#fff
     style Persistence fill:#2f855a,color:#fff
     style Model fill:#744210,color:#fff
-````
+```
 
 ## Descripcion de capas
 
 - **UI:** interactua con el usuario y delega en los servicios.
-- **Service:** contiene la logica de negocio (validaciones, reglas de registro, seleccion de la mejor promocion).
+- **Service:** contiene la logica de negocio (validaciones, reglas de registro, seleccion de la mejor promocion, procesamiento de devoluciones).
 - **Persistence:** se encarga de guardar y leer datos (archivos CSV).
-- **Model:** representa las entidades del dominio. Controller, Cable y Memory heredan de Accessory, que a su vez hereda de Product. PercentageDiscount, CategoryDiscount y BulkPurchaseDiscount heredan de la clase abstracta Promotion.
+- **Model:** representa las entidades del dominio. Controller, Cable y Memory heredan de Accessory, que a su vez hereda de Product. PercentageDiscount, CategoryDiscount y BulkPurchaseDiscount heredan de la clase abstracta Promotion. Return hace referencia a Sale (asociacion, no herencia).
 
-## Modulo de Promociones (nuevo)
+## Modulo de Promociones
 
 - PromotionRepository persiste todas las promociones en data/promotions.csv usando un discriminador de tipo (PERCENTAGE, CATEGORY, BULK).
 - PromotionService implementa el registro de cada tipo de promocion, el listado de promociones vigentes, y la logica de seleccion de la mejor promocion aplicable a una venta (findBestPromotionFor).
 - SaleService.registerSale invoca PromotionService.findBestPromotionFor(sale) al registrar una venta, y si retorna una promocion, aplica su descuento al total de la venta.
 - CategoryDiscount.calculateDiscount depende de Product (mediante instanceof VideoGame / instanceof Console) para filtrar los productos de la categoria objetivo.
 
-## Descripción de capas
+## Modulo de Devoluciones (nuevo)
 
-- **UI:** interactúa con el usuario y delega en los servicios.
-- **Service:** contiene la lógica de negocio (validaciones, reglas de registro).
-- **Persistence:** se encarga de guardar y leer datos (archivos CSV).
-- **Model:** representa las entidades del dominio. `Controller`, `Cable` y `Memory` heredan de `Accessory`, que a su vez hereda de `Product`.
+- ReturnRepository persiste todas las devoluciones en data/returns.csv, e inyecta SaleService y ProductService para resolver las referencias a Sale y Product durante la carga.
+- ReturnService implementa el registro de una devolucion (registerReturn), validando que la venta exista, que este dentro del plazo de 30 dias (Sale.canBeReturned()) y que los productos indicados pertenezcan efectivamente a la venta original.
+- Al registrar una devolucion exitosa, ReturnService invoca ProductService.restoreStock() para reintegrar el stock de los productos devueltos, reutilizando la logica existente en lugar de duplicarla.
+- ReturnService tambien implementa las consultas viewAllReturns, viewReturnsByCustomer y viewReturnsBySale, y el reporte generateMonthlyBalance, que consolida el total de ventas y devoluciones de un mes y ano especificos.
+
