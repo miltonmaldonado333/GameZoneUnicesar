@@ -2,7 +2,6 @@
 classDiagram
     direction TB
 
-   
     namespace com.gamezone.model {
         class Person {
             <<abstract>>
@@ -12,12 +11,12 @@ classDiagram
             +getId() String
             +getName() String
         }
-        
+
         class Client {
             -String email
             -List~Sale~ purchaseHistory
         }
-        
+
         class Seller {
             -String employeeId
             -String shift
@@ -82,6 +81,7 @@ classDiagram
             -double discountAmount
             +calculateTotal() double
             +generateReceipt() String
+            +canBeReturned() boolean
         }
 
         class Promotion {
@@ -110,9 +110,18 @@ classDiagram
             -double percentage
             +calculateDiscount(Sale) double
         }
+
+        class Return {
+            -String returnId
+            -LocalDate date
+            -String reason
+            -double refundAmount
+            +calculateRefundAmount() double
+            +generateReturnReceipt() String
+        }
     }
 
-    
+
     namespace com.gamezone.persistence {
         class PersonRepository {
             <<interface>>
@@ -140,9 +149,13 @@ classDiagram
             +saveAll(List~Promotion~)
             +loadAll() List~Promotion~
         }
+        class ReturnRepository {
+            +saveAll(List~Return~)
+            +loadAll() List~Return~
+        }
     }
 
-   
+
     namespace com.gamezone.service {
         class PersonService {
             +registerClient(Client)
@@ -154,6 +167,7 @@ classDiagram
             +registerConsole(Console)
             +listProducts()
             +updateStock(id, quantity)
+            +restoreStock(productId, quantity)
         }
         class AccessoryService {
             +registerController(Controller)
@@ -176,19 +190,27 @@ classDiagram
             +registerSale(Client, Seller, items)
             +listAllSales()
         }
+        class ReturnService {
+            +registerReturn(saleId, productIds, reason) Return
+            +viewAllReturns() List~Return~
+            +viewReturnsByCustomer(customerId) List~Return~
+            +viewReturnsBySale(saleId) List~Return~
+            +generateMonthlyBalance(month, year) double
+        }
     }
 
-   
+
     namespace com.gamezone.ui {
         class GameZoneUI {
             +start()
             -showMainMenu()
             -showAccessoryMenu()
             -showPromotionMenu()
+            -showReturnMenu()
         }
     }
 
-    
+
     Person <|-- Client
     Person <|-- Seller
 
@@ -207,24 +229,32 @@ classDiagram
     PersonRepository <|.. FilePersonRepository
     ProductRepository <|.. FileProductRepository
 
-   
+
     Sale o-- Client : "places"
     Sale o-- Seller : "handles"
     Sale o-- Product : "contains"
 
-   
+    Return o-- Sale : "references"
+    Return o-- Product : "contains partial"
+
+
     GameZoneUI ..> PersonService
     GameZoneUI ..> ProductService
     GameZoneUI ..> SaleService
     GameZoneUI ..> AccessoryService
     GameZoneUI ..> PromotionService
+    GameZoneUI ..> ReturnService
 
-   
+
     SaleService ..> PersonService : "validates"
     SaleService ..> ProductService : "updates stock"
     SaleService ..> AccessoryService : "updates stock"
     SaleService ..> PromotionService : "calculates discount"
     SaleService ..> SaleRepository
+
+    ReturnService ..> SaleService : "validates time/existence"
+    ReturnService ..> ProductService : "restores stock"
+    ReturnService ..> ReturnRepository
 
     PersonService ..> FilePersonRepository
     ProductService ..> FileProductRepository
@@ -237,4 +267,5 @@ classDiagram
     AccessoryRepository ..> Accessory
     PromotionRepository ..> Promotion
     SaleRepository ..> Sale
+    ReturnRepository ..> Return
 ```

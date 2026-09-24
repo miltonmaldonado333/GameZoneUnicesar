@@ -13,6 +13,9 @@ import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
 import com.gamezone.service.SaleService;
 import com.gamezone.ui.GameZoneUI;
+import com.gamezone.service.ReturnService;
+import com.gamezone.persistence.ReturnRepository;
+
 
 /**
  * Punto de entrada principal para el sistema GameZone Unicesar.
@@ -44,9 +47,11 @@ public class main {
         // 3. Inicializar el módulo de ventas con sus dependencias
         SaleRepository saleRepo = new SaleRepository(personService, productService);
         SaleService saleService = new SaleService(saleRepo, productService, accessoryService, promotionService);
+        ReturnRepository returnrepository =  new ReturnRepository(saleService, productService);
+        ReturnService returnservice  = new ReturnService(returnrepository, saleService, productService);
 
         // 4. Inicializar y arrancar la capa de presentación (UI)
-        GameZoneUI ui = new GameZoneUI(saleService, productService, personService, accessoryService, promotionService);
+        GameZoneUI ui = new GameZoneUI(saleService, productService, personService, accessoryService, promotionService, returnservice);
         ui.start();
     }
 }
