@@ -1,58 +1,73 @@
 package com.gamezone.ui;
 
+import com.gamezone.model.Accessory;
 import com.gamezone.model.Client;
 import com.gamezone.model.Product;
+import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
+import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
+import com.gamezone.service.PromotionService;
 import com.gamezone.service.SaleService;
+import com.gamezone.service.ReturnService;
+import com.gamezone.model.Return;
 
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Handles the interactive console user interface for the GameZone system.
  * It provides menus to execute all required operations,
- * grouping them into Product, Person, and Sales management.
+ * grouping them into Product, Person, Sales, Accessory, and Promotion management.
  */
 public class GameZoneUI {
-    
+
     // Service and input dependencies
     private final BufferedReader reader;
     private final SaleService saleService;
     private final ProductService productService;
     private final PersonService personService;
+    private final AccessoryService accessoryService;
+    private final PromotionService promotionService;
+    private final ReturnService returnService;
 
     // Initializes the UI with required services
-    public GameZoneUI(SaleService saleService, ProductService productService, PersonService personService) {
+    public GameZoneUI(SaleService saleService, ProductService productService, 
+                      PersonService personService, AccessoryService accessoryService,
+                      PromotionService promotionService, ReturnService returnservice) {
         this.reader = new BufferedReader(new InputStreamReader(System.in));
         this.saleService = saleService;
         this.productService = productService;
         this.personService = personService;
+        this.accessoryService = accessoryService;
+        this.promotionService = promotionService;
+        this.returnService = returnservice;
     }
-    
+
     // Starts the application main execution loop
     public void start() {
         int option = -1;
-        
+
         System.out.println("===========================================");
-        System.out.println("        WELCOME TO GAMEZONE SYSTEM         ");
+        System.out.println("         WELCOME TO GAMEZONE SYSTEM        ");
         System.out.println("===========================================");
-        
+
         // Main menu loop
         do {
             displayMainMenu();
             option = readOption();
             processMainMenuOption(option);
         } while (option != 0);
-        
+
         System.out.println("Exiting GameZone system... Goodbye!");
-        
+
         // Close the input reader safely
         try {
             reader.close();
@@ -60,17 +75,21 @@ public class GameZoneUI {
             System.out.println("Error closing reader: " + e.getMessage());
         }
     }
-    
+
     // Displays the top-level options
     private void displayMainMenu() {
         System.out.println("\n---------------- MAIN MENU ----------------");
-        System.out.println("1. Product Management");
+        System.out.println("1. Product Management (Consoles and Video Games)");
         System.out.println("2. Person Management");
         System.out.println("3. Sales Management");
+        System.out.println("4. Accessory Management");
+        System.out.println("5. Promotion Management");
+        System.out.println("6.Return Mangement");
+        System.out.println("7.Consult Monthly Balance");
         System.out.println("0. Exit");
         System.out.print("Select an option: ");
     }
-    
+
     // Reads and parses numeric user input securely
     private int readOption() {
         try {
@@ -84,30 +103,34 @@ public class GameZoneUI {
             return -1;
         }
     }
-    
+
     // Routes input to the appropriate submenu handler
     private void processMainMenuOption(int option) {
         switch (option) {
             case 1 -> handleProductMenu();
             case 2 -> handlePersonMenu();
             case 3 -> handleSalesMenu();
+            case 4 -> handleAccessoryMenu();
+            case 5 -> handlePromotionMenu();
+            case 6 -> handleReturnMenu();
+            case 7 -> generateMonthlyBalance();
             case 0, -1 -> { }
             default -> System.out.println("Invalid option. Please try again.");
         }
     }
-    
+
     // ================= PRODUCT SUBMENU =================
 
     private void handleProductMenu() {
         int option = -1;
         do {
             System.out.println("\n============= PRODUCT MANAGEMENT ==============");
-            System.out.println("1. Register a new videogame");
+            System.out.println("1. Register a new video game");
             System.out.println("2. Register a new console");
             System.out.println("3. List all available products in inventory");
             System.out.println("0. Return to Main Menu");
             System.out.print("Select an option: ");
-            
+
             option = readOption();
             switch (option) {
                 case 1 -> registerVideoGame();
@@ -119,7 +142,6 @@ public class GameZoneUI {
         } while (option != 0);
     }
 
-    // Collects data and registers a new video game
     private void registerVideoGame() {
         try {
             System.out.println("\n--- REGISTER VIDEO GAME ---");
@@ -142,7 +164,6 @@ public class GameZoneUI {
         }
     }
 
-    // Collects data and registers a new console
     private void registerConsole() {
         try {
             System.out.println("\n--- REGISTER CONSOLE ---");
@@ -165,9 +186,8 @@ public class GameZoneUI {
         }
     }
 
-    // Prints the full inventory list
     private void listProducts() {
-        System.out.println("\n--- INVENTORY ---");
+        System.out.println("\n--- PRODUCT INVENTORY ---");
         List<Product> products = productService.getAllProducts();
         if (products == null || products.isEmpty()) {
             System.out.println("Inventory is empty.");
@@ -190,7 +210,7 @@ public class GameZoneUI {
             System.out.println("4. List all registered sellers");
             System.out.println("0. Return to Main Menu");
             System.out.print("Select an option: ");
-            
+
             option = readOption();
             switch (option) {
                 case 1 -> registerClient();
@@ -203,7 +223,6 @@ public class GameZoneUI {
         } while (option != 0);
     }
 
-    // Registers a new client entity
     private void registerClient() {
         try {
             System.out.println("\n--- REGISTER CLIENT ---");
@@ -219,25 +238,22 @@ public class GameZoneUI {
         }
     }
 
-    // Registers a new seller entity
-   // Registers a new seller entity
-private void registerSeller() {
-    try {
-        System.out.println("\n--- REGISTER SELLER ---");
-        System.out.print("Name: "); String name = reader.readLine();
-        System.out.print("Identification: "); String identification = reader.readLine();
-        System.out.print("Phone: "); String phone = reader.readLine();
-        System.out.print("Employee Code: "); String employeeCode = reader.readLine();
-        System.out.print("Work Shift: "); String workShift = reader.readLine();
+    private void registerSeller() {
+        try {
+            System.out.println("\n--- REGISTER SELLER ---");
+            System.out.print("Name: "); String name = reader.readLine();
+            System.out.print("Identification: "); String identification = reader.readLine();
+            System.out.print("Phone: "); String phone = reader.readLine();
+            System.out.print("Employee Code: "); String employeeCode = reader.readLine();
+            System.out.print("Work Shift: "); String workShift = reader.readLine();
 
-        personService.registerSeller(name, identification, phone, employeeCode, workShift);
-        System.out.println("Seller registered successfully!");
-    } catch (Exception e) {
-        System.out.println("Error registering seller: " + e.getMessage());
+            personService.registerSeller(name, identification, phone, employeeCode, workShift);
+            System.out.println("Seller registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error registering seller: " + e.getMessage());
+        }
     }
-}
 
-    // Prints all registered clients
     private void listClients() {
         System.out.println("\n--- CLIENT LIST ---");
         List<Client> clients = personService.getAllClients();
@@ -250,7 +266,6 @@ private void registerSeller() {
         }
     }
 
-    // Prints all registered sellers
     private void listSellers() {
         System.out.println("\n--- SELLER LIST ---");
         List<Seller> sellers = personService.getAllSellers();
@@ -262,8 +277,8 @@ private void registerSeller() {
             }
         }
     }
-
-    // ================= SALES SUBMENU =================
+    
+      // ================= SALES SUBMENU =================
 
     private void handleSalesMenu() {
         int option = -1;
@@ -275,7 +290,7 @@ private void registerSeller() {
             System.out.println("4. Consult sales attended by a specific seller");
             System.out.println("0. Return to Main Menu");
             System.out.print("Select an option: ");
-            
+
             option = readOption();
             switch (option) {
                 case 1 -> registerSale();
@@ -288,13 +303,10 @@ private void registerSeller() {
         } while (option != 0);
     }
 
-    // Handles the complete workflow of registering a new sale
     private void registerSale() {
         try {
             System.out.println("\n--- REGISTER NEW SALE ---");
-            System.out.print("Enter Sale ID (integer): ");
-            int saleId = Integer.parseInt(reader.readLine());
-            
+
             // Validate client existence
             System.out.print("Enter Client ID: ");
             String clientId = reader.readLine();
@@ -303,7 +315,7 @@ private void registerSeller() {
                 System.out.println("Error: Client not found.");
                 return;
             }
-            
+
             // Validate seller existence
             System.out.print("Enter Seller Employee Code: ");
             String sellerCode = reader.readLine();
@@ -312,55 +324,61 @@ private void registerSeller() {
                 System.out.println("Error: Seller not found.");
                 return;
             }
-            
-            // Add products to cart loop
+
+            // Add products and accessories to cart loop
             List<Product> products = new ArrayList<>();
             String addMore;
             do {
-                System.out.print("Enter Product ID to add: ");
-                String prodId = reader.readLine();
-                Product p = productService.findProductById(prodId);
-                
-                if (p != null) {
-                    products.add(p);
-                    System.out.println("Product added to cart.");
-                } else {
-                    System.out.println("Error: Product not found.");
+                System.out.print("Enter Product or Accessory ID to add: ");
+                String itemId = reader.readLine();
+
+                // Buscar primero en productos regulares
+                Product item = productService.findProductById(itemId);
+
+                // Si no se encuentra, buscar en accesorios
+                if (item == null) {
+                    item = accessoryService.findById(itemId);
                 }
-                
-                System.out.print("Add another product? (y/n): ");
+
+                if (item != null) {
+                    products.add(item);
+                    System.out.println("Item added to cart.");
+                } else {
+                    System.out.println("Error: Product or Accessory not found.");
+                }
+
+                System.out.print("Add another item? (y/n): ");
                 addMore = reader.readLine();
             } while (addMore.equalsIgnoreCase("y"));
-            
+
             // Ensure cart is not empty
             if (products.isEmpty()) {
-                System.out.println("Error: Sale aborted. At least one product is required.");
+                System.out.println("Error: Sale aborted. At least one item is required.");
                 return;
             }
-            
-            String date = LocalDate.now().toString();
-            Sale newSale = new Sale(saleId, date, client, seller, products);
-            
-            saleService.registerSale(newSale);
-            System.out.println("Sale registered successfully!");
 
-        } catch (NumberFormatException e) {
-            System.out.println("Error: Invalid numeric input.");
+            // Delegate creation to service
+            Sale registeredSale = saleService.registerSale(client, seller, products);
+            System.out.println("Sale registered successfully with ID: " + registeredSale.getId());
+            if (registeredSale.getAppliedPromotionName() != null) {
+                System.out.println("Applied Promotion: " + registeredSale.getAppliedPromotionName() + 
+                                   " | Discount: $" + registeredSale.getDiscountAmount());
+            }
+            System.out.println("Final Total: $" + registeredSale.getTotal());
+
         } catch (IllegalArgumentException e) {
-            System.out.println(e.getMessage());
+            System.out.println("Validation Error: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("Error registering sale: " + e.getMessage());
         }
     }
 
-    // Lists all recorded sales in the system
     private void listAllSales() {
         System.out.println("\n--- COMPLETE SALES HISTORY ---");
         List<Sale> allSales = saleService.getAllSales();
         printSalesList(allSales);
     }
 
-    // Lists sales associated with a specific client ID
     private void listSalesByClient() {
         try {
             System.out.print("Enter Client Identification: ");
@@ -369,20 +387,19 @@ private void registerSeller() {
             System.out.println("\n--- CLIENT PURCHASE HISTORY ---");
             printSalesList(clientSales);
         } catch (IOException e) {
-             System.out.println("Error reading input: " + e.getMessage());
+            System.out.println("Error reading input: " + e.getMessage());
         }
     }
 
-    // Lists sales attended by a specific seller code
     private void listSalesBySeller() {
-         try {
+        try {
             System.out.print("Enter Seller Employee Code: ");
             String searchSellerId = reader.readLine();
             List<Sale> sellerSales = saleService.getSalesBySeller(searchSellerId);
             System.out.println("\n--- SELLER SALES HISTORY ---");
             printSalesList(sellerSales);
         } catch (IOException e) {
-             System.out.println("Error reading input: " + e.getMessage());
+            System.out.println("Error reading input: " + e.getMessage());
         }
     }
 
@@ -392,12 +409,403 @@ private void registerSeller() {
             System.out.println("No sales records found.");
         } else {
             for (Sale s : sales) {
+                String promoInfo = (s.getAppliedPromotionName() != null) 
+                        ? " | Promo: " + s.getAppliedPromotionName() + " (-$" + s.getDiscountAmount() + ")"
+                        : "";
+                
+                System.out.println("------------------------------------------------------------------");
                 System.out.println("Sale ID: " + s.getId() + 
                                    " | Date: " + s.getDate() + 
                                    " | Client: " + s.getClient().getName() + 
                                    " | Seller: " + s.getSeller().getName() + 
+                                   promoInfo +
                                    " | Total: $" + s.getTotal());
+                
+                System.out.println("  Items Sold:");
+                if (s.getProducts() != null && !s.getProducts().isEmpty()) {
+                    for (Product item : s.getProducts()) {
+                        System.out.println("    - [ID: " + item.getId() + "] " + item.getTitle() + " ($" + item.getPrice() + ")");
+                    }
+                } else {
+                    System.out.println("    (No items listed)");
+                }
+            }
+            System.out.println("------------------------------------------------------------------");
+        }
+    }
+
+    // ================= ACCESSORY SUBMENU =================
+
+    private void handleAccessoryMenu() {
+        int option = -1;
+        do {
+            System.out.println("\n============= ACCESSORY MANAGEMENT ==============");
+            System.out.println("1. Register a new controller");
+            System.out.println("2. Register a new cable");
+            System.out.println("3. Register a new memory");
+            System.out.println("4. List all accessories");
+            System.out.println("5. List accessories by type");
+            System.out.println("6. Consult compatible accessories for a console");
+            System.out.println("0. Return to Main Menu");
+            System.out.print("Select an option: ");
+
+            option = readOption();
+            switch (option) {
+                case 1 -> registerController();
+                case 2 -> registerCable();
+                case 3 -> registerMemory();
+                case 4 -> listAllAccessories();
+                case 5 -> listAccessoriesByType();
+                case 6 -> consultCompatibleAccessories();
+                case 0 -> { }
+                default -> System.out.println("Invalid option.");
+            }
+        } while (option != 0);
+    }
+
+    private void registerController() {
+        try {
+            System.out.println("\n--- REGISTER CONTROLLER ---");
+            System.out.print("ID: "); String id = reader.readLine();
+            System.out.print("Title: "); String title = reader.readLine();
+            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Connection Type (wireless/wired): "); String connection = reader.readLine();
+
+            System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
+            String consolesInput = reader.readLine();
+            List<String> compatibleConsoles = new ArrayList<>();
+            if (!consolesInput.isBlank()) {
+                compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
+            }
+
+            accessoryService.registerController(id, title, price, stock, connection, compatibleConsoles);
+            System.out.println("Controller registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void registerCable() {
+        try {
+            System.out.println("\n--- REGISTER CABLE ---");
+            System.out.print("ID: "); String id = reader.readLine();
+            System.out.print("Title: "); String title = reader.readLine();
+            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Length (meters): "); double length = Double.parseDouble(reader.readLine());
+            System.out.print("Connector Type (e.g., HDMI, USB): "); String type = reader.readLine();
+
+            System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
+            String consolesInput = reader.readLine();
+            List<String> compatibleConsoles = new ArrayList<>();
+            if (!consolesInput.isBlank()) {
+                compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
+            }
+
+            accessoryService.registerCable(id, title, price, stock, length, type, compatibleConsoles);
+            System.out.println("Cable registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void registerMemory() {
+        try {
+            System.out.println("\n--- REGISTER MEMORY ---");
+            System.out.print("ID: "); String id = reader.readLine();
+            System.out.print("Title: "); String title = reader.readLine();
+            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Capacity (GB): "); int capacity = Integer.parseInt(reader.readLine());
+            System.out.print("Memory Type (e.g., SD, microSD): "); String type = reader.readLine();
+            System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
+            String consolesInput = reader.readLine();
+            List<String> compatibleConsoles = new ArrayList<>();
+            if (!consolesInput.isBlank()) {
+                compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
+            }
+
+            accessoryService.registerMemory(id, title, price, stock, capacity, type, compatibleConsoles);
+            System.out.println("Memory registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void listAllAccessories() {
+        System.out.println("\n--- ALL ACCESSORIES ---");
+        List<Accessory> accessories = accessoryService.listAllAccessories();
+        if (accessories == null || accessories.isEmpty()) {
+            System.out.println("No accessories registered.");
+        } else {
+            accessories.forEach(a -> System.out.println(a.getFullDescription()));
+        }
+    }
+
+    private void listAccessoriesByType() {
+        try {
+            System.out.print("Enter accessory type (Controller/Cable/Memory): ");
+            String type = reader.readLine();
+            List<Accessory> accessories = accessoryService.listAccessoriesByType(type);
+            if (accessories == null || accessories.isEmpty()) {
+                System.out.println("No accessories of that type found.");
+            } else {
+                accessories.forEach(a -> System.out.println(a.getFullDescription()));
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void consultCompatibleAccessories() {
+        try {
+            System.out.print("Enter Console ID to check compatibility: ");
+            String consoleId = reader.readLine();
+            List<Accessory> accessories = accessoryService.findAccessoriesCompatibleWith(consoleId);
+            if (accessories == null || accessories.isEmpty()) {
+                System.out.println("No compatible accessories found.");
+            } else {
+                accessories.forEach(a -> System.out.println(a.getFullDescription()));
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    // ================= PROMOTION SUBMENU =================
+
+    private void handlePromotionMenu() {
+        int option = -1;
+        do {
+            System.out.println("\n============= PROMOTION MANAGEMENT ==============");
+            System.out.println("1. Register a percentage discount promotion");
+            System.out.println("2. Register a category discount promotion");
+            System.out.println("3. Register a bulk purchase discount promotion");
+            System.out.println("4. List all active promotions");
+            System.out.println("5. List all promotions (active & inactive)");
+            System.out.println("0. Return to Main Menu");
+            System.out.print("Select an option: ");
+
+            option = readOption();
+            switch (option) {
+                case 1 -> registerPercentageDiscount();
+                case 2 -> registerCategoryDiscount();
+                case 3 -> registerBulkPurchaseDiscount();
+                case 4 -> listActivePromotions();
+                case 5 -> listAllPromotions();
+                case 0 -> { }
+                default -> System.out.println("Invalid option.");
+            }
+        } while (option != 0);
+    }
+
+    private void registerPercentageDiscount() {
+        try {
+            System.out.println("\n--- REGISTER PERCENTAGE DISCOUNT ---");
+            System.out.print("ID: "); String id = reader.readLine();
+            System.out.print("Name: "); String name = reader.readLine();
+            System.out.print("Start Date (YYYY-MM-DD): "); LocalDate startDate = LocalDate.parse(reader.readLine());
+            System.out.print("End Date (YYYY-MM-DD): "); LocalDate endDate = LocalDate.parse(reader.readLine());
+            System.out.print("Discount Percentage (e.g., 10 or 15.5): "); double percentage = Double.parseDouble(reader.readLine());
+
+            promotionService.registerPercentageDiscount(id, name, startDate, endDate, percentage);
+            System.out.println("Percentage discount registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error registering percentage discount: " + e.getMessage());
+        }
+    }
+
+   private void registerCategoryDiscount() {
+    try {
+        System.out.println("\n--- REGISTER CATEGORY DISCOUNT ---");
+        System.out.print("ID: "); String id = reader.readLine();
+        System.out.print("Name: "); String name = reader.readLine();
+        System.out.print("Start Date (YYYY-MM-DD): "); LocalDate startDate = LocalDate.parse(reader.readLine());
+        System.out.print("End Date (YYYY-MM-DD): "); LocalDate endDate = LocalDate.parse(reader.readLine());
+        System.out.print("Discount Percentage (e.g., 10 or 15.5): "); double percentage = Double.parseDouble(reader.readLine());
+
+        // Recopilar categorías únicas disponibles usando un bucle tradicional
+        List<String> availableCategories = new ArrayList<>();
+        List<Product> products = productService.getAllProducts();
+
+        if (products != null) {
+            for (Product p : products) {
+                // Si Product tiene getCategory() se usa directamente, o se evalúa por tipo de clase
+                String category = (p.getCategory() != null) ? p.getCategory() : p.getClass().getSimpleName();
+                if (!availableCategories.contains(category)) {
+                    availableCategories.add(category);
+                }
+            }
+        }
+
+        System.out.println("\nAvailable categories in inventory: " + availableCategories);
+        System.out.print("Enter Target Category from the list above: ");
+        String category = reader.readLine();
+
+        promotionService.registerCategoryDiscount(id, name, startDate, endDate, percentage, category);
+        System.out.println("Category discount registered successfully!");
+    } catch (Exception e) {
+        System.out.println("Error registering category discount: " + e.getMessage());
+    }
+}
+
+    private void registerBulkPurchaseDiscount() {
+        try {
+            System.out.println("\n--- REGISTER BULK PURCHASE DISCOUNT ---");
+            System.out.print("ID: "); String id = reader.readLine();
+            System.out.print("Name: "); String name = reader.readLine();
+            System.out.print("Start Date (YYYY-MM-DD): "); LocalDate startDate = LocalDate.parse(reader.readLine());
+            System.out.print("End Date (YYYY-MM-DD): "); LocalDate endDate = LocalDate.parse(reader.readLine());
+            System.out.print("Minimum Quantity: "); int minQuantity = Integer.parseInt(reader.readLine());
+            System.out.print("Discount Percentage (e.g., 10 or 15.5): "); double percentage = Double.parseDouble(reader.readLine());
+
+            promotionService.registerBulkPurchaseDiscount(id, name, startDate, endDate, minQuantity, percentage);
+            System.out.println("Bulk purchase discount registered successfully!");
+        } catch (Exception e) {
+            System.out.println("Error registering bulk purchase discount: " + e.getMessage());
+        }
+    }
+
+    private void listActivePromotions() {
+    System.out.println("\n--- ACTIVE PROMOTIONS ---");
+    List<Promotion> activePromos = promotionService.listActivePromotions();
+
+    if (activePromos.isEmpty()) {
+        System.out.println("No active promotions available at the moment.");
+        return;
+    }
+
+    for (Promotion promo : activePromos) {
+        System.out.printf("ID: %s | Name: %s | Active: %s to %s | %s%n",
+                promo.getId(),
+                promo.getName(),
+                promo.getStartDate(),
+                promo.getEndDate(),
+                promo.getDetails());
+    }
+}
+
+    private void listAllPromotions() {
+        System.out.println("\n--- ALL PROMOTIONS ---");
+        List<Promotion> promotions = promotionService.listAllPromotions();
+        if (promotions == null || promotions.isEmpty()) {
+            System.out.println("No promotions recorded.");
+        } else {
+            for (Promotion p : promotions) {
+                System.out.println("ID: " + p.getId() + " | Name: " + p.getName() + 
+                                   " | Active: " + p.getStartDate() + " to " + p.getEndDate());
             }
         }
     }
+  
+    private void handleReturnMenu(){
+        int option = -1;
+         do{
+            System.out.println("\n============= RETURN MANAGEMENT ==============");
+            System.out.println("1. Register a new return");
+            System.out.println("2. Consult all returns");
+            System.out.println("3. Consult returns by client");
+            System.out.println("4. Consult returns by sale");
+            System.out.println("0. Return to Main Menu");
+            System.out.print("Select an option: ");
+            
+            option = readOption();
+            switch (option) {
+                case 1 -> registerReturn();
+                case 2 -> listAllReturns();
+                case 3 -> listReturnsByClient();
+                case 4 -> listReturnsBySale();
+                case 0 -> { }
+                default -> System.out.println("Invalid option.");
+            }
+             
+         }while(option != 0);
+    }
+    
+    private void registerReturn() {
+        try {
+            System.out.println("\n--- REGISTER NEW RETURN ---");
+            System.out.print("Enter Sale ID: ");
+            String saleId = reader.readLine();
+
+            System.out.print("Enter Product IDs to return (comma-separated, e.g., P01,P02): ");
+            String inputProducts = reader.readLine();
+            List<String> productIds = Arrays.asList(inputProducts.split("\\s*,\\s*"));
+
+            System.out.print("Enter Return Reason: ");
+            String reason = reader.readLine();
+
+            Return processedReturn = returnService.registerReturn(saleId, productIds, reason);
+            System.out.println("\nReturn processed successfully!");
+            System.out.println(processedReturn.generateReturnReceipt());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Validation Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error processing return: " + e.getMessage());
+        }
+    }
+    
+    // Helper method to print formatted lists of returns
+    private void printReturnList(List<Return> returns) {
+        if (returns == null || returns.isEmpty()) {
+            System.out.println("No return records found.");
+        } else {
+            for (Return r : returns) {
+                System.out.println(r.generateReturnReceipt());
+                System.out.println("----------------------------------------");
+            }
+        }
+    }
+    
+    private void listAllReturns() {
+        System.out.println("\n--- ALL RETURNS ---");
+        List<Return> returns = returnService.viewAllReturns();
+        printReturnList(returns);
+    }
+    
+    private void listReturnsByClient() {
+        try {
+            System.out.print("Enter Client ID: ");
+            String customerId = reader.readLine();
+            List<Return> returns = returnService.viewReturnsByCustomer(customerId);
+            System.out.println("\n--- RETURNS BY CLIENT ---");
+            printReturnList(returns);
+        } catch (IOException e) {
+            System.out.println("Error reading input: " + e.getMessage());
+        }
+    }
+    
+    private void listReturnsBySale() {
+        try {
+            System.out.print("Enter Sale ID: ");
+            String saleId = reader.readLine();
+            List<Return> returns = returnService.viewReturnsBySale(saleId);
+            System.out.println("\n--- RETURNS BY SALE ---");
+            printReturnList(returns);
+        } catch (IOException e) {
+            System.out.println("Error reading input: " + e.getMessage());
+        }
+    }
+    
+    
+    private void generateMonthlyBalance() {
+        try {
+            System.out.println("\n--- MONTHLY BALANCE REPORT ---");
+            System.out.print("Enter Month (1-12): ");
+            int month = Integer.parseInt(reader.readLine());
+            System.out.print("Enter Year (e.g., 2026): ");
+            int year = Integer.parseInt(reader.readLine());
+
+            double netBalance = returnService.generateMonthlyBalance(month, year);
+            System.out.println(String.format("\n=== MONTHLY BALANCE (%02d/%d) ===", month, year));
+            System.out.println(String.format("Net Balance (Sales - Returns): $%.2f", netBalance));
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Please enter valid numeric values for month and year.");
+        } catch (Exception e) {
+            System.out.println("Error generating balance: " + e.getMessage());
+        }
+    }
+    
+    
 }
