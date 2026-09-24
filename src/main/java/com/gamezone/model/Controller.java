@@ -15,7 +15,7 @@ public class Controller extends Accessory {
      */
     public Controller(List<String> compatibleConsoleIds, String id, String title, double price, int stock, String connectionType) {
         // Llama al constructor de Accessory respetando su orden de parámetros
-        super(compatibleConsoleIds, id, title, price, stock);
+        super(id, title, price, stock,compatibleConsoleIds);
         this.connectionType = connectionType;
     }
 
@@ -40,8 +40,15 @@ public class Controller extends Accessory {
      *
      * @return The formatted description string incorporating the connection type.
      */
+    
+    @Override
+    public String getCategory(){
+        return "controller";
+    }
+    
     @Override
     public String getFullDescription() {
-        return "Controller (ID: " + getId() + ") - Title: " + getTitle() + " - Connection Type: " + connectionType;
+        return String.format("Controller: [ID: %s, Title: %s, Price: $%.2f, Stock: %d, Connection: %s, Compatible Consoles: %s]",
+                getId(), getTitle(), getPrice(), getStock(), connectionType, getCompatibleConsoleIds());
     }
 }

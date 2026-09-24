@@ -3,8 +3,8 @@ package com.gamezone.model;
 import java.util.List;
 
 /**
- * Concrete class representing a cable accessory.
- * Extends Accessory to include cable-specific attributes like length and connector type.
+ * Concrete class representing a cable accessory. Extends Accessory to include
+ * cable-specific attributes like length and connector type.
  */
 public class Cable extends Accessory {
 
@@ -15,7 +15,7 @@ public class Cable extends Accessory {
      * Constructs a new Cable.
      */
     public Cable(List<String> compatibleConsoleIds, String id, String title, double price, int stock, double length, String connectorType) {
-        super(compatibleConsoleIds, id, title, price, stock);
+        super(id, title, price, stock, compatibleConsoleIds);
         this.length = length;
         this.connectorType = connectorType;
     }
@@ -53,6 +53,11 @@ public class Cable extends Accessory {
      */
     @Override
     public String getFullDescription() {
-        return "Cable (ID: " + getId() + ") - Title: " + getTitle() + " - Length: " + length + "m - Connector: " + connectorType;
+        return String.format("Cable: [ID: %s, Title: %s, Price: $%.2f, Stock: %d, Length: %.2fm, Compatible Consoles: %s]",
+                getId(), getTitle(), getPrice(), getStock(), length, getCompatibleConsoleIds());
+    }
+
+    public String getCategory() {
+        return "Cable";
     }
 }

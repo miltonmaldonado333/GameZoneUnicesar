@@ -89,7 +89,7 @@ public class AccessoryService {
      */
     public void registerMemory(String id, String title, double price, int stock,
             int capacity, String storageType, List<String> compatibleConsoleIds) {
-        Memory memory = new Memory(compatibleConsoleIds, id, title, price, stock, capacity, storageType);
+        Memory memory = new Memory(capacity, storageType, id, title, price, stock, compatibleConsoleIds);
         accessories.add(memory);
         accessoryRepository.saveAll(accessories);
     }

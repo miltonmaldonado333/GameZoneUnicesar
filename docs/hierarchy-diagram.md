@@ -1,7 +1,7 @@
 ```mermaid
-
 classDiagram
     direction TB
+direction TB
 
     %% ==========================================
     %% 1. PERSON HIERARCHY
@@ -18,6 +18,7 @@ classDiagram
 
     %% ==========================================
     %% 2. PRODUCT & ACCESSORY HIERARCHY (Req 1)
+    %% 2. PRODUCT & ACCESSORY HIERARCHY
     %% ==========================================
     class Product {
         <<abstract>>
@@ -44,6 +45,7 @@ classDiagram
 
     %% ==========================================
     %% 3. PROMOTION HIERARCHY (Req 2)
+    %% 3. PROMOTION HIERARCHY (Requirement 2)
     %% ==========================================
     class Promotion {
         <<abstract>>

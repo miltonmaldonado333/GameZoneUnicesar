@@ -3,56 +3,47 @@ package com.gamezone.model;
 import java.util.List;
 
 /**
- * Concrete class representing a memory accessory.
- * Extends Accessory to include memory-specific attributes like capacity and storage type.
+ * Model class representing a memory card accessory for gaming consoles.
+ * Extends {@link Accessory} with capacity and storage type specifications.
  */
 public class Memory extends Accessory {
 
-    private int capacity;
+    private int capacityGB;
     private String storageType;
 
-    /**
-     * Constructs a new Memory accessory..
-     */
-    public Memory(List<String> compatibleConsoleIds, String id, String title, double price, int stock, int capacity, String storageType) {
-        super(compatibleConsoleIds, id, title, price, stock);
-        this.capacity = capacity;
+    public Memory() {
+    }
+
+    public Memory(int capacityGB, String storageType, String id, String title, double price, int stock, List<String> compatibleConsoleIds) {
+        super(id, title, price, stock, compatibleConsoleIds);
+        this.capacityGB = capacityGB;
         this.storageType = storageType;
     }
 
-    /**
-     * Gets the capacity of the memory.
-     */
-    public int getCapacity() {
-        return capacity;
+    public int getCapacityGB() {
+        return capacityGB;
     }
 
-    /**
-     * Sets the capacity of the memory.
-     */
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
+    public void setCapacityGB(int capacityGB) {
+        this.capacityGB = capacityGB;
     }
 
-    /**
-     * Gets the storage type of the memory.
-     */
     public String getStorageType() {
         return storageType;
     }
 
-    /**
-     * Sets the storage type of the memory.
-     */
     public void setStorageType(String storageType) {
         this.storageType = storageType;
     }
 
-    /**
-     * Returns a detailed description of the memory accessory.
-     */
+    @Override
+    public String getCategory() {
+        return "Memory";
+    }
+
     @Override
     public String getFullDescription() {
-        return "Memory (ID: " + getId() + ") - Title: " + getTitle() + " - Capacity: " + capacity + "GB - Type: " + storageType;
+        return String.format("Memory: [ID: %s, Title: %s, Price: $%.2f, Stock: %d, Capacity: %d GB, Type: %s, Compatible Consoles: %s]",
+                getId(), getTitle(), getPrice(), getStock(), capacityGB, storageType, getCompatibleConsoleIds());
     }
 }

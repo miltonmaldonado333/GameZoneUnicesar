@@ -14,6 +14,10 @@ public class Sale {
     private List<Product> products; 
     private double total;
 
+    // Promotion / Discount attributes (Requirement 2)
+    private String appliedPromotionName;
+    private double discountAmount;
+
     // Default constructor
     public Sale() {
     }
@@ -28,7 +32,7 @@ public class Sale {
         this.total = calculateTotal();
     }
 
-    // Calculates the total price by summing up all products in the sale
+    // Calculates the total price by summing up all products in the sale (Subtotal)
     public double calculateTotal() {
         double sum = 0.0;
         if (products != null) {
@@ -36,10 +40,25 @@ public class Sale {
                 sum += product.getPrice();
             }
         }
-        this.total = sum;
+        this.total = sum - this.discountAmount;
         return this.total;
     }
 
+    // Alias for calculateTotal / Subtotal
+    public double getSubtotal() {
+        double sum = 0.0;
+        if (products != null) {
+            for (Product product : products) {
+                sum += product.getPrice();
+            }
+        }
+        return sum;
+    }
+
+    // Alias to match service calls expecting getItems()
+    public List<Product> getItems() {
+        return products;
+    }
 
     // Getters and setters
     public int getId() { return id; }
@@ -61,5 +80,16 @@ public class Sale {
     }
 
     public double getTotal() { return total; }
-    
+    public void setTotal(double total) { this.total = total; }
+
+    // Getters and Setters for Promotions
+    public String getAppliedPromotionName() { return appliedPromotionName; }
+    public void setAppliedPromotionName(String appliedPromotionName) { 
+        this.appliedPromotionName = appliedPromotionName; 
+    }
+
+    public double getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(double discountAmount) { 
+        this.discountAmount = discountAmount; 
+    }
 }
