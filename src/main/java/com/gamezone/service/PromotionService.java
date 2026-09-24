@@ -1,6 +1,7 @@
 ﻿package com.gamezone.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.gamezone.model.BulkPurchaseDiscount;
@@ -40,4 +41,20 @@ public class PromotionService {
         promotions.add(new BulkPurchaseDiscount(minQuantity, percentage, id, name, startDate, endDate));
         promotionRepository.saveAll(promotions);
     }
+
+    public List<Promotion> listAllPromotions() {
+        return promotionRepository.loadAll();
+    }
+
+    public List<Promotion> listActivePromotions() {
+        List<Promotion> active = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (Promotion promotion : promotionRepository.loadAll()) {
+            if (promotion.isActive(today)) {
+                active.add(promotion);
+            }
+        }
+        return active;
+    }
 }
+
