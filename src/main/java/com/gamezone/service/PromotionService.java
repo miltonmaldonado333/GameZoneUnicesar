@@ -72,6 +72,16 @@ public class PromotionService {
 
         return bestPromotion;
     }
+
+    public Promotion findById(String id) {
+        for (Promotion promotion : promotionRepository.loadAll()) {
+            if (promotion.getId().equals(id)) {
+                return promotion;
+            }
+        }
+        return null;
+    }
 }
+
 
 
