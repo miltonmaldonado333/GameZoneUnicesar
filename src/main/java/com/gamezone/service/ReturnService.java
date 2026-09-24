@@ -79,6 +79,47 @@ public class ReturnService {
         return null;
     }
 
+    /**
+     * Returns every return recorded in the system.
+     *
+     * @return the full list of registered returns
+     */
+    public List<Return> viewAllReturns() {
+        return returnRepository.loadAll();
+    }
+
+    /**
+     * Returns the returns whose original sale belongs to the given customer.
+     *
+     * @param customerId the customer identification number
+     * @return the list of matching returns
+     */
+    public List<Return> viewReturnsByCustomer(String customerId) {
+        List<Return> matching = new ArrayList<>();
+        for (Return returnRecord : returnRepository.loadAll()) {
+            if (returnRecord.getOriginalSale().getClient().getIdentification().equalsIgnoreCase(customerId)) {
+                matching.add(returnRecord);
+            }
+        }
+        return matching;
+    }
+
+    /**
+     * Returns the returns associated with a specific sale.
+     *
+     * @param saleId the sale identifier
+     * @return the list of matching returns
+     */
+    public List<Return> viewReturnsBySale(String saleId) {
+        List<Return> matching = new ArrayList<>();
+        for (Return returnRecord : returnRepository.loadAll()) {
+            if (String.valueOf(returnRecord.getOriginalSale().getId()).equals(saleId)) {
+                matching.add(returnRecord);
+            }
+        }
+        return matching;
+    }
+
     private Product findProductInSale(Sale sale, String productId) {
         for (Product product : sale.getProducts()) {
             if (product.getId().equalsIgnoreCase(productId)) {
@@ -88,3 +129,4 @@ public class ReturnService {
         return null;
     }
 }
+
