@@ -504,17 +504,23 @@ public class GameZoneUI {
     }
 
     private void listActivePromotions() {
-        System.out.println("\n--- ACTIVE PROMOTIONS ---");
-        List<Promotion> promotions = promotionService.listActivePromotions();
-        if (promotions == null || promotions.isEmpty()) {
-            System.out.println("No active promotions available.");
-        } else {
-            for (Promotion p : promotions) {
-                System.out.println("ID: " + p.getId() + " | Name: " + p.getName() + 
-                                   " | Active: " + p.getStartDate() + " to " + p.getEndDate());
-            }
-        }
+    System.out.println("\n--- ACTIVE PROMOTIONS ---");
+    List<Promotion> activePromos = promotionService.listActivePromotions();
+
+    if (activePromos.isEmpty()) {
+        System.out.println("No active promotions available at the moment.");
+        return;
     }
+
+    for (Promotion promo : activePromos) {
+        System.out.printf("ID: %s | Name: %s | Active: %s to %s | %s%n",
+                promo.getId(),
+                promo.getName(),
+                promo.getStartDate(),
+                promo.getEndDate(),
+                promo.getDetails());
+    }
+}
 
     private void listAllPromotions() {
         System.out.println("\n--- ALL PROMOTIONS ---");

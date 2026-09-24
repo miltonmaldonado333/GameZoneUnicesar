@@ -29,6 +29,7 @@ public class main {
     public static void main(String[] args) {
 
         // 1. Inicializar la capa de persistencia (Repositorios)
+        
         ProductRepository productRepo = new FileProductRepository();
         PersonRepository personRepo = new FilePersonRepository("persons.txt"); 
         AccessoryRepository accessoryRepo = new AccessoryRepository();

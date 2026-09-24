@@ -42,4 +42,9 @@ public class CategoryDiscount extends Promotion {
         }
         return applicableSubtotal * (percentage / 100);
     }
+
+    @Override
+    public String getDetails() {
+        return String.format("Type: Category | Target Category: %s | Discount: %.1f%%", targetCategory, percentage);
+    }
 }

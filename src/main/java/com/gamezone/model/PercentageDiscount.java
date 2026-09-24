@@ -27,5 +27,10 @@ public class PercentageDiscount extends Promotion {
     public double calculateDiscount(Sale sale) {
        return sale.calculateTotal()*(percentage / 100);
     }
+    
+    @Override
+public String getDetails() {
+    return String.format("Type: Percentage | Discount: %.1f%%", percentage);
+}
             
 }

@@ -6,6 +6,7 @@ import java.time.LocalDate;
  * Abstract base class representing a generic promotion in the system.
  */
 public abstract class Promotion {
+
     private String id;
     private String name;
     private LocalDate startDate;
@@ -20,16 +21,19 @@ public abstract class Promotion {
 
     /**
      * Checks if the promotion is active on a given date.
+     *
      * @param date the date to check
-     * @return true if the date is within the promotion's start and end dates, false otherwise
+     * @return true if the date is within the promotion's start and end dates,
+     * false otherwise
      */
     public boolean isActive(LocalDate date) {
-        return (date.isEqual(startDate) || date.isAfter(startDate)) && 
-               (date.isEqual(endDate) || date.isBefore(endDate));
+        return (date.isEqual(startDate) || date.isAfter(startDate))
+                && (date.isEqual(endDate) || date.isBefore(endDate));
     }
 
     /**
      * Calculates the monetary discount for a specific sale.
+     *
      * @param sale the sale to evaluate
      * @return the discount amount in local currency
      */
@@ -37,34 +41,42 @@ public abstract class Promotion {
 
     // Genera aquí los Getters y Setters para id, name, startDate y endDate
     public String getId() {
-    return id;
-}
+        return id;
+    }
 
-public void setId(String id) {
-    this.id = id;
-}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-public String getName() {
-    return name;
-}
+    public String getName() {
+        return name;
+    }
 
-public void setName(String name) {
-    this.name = name;
-}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-public LocalDate getStartDate() {
-    return startDate;
-}
+    public LocalDate getStartDate() {
+        return startDate;
+    }
 
-public void setStartDate(LocalDate startDate) {
-    this.startDate = startDate;
-}
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
 
-public LocalDate getEndDate() {
-    return endDate;
-}
+    public LocalDate getEndDate() {
+        return endDate;
+    }
 
-public void setEndDate(LocalDate endDate) {
-    this.endDate = endDate;
-}
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    /**
+     * Abstract method to get specific details about the promotion rules.
+     *
+     * @return a formatted string with promotion details
+     */
+    public abstract String getDetails();
+
 }
