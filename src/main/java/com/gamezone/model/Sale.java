@@ -59,6 +59,21 @@ public class Sale {
     public List<Product> getItems() {
         return products;
     }
+   /**
+     * Checks if the sale is eligible for a return based on the 30-day policy.
+     * 
+     * @return true if the current date is within 30 days of the sale date, false otherwise.
+     */
+    public boolean canBeReturned() {
+        if (this.date == null || this.date.isEmpty()) {
+            return false;
+        }
+        
+        java.time.LocalDate saleDate = java.time.LocalDate.parse(this.date);
+        java.time.LocalDate currentDate = java.time.LocalDate.now();
+        
+        return !currentDate.isAfter(saleDate.plusDays(30));
+    }
 
     // Getters and setters
     public int getId() { return id; }
