@@ -9,6 +9,7 @@ import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.AccessoryService;
+import java.util.Arrays;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -289,7 +290,7 @@ public class GameZoneUI {
         } while (option != 0);
     }
 
-    private void registerController() {
+   private void registerController() {
         try {
             System.out.println("\n--- REGISTER CONTROLLER ---");
             System.out.print("ID: "); String id = reader.readLine();
@@ -298,7 +299,15 @@ public class GameZoneUI {
             System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
             System.out.print("Connection Type (wireless/wired): "); String connection = reader.readLine();
             
-            accessoryService.registerController(id, title, price, stock, connection);
+            // NUEVO: Pedir consolas compatibles
+            System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
+            String consolesInput = reader.readLine();
+            List<String> compatibleConsoles = new ArrayList<>();
+            if (!consolesInput.isBlank()) {
+                compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
+            }
+            
+            accessoryService.registerController(id, title, price, stock, connection, compatibleConsoles);
             System.out.println("Controller registered successfully!");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -315,7 +324,15 @@ public class GameZoneUI {
             System.out.print("Length (meters): "); double length = Double.parseDouble(reader.readLine());
             System.out.print("Connector Type (e.g., HDMI, USB): "); String type = reader.readLine();
             
-            accessoryService.registerCable(id, title, price, stock, length, type);
+            // NUEVO: Pedir consolas compatibles
+            System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
+            String consolesInput = reader.readLine();
+            List<String> compatibleConsoles = new ArrayList<>();
+            if (!consolesInput.isBlank()) {
+                compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
+            }
+            
+            accessoryService.registerCable(id, title, price, stock, length, type, compatibleConsoles);
             System.out.println("Cable registered successfully!");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -331,8 +348,14 @@ public class GameZoneUI {
             System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
             System.out.print("Capacity (GB): "); int capacity = Integer.parseInt(reader.readLine());
             System.out.print("Memory Type (e.g., SD, microSD): "); String type = reader.readLine();
+            System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
+            String consolesInput = reader.readLine();
+            List<String> compatibleConsoles = new ArrayList<>();
+            if (!consolesInput.isBlank()) {
+                compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
+            }
             
-            accessoryService.registerMemory(id, title, price, stock, capacity, type);
+            accessoryService.registerMemory(id, title, price, stock, capacity, type, compatibleConsoles);
             System.out.println("Memory registered successfully!");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
