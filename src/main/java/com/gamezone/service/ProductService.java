@@ -67,4 +67,14 @@ public class ProductService {
             }
         }
     }
+    
+    public void restoreStock(String productId, int quantity){
+        Product product= findProductById(productId);
+        if(product != null){
+            product.setStock(product.getStock() + quantity);
+            productRepository.saveProducts(products);
+        }else{
+            throw new IllegalArgumentException("product not foun with ID: " + productId);
+        }
+    }
 }
