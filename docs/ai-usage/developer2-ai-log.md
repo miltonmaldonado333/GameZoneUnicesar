@@ -1,4 +1,4 @@
-﻿# AI Usage Log — Developer 2 (Person, Accessory & Promotion Modules)
+# AI Usage Log — Developer 2 (Person, Accessory & Promotion Modules)
 
 **Student:** Luis Manuel Corzo Castro — 1066870055
 **Tool used:** Claude (Anthropic)
@@ -225,3 +225,57 @@ Wrote and reviewed each commit message myself.
 What I can explain without notes
 
 The purpose of each class in my modules, why the abstract classes/interfaces are structured this way, and how my layers (model → persistence → service) connect and depend only in the direction allowed by the architecture (service → persistence → model). Also: why the Leader's typo caused a "cannot find symbol" error while the missing-argument errors were a different category of problem (signature mismatch vs. unresolved symbol); why overloading methods with default values is a safer fix than changing a teammate's already-integrated UI code; and why my AccessoryService and AccessoryRepository are structured to accept both full and simplified calls without duplicating logic.
+
+---
+
+## Part 4 - Return Module (feature/return-module)
+
+### Reviewing the requirement and confirming assigned scope
+Date & Time: September 24, 2026, ~3:30 PM COT
+Context / Prompt: I shared the full requirement document for the return/refund system with Claude, confirming my role (Developer 2) covered ReturnRepository, ReturnService (deadline validation, ownership validation, stock restoration) and the monthly balance report.
+AI Response / Advice: Claude summarized the division of labor and asked to see the current Sale.java, SaleService.java, ProductService.java, Return.java (already built by my teammate), and Client.java before writing any code, since several of these classes had changed since the previous module.
+Decision Taken: I pulled the latest changes from the shared feature/return-module branch and shared the requested files so the generated code matched the real project state instead of assumptions.
+
+### Adapting to a Sale class without a findSaleById method
+Date & Time: September 24, 2026, ~4:00 PM COT
+Context / Prompt: After reviewing SaleService.java, Claude noted there was no findSaleById method available - only getAllSales(), getSalesByClient(), and getSalesBySeller().
+AI Response / Advice: Claude proposed resolving the sale lookup inside my own ReturnRepository and ReturnService classes, by iterating over getAllSales() and comparing IDs as strings, rather than asking the Leader to add a method outside of my assigned scope.
+Decision Taken: I agreed to keep the lookup logic inside my own classes to avoid depending on a change to a file I do not own, and confirmed Sale.getId() returns an int while the requirement specifies a String saleId parameter, so the comparison converts with String.valueOf().
+
+### Building ReturnRepository and ReturnService via terminal, in atomic commits
+Date & Time: September 24, 2026, ~4:10-4:40 PM COT
+Context / Prompt: Continuing the same terminal-based workflow as the Promotion module, I asked Claude to build ReturnRepository and ReturnService incrementally, committing and pushing after each logical piece.
+AI Response / Advice: Claude provided PowerShell heredoc commands to create ReturnRepository.java (CSV persistence resolving Sale and Product references through injected SaleService and ProductService) and to progressively extend ReturnService.java with registerReturn (deadline and ownership validation, stock restoration via ProductService.restoreStock), the query methods (viewAllReturns, viewReturnsByCustomer, viewReturnsBySale), and generateMonthlyBalance.
+Decision Taken: I reviewed the full file content after each step before committing, and split the work into six atomic commits as required, pushing immediately after each one.
+
+### Diagnosing a BOM character compilation error
+Date & Time: September 24, 2026, ~4:45 PM COT
+Context / Prompt: After building both classes, mvn clean compile failed with "illegal character: '\ufeff'" errors on both new files.
+AI Response / Advice: Claude identified this as a Byte Order Mark (BOM) added by PowerShell's -Encoding UTF8 flag at the start of the file, which Java's compiler does not accept, and provided a script to rewrite both files using UTF8Encoding(false) to remove the BOM.
+Decision Taken: I ran the fix, verified with mvn clean compile that the entire project (including my teammates' modules) built successfully, and committed the fix as its own atomic commit.
+
+### Fixing a corrupted layers diagram from a bad merge
+Date & Time: September 24, 2026, ~5:00 PM COT
+Context / Prompt: When updating docs/layers-diagram.md to include the Return module, the file already contained duplicated content (repeated headers, mismatched triple/quadruple backtick code fences) from an earlier merge conflict that had not been cleanly resolved.
+AI Response / Advice: Claude pointed out the duplication and rewrote the entire file cleanly in one pass, incorporating both the previously existing Promotion module content and the new Return module classes and relationships, rather than trying to patch the corrupted version.
+Decision Taken: I reviewed the full rewritten file before committing to confirm no content from teammates' prior work was lost, and committed it as my final atomic commit for this module.
+
+### Confirming already-completed documentation before duplicating work
+Date & Time: September 24, 2026, ~5:15 PM COT
+Context / Prompt: Before creating docs/return-analysis.md myself, I asked Claude to check whether it was already done by a teammate.
+AI Response / Advice: Claude had me run git log --oneline -- docs/return-analysis.md and git status to verify, rather than assuming either way.
+Decision Taken: I confirmed the analysis document was already committed by a teammate (three prior commits) and left it untouched, avoiding duplicate or conflicting work.
+
+### Decisions I made myself (Return Module)
+- Kept the sale-lookup logic inside my own classes instead of requesting a change to a teammate's SaleService, since it was outside my assigned scope.
+- Verified the exact type mismatch between Sale.getId() (int) and the required String saleId parameter before writing the comparison logic.
+- Diagnosed the BOM compilation error as an encoding issue from the terminal workflow itself, not a logic error in my code.
+- Chose to fully rewrite a corrupted documentation file rather than attempt a partial patch, after confirming no content would be lost.
+- Verified via git log whether documentation was already completed by a teammate before creating it myself.
+- Split the work into six atomic, immediately-pushed commits as required by the exam's Git Flow rules, and confirmed the full project compiled successfully before considering the module complete.
+
+---
+
+## What I can explain without notes (updated)
+
+All of the above, plus: why Return has an association (not inheritance, aggregation, or composition) with Sale - a return references an existing sale but does not own its lifecycle, and Sale continues to exist independently of any return; why the 30-day deadline check belongs in the model (Sale.canBeReturned(), since it only depends on the sale's own date) while orchestrating that check across a return request belongs in the service layer (ReturnService.registerReturn); why restoreStock is reused from ProductService rather than duplicated in the return module, preserving a single source of truth for stock-adjustment logic; and why generateMonthlyBalance belongs in ReturnService rather than SaleService or ProductService, since it needs to consolidate data from both the sales and returns modules, which is a cross-module business concern appropriate for a service-layer method with the necessary dependencies injected.
