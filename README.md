@@ -1,17 +1,17 @@
 # GameZone Unicesar - Information System
 
-GameZone Unicesar is a layered Java application designed for managing products, sales, customers, and staff for a video game store located in Valledupar, Colombia. The system provides persistent file-based data management, strict domain validation rules, and a interactive console interface[cite: 1, 2].
+GameZone Unicesar is a layered Java application designed for managing products, sales, customers, staff, and commercial promotions for a video game store located in Valledupar, Colombia[cite: 1, 2, 4]. The system provides persistent file-based data management, strict domain validation rules, and an interactive console interface[cite: 1, 2, 4].
 
 ---
 
 ## Architecture & Design Principles
 
-The application is built using a **4-Layer Architecture** to enforce separation of concerns, maintainability, and clean code principles[cite: 1, 2]:
+The application is built using a **4-Layer Architecture** to enforce separation of concerns, maintainability, and clean code principles[cite: 1, 2, 4]:
 
-1. **Model Layer (`com.gamezone.model`):** Core domain entities (`Person`, `Client`, `Seller`, `Product`, `VideoGame`, `Console`, `Accessory`, `Sale`)[cite: 1, 2].
-2. **Persistence Layer (`com.gamezone.persistence`):** Handles file-based data reading and writing (`data/*.csv`)[cite: 1, 2].
-3. **Service Layer (`com.gamezone.service`):** Contains business logic, inventory updates, and transaction rules[cite: 1, 2].
-4. **UI Layer (`com.gamezone.ui`):** Console-based user interface (`GameZoneUI`)[cite: 2, 3].
+1. **Model Layer (`com.gamezone.model`):** Core domain entities (`Person`, `Client`, `Seller`, `Product`, `VideoGame`, `Console`, `Accessory`, `Sale`, `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`)[cite: 1, 2, 4].
+2. **Persistence Layer (`com.gamezone.persistence`):** Handles file-based data reading and writing (`data/*.csv`, `data/*.txt`)[cite: 1, 2, 4].
+3. **Service Layer (`com.gamezone.service`):** Contains business logic, inventory updates, promotion/discount calculations, and transaction rules[cite: 1, 2, 4].
+4. **UI Layer (`com.gamezone.ui`):** Console-based user interface (`GameZoneUI`)[cite: 2, 3, 4].
 
 ---
 
@@ -23,26 +23,38 @@ The application is built using a **4-Layer Architecture** to enforce separation 
 - **People & Roles:** Register and list Customers and Salespeople with their respective roles[cite: 2].
 - **Sales System:** Process sales involving multiple products, automatic stock reduction, total calculations, and sales history queries[cite: 2].
 
-### New Feature: Accessory Module (Requirement 1)
+### Feature 1: Accessory Module (Requirement 1)
 
-The system has been extended to manage video game accessories directly integrated into the existing product hierarchy (`Product`):
+The system manages video game accessories integrated into the existing product hierarchy (`Product`)[cite: 1]:
 
 - **Accessory Types:**
   - **Controllers (`Controller`):** Supports connection type (Wireless or Wired)[cite: 1].
   - **Cables (`Cable`):** Supports length (in meters) and connector type (HDMI, USB, Optical, etc.)[cite: 1].
   - **Memories (`Memory`):** Supports storage capacity (GB) and card type (SD, microSD, internal)[cite: 1].
-- **Console Compatibility:** Accessories track compatible console IDs, allowing users to query which accessories work with specific consoles before completing a transaction[cite: 1].
-- **Unified Sales:** Sales transactions seamlessly combine Video Games, Consoles, and Accessories within a single purchase order while ensuring unified stock updates[cite: 1].
+- **Console Compatibility:** Accessories track compatible console IDs, allowing users to query compatible accessories for specific consoles[cite: 1].
+- **Unified Sales:** Sales transactions seamlessly combine Video Games, Consoles, and Accessories within a single purchase order with unified inventory deduction[cite: 1].
+
+### Feature 2: Promotion & Discount Module (Requirement 2)
+
+The system supports automated marketing campaigns and discount calculations applied during checkout[cite: 4]:
+
+- **Promotion Types:**
+  - **Percentage Discount (`PercentageDiscount`):** Applies a global percentage discount across the entire sale total[cite: 4].
+  - **Category Discount (`CategoryDiscount`):** Applies a percentage discount exclusively to items belonging to a specific product category (e.g., `VIDEOGAME` or `CONSOLE`)[cite: 4].
+  - **Bulk Purchase Discount (`BulkPurchaseDiscount`):** Applies a percentage discount when the total item count in a sale meets or exceeds a minimum threshold[cite: 4].
+- **Validity Check:** Promotions feature start and end dates (`LocalDate`), ensuring discounts are applied only when active on the transaction date[cite: 4].
+- **Automatic Best-Discount Engine:** When processing a sale, the system evaluates all active promotions and automatically applies the single campaign that yields the highest monetary savings for the customer (promotions are non-cumulative)[cite: 4].
+- **Itemized Receipts:** Generated sale receipts display the subtotal, applied promotion name, discount amount saved, and final net total[cite: 4].
 
 ---
 
 ## Technical Specifications & Stack
 
 - **Language:** Java 17+[cite: 2]
-- **Build Tool:** Apache Maven (`pom.xml`)[cite: 2]
-- **Version Control:** Git Flow (`main`, `develop`, `feature/*`)[cite: 1, 2]
-- **Commit Standard:** Conventional Commits[cite: 1, 2]
-- **Data Storage:** Delimited text/CSV files in `src/main/data/` (`accessories.csv`, `products.txt`, `persons.txt`)[cite: 1, 3]
+- **Build Tool:** Apache Maven (`pom.xml`)[cite: 2, 4]
+- **Version Control:** Git Flow (`main`, `develop`, `feature/*`)[cite: 1, 2, 4]
+- **Commit Standard:** Conventional Commits[cite: 1, 2, 4]
+- **Data Storage:** Delimited CSV/text files in `data/` (`accessories.csv`, `promotions.csv`, `persons.txt`, `products.txt`)[cite: 1, 3, 4]
 
 ---
 
@@ -57,11 +69,14 @@ GameZoneUnicesar/
 │   ├── analysis.md
 │   ├── hierarchy-diagram.md
 │   ├── accessory-class-diagram.md
+│   ├── promotion-analysis.md
+│   ├── promotion-class-diagram.md
 │   └── layers-diagram.md
 └── src/
     └── main/
         ├── data/
         │   ├── accessories.csv
+        │   ├── promotions.csv
         │   ├── persons.txt
         │   └── products.txt
         └── java/
@@ -69,38 +84,33 @@ GameZoneUnicesar/
                 └── gamezone/
                     ├── Main.java
                     ├── model/
+                    │   ├── Person.java
+                    │   ├── Client.java
+                    │   ├── Seller.java
+                    │   ├── Product.java
+                    │   ├── VideoGame.java
+                    │   ├── Console.java
+                    │   ├── Accessory.java
+                    │   ├── Controller.java
+                    │   ├── Cable.java
+                    │   ├── Memory.java
+                    │   ├── Sale.java
+                    │   ├── Promotion.java
+                    │   ├── PercentageDiscount.java
+                    │   ├── CategoryDiscount.java
+                    │   └── BulkPurchaseDiscount.java
                     ├── persistence/
+                    │   ├── PersonRepository.java
+                    │   ├── ProductRepository.java
+                    │   ├── AccessoryRepository.java
+                    │   ├── SaleRepository.java
+                    │   └── PromotionRepository.java
                     ├── service/
+                    │   ├── PersonService.java
+                    │   ├── ProductService.java
+                    │   ├── AccessoryService.java
+                    │   ├── SaleService.java
+                    │   └── PromotionService.java
                     └── ui/
+                        └── GameZoneUI.java
 ```
-# GameZone Unicesar[cite: 1]
-
-## Project Description[cite: 1]
-GameZone Unicesar is an information system developed for a video game store located in the university sector of Valledupar, dedicated to the sale of video games and consoles.[cite: 1] The system allows systematizing the store's processes, managing the recording of relevant information automatically.[cite: 1]
-
-The system supports the following main functionalities:[cite: 1]
-* **People and roles management:** Administration of customers (purchase history) and sellers (employee code and shift).[cite: 1]
-* **Products management:** Inventory administration of video games (platform, genre, rating) and consoles (brand, model, generation).[cite: 1]
-* **Sales registration:** Transactions with automatic inventory deduction, total calculation, and association of customers and sellers.[cite: 1]
-* **Information query:** Inventory, customer, seller, and sales history listings.[cite: 1]
-
-All managed information (products, people, and sales) is preserved between executions thanks to a file persistence system.[cite: 1]
-
-## System Architecture[cite: 1]
-The project is developed in **Java** and configured as a **Maven** project.[cite: 1] The design is organized under the four-layer architecture model:[cite: 1]
-
-1. **Model (`com.gamezone.model`):** Contains the business domain classes with their attributes and abstract hierarchies.[cite: 1]
-2. **Persistence (`com.gamezone.persistence`):** Contains the classes responsible for saving and retrieving information from the files managed by the application.[cite: 1]
-3. **Services (`com.gamezone.service`):** Contains the classes responsible for business logic, validations, and rules (e.g., stock validation).[cite: 1]
-4. **User Interface (`com.gamezone.ui`):** Contains the interactive console menu that communicates exclusively with the services layer.[cite: 1]
-
-## Compilation and Execution Instructions[cite: 1]
-
-### Prerequisites
-* Java Development Kit (JDK) installed (version 17 or higher recommended).
-* Apache Maven installed and configured in the environment variables.
-
-### 1. Compile the project
-To compile the source code and download the necessary dependencies, open a terminal in the project's root folder and run the following command:
-```bash
-mvn clean install
