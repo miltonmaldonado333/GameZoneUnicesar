@@ -100,4 +100,26 @@ public class WarrantyService {
         }
         return active;
     }
+    /**
+     * Returns the warranties whose end date falls within the given number of
+     * days from today.
+     *
+     * @param daysAhead the number of days ahead to check for expiration
+     * @return the list of warranties expiring within that window
+     */
+    public List<Warranty> listWarrantiesExpiringSoon(int daysAhead) {
+        List<Warranty> expiringSoon = new java.util.ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate limit = today.plusDays(daysAhead);
+
+        for (Warranty warranty : warrantyRepository.loadAll()) {
+            LocalDate endDate = warranty.getEndDate();
+            boolean withinWindow = !endDate.isBefore(today) && !endDate.isAfter(limit);
+            if (withinWindow) {
+                expiringSoon.add(warranty);
+            }
+        }
+
+        return expiringSoon;
+    }
 }
