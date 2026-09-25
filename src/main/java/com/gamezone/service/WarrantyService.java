@@ -58,4 +58,30 @@ public class WarrantyService {
 
         return warranty;
     }
+    /**
+     * Finds the warranty associated with a specific product within a specific sale.
+     *
+     * @param productId the product identifier
+     * @param saleId    the sale identifier
+     * @return the matching warranty, or null if none is found
+     */
+    public Warranty findWarrantyByProduct(String productId, String saleId) {
+        for (Warranty warranty : warrantyRepository.loadAll()) {
+            boolean matchesProduct = warranty.getProduct().getId().equalsIgnoreCase(productId);
+            boolean matchesSale = String.valueOf(warranty.getSale().getId()).equals(saleId);
+            if (matchesProduct && matchesSale) {
+                return warranty;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns every warranty recorded in the system.
+     *
+     * @return the full list of registered warranties
+     */
+    public List<Warranty> listAllWarranties() {
+        return warrantyRepository.loadAll();
+    }
 }
