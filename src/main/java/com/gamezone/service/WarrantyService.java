@@ -84,4 +84,20 @@ public class WarrantyService {
     public List<Warranty> listAllWarranties() {
         return warrantyRepository.loadAll();
     }
+    /**
+     * Returns the warranties that are currently active (today's date falls
+     * within their start and end dates).
+     *
+     * @return the list of active warranties
+     */
+    public List<Warranty> listActiveWarranties() {
+        List<Warranty> active = new java.util.ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (Warranty warranty : warrantyRepository.loadAll()) {
+            if (warranty.isActive(today)) {
+                active.add(warranty);
+            }
+        }
+        return active;
+    }
 }
