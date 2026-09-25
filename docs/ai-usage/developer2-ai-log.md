@@ -66,3 +66,9 @@ Date & Time: Across all four modules
 Context / Prompt: Understanding commit granularity requirements (six-plus atomic commits per module, immediate push after each) and how to handle an already-pushed large commit in the Accessory module.
 AI Response / Advice: Explained the trade-off between rewriting shared history (git reset --soft plus push --force) versus continuing with smaller commits going forward, recommending the latter to avoid disrupting teammates.
 Decision Taken: Kept shared history intact, split all subsequent work into atomic commits pushed immediately, and verified via git log whether documentation (promotion-analysis.md, return-analysis.md) was already completed by a teammate before creating it myself.
+
+11. Warranty Module - Resolving Sale Lookup Without a Dedicated Method
+Date & Time: Warranty module session
+Context / Prompt: Building WarrantyRepository and WarrantyService, needing to resolve Sale references during CSV loading, but SaleService still had no findSaleById method.
+AI Response / Advice: Reused the same pattern applied in the Return module: resolving the sale lookup inside my own repository and service classes by iterating getAllSales() and comparing IDs as strings.
+Decision Taken: Kept the lookup logic within my own classes, confirmed BUILD SUCCESS for the full project after adding assignBasicWarranty, assignExtendedWarranty, findWarrantyByProduct, listAllWarranties, listActiveWarranties, and listWarrantiesExpiringSoon, and updated docs/layers-diagram.md to include the new Warranty hierarchy and its relationships.
