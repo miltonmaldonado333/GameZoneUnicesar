@@ -26,9 +26,10 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Handles the interactive console user interface for the GameZone system.
- * It provides menus to execute all required operations, grouping them into Product,
- * Person, Sales, Accessory, Promotion, Return, and Warranty management.
+ * Handles the interactive console user interface for the GameZone system. It
+ * provides menus to execute all required operations, grouping them into
+ * Product, Person, Sales, Accessory, Promotion, Return, and Warranty
+ * management.
  */
 public class GameZoneUI {
 
@@ -45,18 +46,18 @@ public class GameZoneUI {
     /**
      * Constructs a GameZoneUI with all required service dependencies.
      *
-     * @param saleService      the service managing sales
-     * @param productService   the service managing products
-     * @param personService    the service managing persons (clients and sellers)
+     * @param saleService the service managing sales
+     * @param productService the service managing products
+     * @param personService the service managing persons (clients and sellers)
      * @param accessoryService the service managing accessories
      * @param promotionService the service managing promotions
-     * @param returnService    the service managing returns
-     * @param warrantyService  the service managing warranties
+     * @param returnService the service managing returns
+     * @param warrantyService the service managing warranties
      */
-    public GameZoneUI(SaleService saleService, ProductService productService, 
-                      PersonService personService, AccessoryService accessoryService,
-                      PromotionService promotionService, ReturnService returnService,
-                      WarrantyService warrantyService) {
+    public GameZoneUI(SaleService saleService, ProductService productService,
+            PersonService personService, AccessoryService accessoryService,
+            PromotionService promotionService, ReturnService returnService,
+            WarrantyService warrantyService) {
         this.reader = new BufferedReader(new InputStreamReader(System.in));
         this.saleService = saleService;
         this.productService = productService;
@@ -136,21 +137,30 @@ public class GameZoneUI {
      */
     private void processMainMenuOption(int option) {
         switch (option) {
-            case 1 -> handleProductMenu();
-            case 2 -> handlePersonMenu();
-            case 3 -> handleSalesMenu();
-            case 4 -> handleAccessoryMenu();
-            case 5 -> handlePromotionMenu();
-            case 6 -> handleReturnMenu();
-            case 7 -> generateMonthlyBalance();
-            case 8 -> handleWarrantyMenu();
-            case 0, -1 -> { }
-            default -> System.out.println("Invalid option. Please try again.");
+            case 1 ->
+                handleProductMenu();
+            case 2 ->
+                handlePersonMenu();
+            case 3 ->
+                handleSalesMenu();
+            case 4 ->
+                handleAccessoryMenu();
+            case 5 ->
+                handlePromotionMenu();
+            case 6 ->
+                handleReturnMenu();
+            case 7 ->
+                generateMonthlyBalance();
+            case 8 ->
+                handleWarrantyMenu();
+            case 0, -1 -> {
+            }
+            default ->
+                System.out.println("Invalid option. Please try again.");
         }
     }
 
     // ================= PRODUCT SUBMENU =================
-
     /**
      * Handles product management options loop.
      */
@@ -166,11 +176,16 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerVideoGame();
-                case 2 -> registerConsole();
-                case 3 -> listProducts();
-                case 0 -> { }
-                default -> System.out.println("Invalid option.");
+                case 1 ->
+                    registerVideoGame();
+                case 2 ->
+                    registerConsole();
+                case 3 ->
+                    listProducts();
+                case 0 -> {
+                }
+                default ->
+                    System.out.println("Invalid option.");
             }
         } while (option != 0);
     }
@@ -181,13 +196,20 @@ public class GameZoneUI {
     private void registerVideoGame() {
         try {
             System.out.println("\n--- REGISTER VIDEO GAME ---");
-            System.out.print("ID: "); String id = reader.readLine();
-            System.out.print("Title: "); String title = reader.readLine();
-            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Platform: "); String platform = reader.readLine();
-            System.out.print("Genre: "); String genre = reader.readLine();
-            System.out.print("Age Rating: "); String ageRating = reader.readLine();
+            System.out.print("ID: ");
+            String id = reader.readLine();
+            System.out.print("Title: ");
+            String title = reader.readLine();
+            System.out.print("Price: ");
+            double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: ");
+            int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Platform: ");
+            String platform = reader.readLine();
+            System.out.print("Genre: ");
+            String genre = reader.readLine();
+            System.out.print("Age Rating: ");
+            String ageRating = reader.readLine();
 
             boolean registered = productService.registerVideoGame(platform, genre, ageRating, id, title, price, stock);
             if (registered) {
@@ -206,13 +228,20 @@ public class GameZoneUI {
     private void registerConsole() {
         try {
             System.out.println("\n--- REGISTER CONSOLE ---");
-            System.out.print("ID: "); String id = reader.readLine();
-            System.out.print("Title: "); String title = reader.readLine();
-            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Brand: "); String brand = reader.readLine();
-            System.out.print("Model: "); String model = reader.readLine();
-            System.out.print("Generation: "); String generation = reader.readLine();
+            System.out.print("ID: ");
+            String id = reader.readLine();
+            System.out.print("Title: ");
+            String title = reader.readLine();
+            System.out.print("Price: ");
+            double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: ");
+            int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Brand: ");
+            String brand = reader.readLine();
+            System.out.print("Model: ");
+            String model = reader.readLine();
+            System.out.print("Generation: ");
+            String generation = reader.readLine();
 
             boolean registered = productService.registerConsole(brand, model, generation, id, title, price, stock);
             if (registered) {
@@ -241,7 +270,6 @@ public class GameZoneUI {
     }
 
     // ================= PERSON SUBMENU =================
-
     /**
      * Handles person management options loop (Clients and Sellers).
      */
@@ -258,12 +286,18 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerClient();
-                case 2 -> registerSeller();
-                case 3 -> listClients();
-                case 4 -> listSellers();
-                case 0 -> { }
-                default -> System.out.println("Invalid option.");
+                case 1 ->
+                    registerClient();
+                case 2 ->
+                    registerSeller();
+                case 3 ->
+                    listClients();
+                case 4 ->
+                    listSellers();
+                case 0 -> {
+                }
+                default ->
+                    System.out.println("Invalid option.");
             }
         } while (option != 0);
     }
@@ -274,10 +308,14 @@ public class GameZoneUI {
     private void registerClient() {
         try {
             System.out.println("\n--- REGISTER CLIENT ---");
-            System.out.print("Name: "); String name = reader.readLine();
-            System.out.print("Identification: "); String id = reader.readLine();
-            System.out.print("Phone: "); String phone = reader.readLine();
-            System.out.print("Email: "); String email = reader.readLine();
+            System.out.print("Name: ");
+            String name = reader.readLine();
+            System.out.print("Identification: ");
+            String id = reader.readLine();
+            System.out.print("Phone: ");
+            String phone = reader.readLine();
+            System.out.print("Email: ");
+            String email = reader.readLine();
 
             personService.registerClient(name, id, phone, email);
             System.out.println("Client registered successfully!");
@@ -292,11 +330,16 @@ public class GameZoneUI {
     private void registerSeller() {
         try {
             System.out.println("\n--- REGISTER SELLER ---");
-            System.out.print("Name: "); String name = reader.readLine();
-            System.out.print("Identification: "); String identification = reader.readLine();
-            System.out.print("Phone: "); String phone = reader.readLine();
-            System.out.print("Employee Code: "); String employeeCode = reader.readLine();
-            System.out.print("Work Shift: "); String workShift = reader.readLine();
+            System.out.print("Name: ");
+            String name = reader.readLine();
+            System.out.print("Identification: ");
+            String identification = reader.readLine();
+            System.out.print("Phone: ");
+            String phone = reader.readLine();
+            System.out.print("Employee Code: ");
+            String employeeCode = reader.readLine();
+            System.out.print("Work Shift: ");
+            String workShift = reader.readLine();
 
             personService.registerSeller(name, identification, phone, employeeCode, workShift);
             System.out.println("Seller registered successfully!");
@@ -336,7 +379,6 @@ public class GameZoneUI {
     }
 
     // ================= SALES SUBMENU =================
-
     /**
      * Handles sales management options loop.
      */
@@ -353,18 +395,25 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerSale();
-                case 2 -> listAllSales();
-                case 3 -> listSalesByClient();
-                case 4 -> listSalesBySeller();
-                case 0 -> { }
-                default -> System.out.println("Invalid option.");
+                case 1 ->
+                    registerSale();
+                case 2 ->
+                    listAllSales();
+                case 3 ->
+                    listSalesByClient();
+                case 4 ->
+                    listSalesBySeller();
+                case 0 -> {
+                }
+                default ->
+                    System.out.println("Invalid option.");
             }
         } while (option != 0);
     }
 
     /**
-     * Registers a new sale transaction. Prompts for extended warranties when adding consoles.
+     * Registers a new sale transaction. Prompts for extended warranties when
+     * adding consoles.
      */
     private void registerSale() {
         try {
@@ -407,7 +456,7 @@ public class GameZoneUI {
 
                     // If item is a console, ask whether to add extended warranty
                     if (item instanceof Console) {
-                        System.out.print("¿Desea agregar garantía extendida (+10% del costo) a la consola '" 
+                        System.out.print("¿Desea agregar garantía extendida (+10% del costo) a la consola '"
                                 + item.getTitle() + "'? (s/n): ");
                         String extendedChoice = reader.readLine();
                         if (extendedChoice.equalsIgnoreCase("s")) {
@@ -431,8 +480,8 @@ public class GameZoneUI {
             Sale registeredSale = saleService.registerSale(client, seller, products, extendedWarrantyProductIds);
             System.out.println("Sale registered successfully with ID: " + registeredSale.getId());
             if (registeredSale.getAppliedPromotionName() != null) {
-                System.out.println("Applied Promotion: " + registeredSale.getAppliedPromotionName() + 
-                                   " | Discount: $" + registeredSale.getDiscountAmount());
+                System.out.println("Applied Promotion: " + registeredSale.getAppliedPromotionName()
+                        + " | Discount: $" + registeredSale.getDiscountAmount());
             }
             System.out.println("Final Total: $" + registeredSale.getTotal());
 
@@ -492,18 +541,18 @@ public class GameZoneUI {
             System.out.println("No sales records found.");
         } else {
             for (Sale s : sales) {
-                String promoInfo = (s.getAppliedPromotionName() != null) 
+                String promoInfo = (s.getAppliedPromotionName() != null)
                         ? " | Promo: " + s.getAppliedPromotionName() + " (-$" + s.getDiscountAmount() + ")"
                         : "";
-                
+
                 System.out.println("------------------------------------------------------------------");
-                System.out.println("Sale ID: " + s.getId() + 
-                                   " | Date: " + s.getDate() + 
-                                   " | Client: " + s.getClient().getName() + 
-                                   " | Seller: " + s.getSeller().getName() + 
-                                   promoInfo +
-                                   " | Total: $" + s.getTotal());
-                
+                System.out.println("Sale ID: " + s.getId()
+                        + " | Date: " + s.getDate()
+                        + " | Client: " + s.getClient().getName()
+                        + " | Seller: " + s.getSeller().getName()
+                        + promoInfo
+                        + " | Total: $" + s.getTotal());
+
                 System.out.println("  Items Sold:");
                 if (s.getProducts() != null && !s.getProducts().isEmpty()) {
                     for (Product item : s.getProducts()) {
@@ -518,7 +567,6 @@ public class GameZoneUI {
     }
 
     // ================= ACCESSORY SUBMENU =================
-
     /**
      * Handles accessory management options loop.
      */
@@ -537,14 +585,22 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerController();
-                case 2 -> registerCable();
-                case 3 -> registerMemory();
-                case 4 -> listAllAccessories();
-                case 5 -> listAccessoriesByType();
-                case 6 -> consultCompatibleAccessories();
-                case 0 -> { }
-                default -> System.out.println("Invalid option.");
+                case 1 ->
+                    registerController();
+                case 2 ->
+                    registerCable();
+                case 3 ->
+                    registerMemory();
+                case 4 ->
+                    listAllAccessories();
+                case 5 ->
+                    listAccessoriesByType();
+                case 6 ->
+                    consultCompatibleAccessories();
+                case 0 -> {
+                }
+                default ->
+                    System.out.println("Invalid option.");
             }
         } while (option != 0);
     }
@@ -555,11 +611,16 @@ public class GameZoneUI {
     private void registerController() {
         try {
             System.out.println("\n--- REGISTER CONTROLLER ---");
-            System.out.print("ID: "); String id = reader.readLine();
-            System.out.print("Title: "); String title = reader.readLine();
-            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Connection Type (wireless/wired): "); String connection = reader.readLine();
+            System.out.print("ID: ");
+            String id = reader.readLine();
+            System.out.print("Title: ");
+            String title = reader.readLine();
+            System.out.print("Price: ");
+            double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: ");
+            int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Connection Type (wireless/wired): ");
+            String connection = reader.readLine();
 
             System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
             String consolesInput = reader.readLine();
@@ -581,12 +642,18 @@ public class GameZoneUI {
     private void registerCable() {
         try {
             System.out.println("\n--- REGISTER CABLE ---");
-            System.out.print("ID: "); String id = reader.readLine();
-            System.out.print("Title: "); String title = reader.readLine();
-            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Length (meters): "); double length = Double.parseDouble(reader.readLine());
-            System.out.print("Connector Type (e.g., HDMI, USB): "); String type = reader.readLine();
+            System.out.print("ID: ");
+            String id = reader.readLine();
+            System.out.print("Title: ");
+            String title = reader.readLine();
+            System.out.print("Price: ");
+            double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: ");
+            int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Length (meters): ");
+            double length = Double.parseDouble(reader.readLine());
+            System.out.print("Connector Type (e.g., HDMI, USB): ");
+            String type = reader.readLine();
 
             System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
             String consolesInput = reader.readLine();
@@ -608,12 +675,18 @@ public class GameZoneUI {
     private void registerMemory() {
         try {
             System.out.println("\n--- REGISTER MEMORY ---");
-            System.out.print("ID: "); String id = reader.readLine();
-            System.out.print("Title: "); String title = reader.readLine();
-            System.out.print("Price: "); double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: "); int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Capacity (GB): "); int capacity = Integer.parseInt(reader.readLine());
-            System.out.print("Memory Type (e.g., SD, microSD): "); String type = reader.readLine();
+            System.out.print("ID: ");
+            String id = reader.readLine();
+            System.out.print("Title: ");
+            String title = reader.readLine();
+            System.out.print("Price: ");
+            double price = Double.parseDouble(reader.readLine());
+            System.out.print("Stock: ");
+            int stock = Integer.parseInt(reader.readLine());
+            System.out.print("Capacity (GB): ");
+            int capacity = Integer.parseInt(reader.readLine());
+            System.out.print("Memory Type (e.g., SD, microSD): ");
+            String type = reader.readLine();
             System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
             String consolesInput = reader.readLine();
             List<String> compatibleConsoles = new ArrayList<>();
@@ -678,7 +751,6 @@ public class GameZoneUI {
     }
 
     // ================= PROMOTION SUBMENU =================
-
     /**
      * Handles promotion management options loop.
      */
@@ -696,13 +768,20 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerPercentageDiscount();
-                case 2 -> registerCategoryDiscount();
-                case 3 -> registerBulkPurchaseDiscount();
-                case 4 -> listActivePromotions();
-                case 5 -> listAllPromotions();
-                case 0 -> { }
-                default -> System.out.println("Invalid option.");
+                case 1 ->
+                    registerPercentageDiscount();
+                case 2 ->
+                    registerCategoryDiscount();
+                case 3 ->
+                    registerBulkPurchaseDiscount();
+                case 4 ->
+                    listActivePromotions();
+                case 5 ->
+                    listAllPromotions();
+                case 0 -> {
+                }
+                default ->
+                    System.out.println("Invalid option.");
             }
         } while (option != 0);
     }
@@ -713,11 +792,16 @@ public class GameZoneUI {
     private void registerPercentageDiscount() {
         try {
             System.out.println("\n--- REGISTER PERCENTAGE DISCOUNT ---");
-            System.out.print("ID: "); String id = reader.readLine();
-            System.out.print("Name: "); String name = reader.readLine();
-            System.out.print("Start Date (YYYY-MM-DD): "); LocalDate startDate = LocalDate.parse(reader.readLine());
-            System.out.print("End Date (YYYY-MM-DD): "); LocalDate endDate = LocalDate.parse(reader.readLine());
-            System.out.print("Discount Percentage (e.g., 10 or 15.5): "); double percentage = Double.parseDouble(reader.readLine());
+            System.out.print("ID: ");
+            String id = reader.readLine();
+            System.out.print("Name: ");
+            String name = reader.readLine();
+            System.out.print("Start Date (YYYY-MM-DD): ");
+            LocalDate startDate = LocalDate.parse(reader.readLine());
+            System.out.print("End Date (YYYY-MM-DD): ");
+            LocalDate endDate = LocalDate.parse(reader.readLine());
+            System.out.print("Discount Percentage (e.g., 10 or 15.5): ");
+            double percentage = Double.parseDouble(reader.readLine());
 
             promotionService.registerPercentageDiscount(id, name, startDate, endDate, percentage);
             System.out.println("Percentage discount registered successfully!");
@@ -729,14 +813,23 @@ public class GameZoneUI {
     /**
      * Registers a category discount promotion.
      */
+    /**
+     * Registers a category discount promotion (Updated for A1: includes
+     * Accessories).
+     */
     private void registerCategoryDiscount() {
         try {
             System.out.println("\n--- REGISTER CATEGORY DISCOUNT ---");
-            System.out.print("ID: "); String id = reader.readLine();
-            System.out.print("Name: "); String name = reader.readLine();
-            System.out.print("Start Date (YYYY-MM-DD): "); LocalDate startDate = LocalDate.parse(reader.readLine());
-            System.out.print("End Date (YYYY-MM-DD): "); LocalDate endDate = LocalDate.parse(reader.readLine());
-            System.out.print("Discount Percentage (e.g., 10 or 15.5): "); double percentage = Double.parseDouble(reader.readLine());
+            System.out.print("ID: ");
+            String id = reader.readLine();
+            System.out.print("Name: ");
+            String name = reader.readLine();
+            System.out.print("Start Date (YYYY-MM-DD): ");
+            LocalDate startDate = LocalDate.parse(reader.readLine());
+            System.out.print("End Date (YYYY-MM-DD): ");
+            LocalDate endDate = LocalDate.parse(reader.readLine());
+            System.out.print("Discount Percentage (e.g., 10 or 15.5): ");
+            double percentage = Double.parseDouble(reader.readLine());
 
             List<String> availableCategories = new ArrayList<>();
             List<Product> products = productService.getAllProducts();
@@ -750,8 +843,15 @@ public class GameZoneUI {
                 }
             }
 
+            // A1 Adjustment: Include Accessories category if accessories exist in inventory
+            if (accessoryService != null && accessoryService.listAllAccessories() != null && !accessoryService.listAllAccessories().isEmpty()) {
+                if (!availableCategories.contains("ACCESSORY")) {
+                    availableCategories.add("ACCESSORY");
+                }
+            }
+
             System.out.println("\nAvailable categories in inventory: " + availableCategories);
-            System.out.print("Enter Target Category from the list above: ");
+            System.out.print("Enter Target Category from the list above (VIDEOGAME, CONSOLE, ACCESSORY): ");
             String category = reader.readLine();
 
             promotionService.registerCategoryDiscount(id, name, startDate, endDate, percentage, category);
@@ -767,12 +867,18 @@ public class GameZoneUI {
     private void registerBulkPurchaseDiscount() {
         try {
             System.out.println("\n--- REGISTER BULK PURCHASE DISCOUNT ---");
-            System.out.print("ID: "); String id = reader.readLine();
-            System.out.print("Name: "); String name = reader.readLine();
-            System.out.print("Start Date (YYYY-MM-DD): "); LocalDate startDate = LocalDate.parse(reader.readLine());
-            System.out.print("End Date (YYYY-MM-DD): "); LocalDate endDate = LocalDate.parse(reader.readLine());
-            System.out.print("Minimum Quantity: "); int minQuantity = Integer.parseInt(reader.readLine());
-            System.out.print("Discount Percentage (e.g., 10 or 15.5): "); double percentage = Double.parseDouble(reader.readLine());
+            System.out.print("ID: ");
+            String id = reader.readLine();
+            System.out.print("Name: ");
+            String name = reader.readLine();
+            System.out.print("Start Date (YYYY-MM-DD): ");
+            LocalDate startDate = LocalDate.parse(reader.readLine());
+            System.out.print("End Date (YYYY-MM-DD): ");
+            LocalDate endDate = LocalDate.parse(reader.readLine());
+            System.out.print("Minimum Quantity: ");
+            int minQuantity = Integer.parseInt(reader.readLine());
+            System.out.print("Discount Percentage (e.g., 10 or 15.5): ");
+            double percentage = Double.parseDouble(reader.readLine());
 
             promotionService.registerBulkPurchaseDiscount(id, name, startDate, endDate, minQuantity, percentage);
             System.out.println("Bulk purchase discount registered successfully!");
@@ -813,14 +919,13 @@ public class GameZoneUI {
             System.out.println("No promotions recorded.");
         } else {
             for (Promotion p : promotions) {
-                System.out.println("ID: " + p.getId() + " | Name: " + p.getName() + 
-                                   " | Active: " + p.getStartDate() + " to " + p.getEndDate());
+                System.out.println("ID: " + p.getId() + " | Name: " + p.getName()
+                        + " | Active: " + p.getStartDate() + " to " + p.getEndDate());
             }
         }
     }
 
     // ================= RETURN SUBMENU =================
-
     /**
      * Handles return management options loop.
      */
@@ -837,12 +942,18 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerReturn();
-                case 2 -> listAllReturns();
-                case 3 -> listReturnsByClient();
-                case 4 -> listReturnsBySale();
-                case 0 -> { }
-                default -> System.out.println("Invalid option.");
+                case 1 ->
+                    registerReturn();
+                case 2 ->
+                    listAllReturns();
+                case 3 ->
+                    listReturnsByClient();
+                case 4 ->
+                    listReturnsBySale();
+                case 0 -> {
+                }
+                default ->
+                    System.out.println("Invalid option.");
             }
         } while (option != 0);
     }
@@ -929,7 +1040,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Calculates and displays net monthly financial balance (Sales minus Returns).
+     * Calculates and displays net monthly financial balance (Sales minus
+     * Returns).
      */
     private void generateMonthlyBalance() {
         try {
@@ -950,7 +1062,6 @@ public class GameZoneUI {
     }
 
     // ================= WARRANTY SUBMENU =================
-
     /**
      * Handles warranty management options loop (Requirement 4).
      */
@@ -967,18 +1078,25 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> consultWarrantyByProductAndSale();
-                case 2 -> listAllWarranties();
-                case 3 -> listActiveWarranties();
-                case 4 -> listWarrantiesExpiringSoon();
-                case 0 -> { }
-                default -> System.out.println("Invalid option.");
+                case 1 ->
+                    consultWarrantyByProductAndSale();
+                case 2 ->
+                    listAllWarranties();
+                case 3 ->
+                    listActiveWarranties();
+                case 4 ->
+                    listWarrantiesExpiringSoon();
+                case 0 -> {
+                }
+                default ->
+                    System.out.println("Invalid option.");
             }
         } while (option != 0);
     }
 
     /**
-     * Consults and prints the warranty certificate associated with a product in a given sale.
+     * Consults and prints the warranty certificate associated with a product in
+     * a given sale.
      */
     private void consultWarrantyByProductAndSale() {
         try {
@@ -1034,7 +1152,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for threshold days and lists warranties expiring within that time frame.
+     * Prompts for threshold days and lists warranties expiring within that time
+     * frame.
      */
     private void listWarrantiesExpiringSoon() {
         try {
