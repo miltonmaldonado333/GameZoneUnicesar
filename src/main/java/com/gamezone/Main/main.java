@@ -6,52 +6,64 @@ import com.gamezone.persistence.FileProductRepository;
 import com.gamezone.persistence.PersonRepository;
 import com.gamezone.persistence.ProductRepository;
 import com.gamezone.persistence.PromotionRepository;
+import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SaleRepository;
+import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
-import com.gamezone.service.SaleService;
-import com.gamezone.ui.GameZoneUI;
 import com.gamezone.service.ReturnService;
-import com.gamezone.persistence.ReturnRepository;
-
+import com.gamezone.service.SaleService;
+import com.gamezone.service.WarrantyService;
+import com.gamezone.ui.GameZoneUI;
 
 /**
- * Punto de entrada principal para el sistema GameZone Unicesar.
- * Inicializa la arquitectura por capas e inicia la interfaz de consola.
+ * Main entry point for the GameZone Unicesar system.
+ * Initializes the layered architecture components and starts the interactive console interface.
  */
 public class main {
 
     /**
-     * Método principal que arranca la aplicación.
-     * Inicializa repositorios, servicios y la interfaz de usuario.
+     * Application entry point. Initializes persistence repositories, 
+     * business services, and user interface before launching the application loop.
      *
-     * @param args argumentos de línea de comandos
+     * @param args command line arguments
      */
     public static void main(String[] args) {
 
-        // 1. Inicializar la capa de persistencia (Repositorios)
-        
+        // 1. Initialize Persistence Layer (Repositories)
         ProductRepository productRepo = new FileProductRepository();
         PersonRepository personRepo = new FilePersonRepository("persons.txt"); 
         AccessoryRepository accessoryRepo = new AccessoryRepository();
         PromotionRepository promotionRepo = new PromotionRepository();
 
-        // 2. Inicializar la capa de negocio (Servicios)
+        // 2. Initialize Core Services
         ProductService productService = new ProductService(productRepo);
         PersonService personService = new PersonService(personRepo);
         AccessoryService accessoryService = new AccessoryService(accessoryRepo);
         PromotionService promotionService = new PromotionService(promotionRepo);
 
-        // 3. Inicializar el módulo de ventas con sus dependencias
+        // 3. Initialize Sales Base Layer
         SaleRepository saleRepo = new SaleRepository(personService, productService);
+        
+        // Crear la instancia inicial de SaleService con 4 parámetros
         SaleService saleService = new SaleService(saleRepo, productService, accessoryService, promotionService);
-        ReturnRepository returnrepository =  new ReturnRepository(saleService, productService);
-        ReturnService returnservice  = new ReturnService(returnrepository, saleService, productService);
 
-        // 4. Inicializar y arrancar la capa de presentación (UI)
-        GameZoneUI ui = new GameZoneUI(saleService, productService, personService, accessoryService, promotionService, returnservice);
+        // 4. Initialize Warranty Module (pasando saleService en minúsculas)
+        WarrantyRepository warrantyRepository = new WarrantyRepository(saleService, productService);
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository);
+
+        saleService = new SaleService(saleRepo, productService, accessoryService, promotionService, warrantyService);
+       
+        // 6. Initialize Returns Module
+        ReturnRepository returnRepository = new ReturnRepository(saleService, productService);
+        ReturnService returnService = new ReturnService(returnRepository, saleService, productService);
+    
+        warrantyService.syncPastConsoleWarranties(saleService);
+
+        // 7. Launch UI with all fully configured services
+        GameZoneUI ui = new GameZoneUI(saleService, productService, personService, accessoryService, promotionService, returnService, warrantyService);
         ui.start();
     }
 }
