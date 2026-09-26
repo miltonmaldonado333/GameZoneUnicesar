@@ -12,7 +12,8 @@ import com.gamezone.model.Sale;
 import com.gamezone.persistence.PromotionRepository;
 
 /**
- * Service class handling the business logic for managing promotions and discounts.
+ * Service class handling the business logic for managing promotions and
+ * discounts.
  */
 public class PromotionService {
 
@@ -23,28 +24,31 @@ public class PromotionService {
     }
 
     public void registerPercentageDiscount(String id, String name, LocalDate startDate,
-                                        LocalDate endDate, double percentage) {
-    List<Promotion> promotions = promotionRepository.loadAll();
-    // model: (percentage, id, name, startDate, endDate)
-    promotions.add(new PercentageDiscount(percentage, id, name, startDate, endDate));
-    promotionRepository.saveAll(promotions);
-}
+            LocalDate endDate, double percentage) {
+        List<Promotion> promotions = promotionRepository.loadAll();
+        // model: (percentage, id, name, startDate, endDate)
+        promotions.add(new PercentageDiscount(percentage, id, name, startDate, endDate));
+        promotionRepository.saveAll(promotions);
+    }
 
-public void registerCategoryDiscount(String id, String name, LocalDate startDate,
-                                      LocalDate endDate, double percentage, String targetCategory) {
-    List<Promotion> promotions = promotionRepository.loadAll();
-    //  model: (percentage, targetCategory, id, name, startDate, endDate)
-    promotions.add(new CategoryDiscount(percentage, targetCategory, id, name, startDate, endDate));
-    promotionRepository.saveAll(promotions);
-}
+    public void registerCategoryDiscount(String id, String name, LocalDate startDate,LocalDate endDate, double percentage, String targetCategory) {
+        if (!"VIDEOGAME".equalsIgnoreCase(targetCategory)&& !"CONSOLE".equalsIgnoreCase(targetCategory)&& !"ACCESSORY".equalsIgnoreCase(targetCategory)) {
+            throw new IllegalArgumentException("La categoría objetivo debe ser VIDEOGAME, CONSOLE o ACCESSORY.");
+        }
 
-public void registerBulkPurchaseDiscount(String id, String name, LocalDate startDate,
-                                          LocalDate endDate, int minQuantity, double percentage) {
-    List<Promotion> promotions = promotionRepository.loadAll();
-    // model: (minQuantity, percentage, id, name, startDate, endDate)
-    promotions.add(new BulkPurchaseDiscount(minQuantity, percentage, id, name, startDate, endDate));
-    promotionRepository.saveAll(promotions);
-}
+        List<Promotion> promotions = promotionRepository.loadAll();
+        // model: (percentage, targetCategory, id, name, startDate, endDate)
+        promotions.add(new CategoryDiscount(percentage, targetCategory.toUpperCase(), id, name, startDate, endDate));
+        promotionRepository.saveAll(promotions);
+    }
+
+    public void registerBulkPurchaseDiscount(String id, String name, LocalDate startDate,
+            LocalDate endDate, int minQuantity, double percentage) {
+        List<Promotion> promotions = promotionRepository.loadAll();
+        // model: (minQuantity, percentage, id, name, startDate, endDate)
+        promotions.add(new BulkPurchaseDiscount(minQuantity, percentage, id, name, startDate, endDate));
+        promotionRepository.saveAll(promotions);
+    }
 
     public List<Promotion> listAllPromotions() {
         return promotionRepository.loadAll();
