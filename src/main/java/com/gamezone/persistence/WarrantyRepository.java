@@ -16,47 +16,49 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
 import com.gamezone.service.ProductService;
-import com.gamezone.service.SaleService;
 
 /**
  * File-based repository for Warranty objects (BasicWarranty, ExtendedWarranty).
  * Persists all warranties in a CSV file using a type discriminator, resolving
- * references to Sale and Product during loading through the injected services.
+ * references to Sale and Product during loading through the injected
+ * SaleRepository and ProductService. Depending on SaleRepository instead of
+ * SaleService avoids a circular dependency, since SaleService depends on
+ * WarrantyService.
  */
 public class WarrantyRepository {
 
     private static final String DEFAULT_FILE_PATH = "data/warranties.csv";
 
     private String filePath;
-    private SaleService saleService;
+    private SaleRepository saleRepository;
     private ProductService productService;
 
     /**
      * Constructs a WarrantyRepository with default file path.
      *
-     * @param saleService    service to resolve sales
-     * @param productService service to resolve products
+     * @param saleRepository repository used to resolve sales
+     * @param productService service used to resolve products
      */
-    public WarrantyRepository(SaleService saleService, ProductService productService) {
-        this(DEFAULT_FILE_PATH, saleService, productService);
+    public WarrantyRepository(SaleRepository saleRepository, ProductService productService) {
+        this(DEFAULT_FILE_PATH, saleRepository, productService);
     }
 
     /**
-     * Constructs a WarrantyRepository with custom file path.
+     * Constructs a WarrantyRepository with a custom file path.
      *
-     * @param filePath       custom path to CSV storage file
-     * @param saleService    service to resolve sales
-     * @param productService service to resolve products
+     * @param filePath       custom path to the CSV storage file
+     * @param saleRepository repository used to resolve sales
+     * @param productService service used to resolve products
      */
-    public WarrantyRepository(String filePath, SaleService saleService, ProductService productService) {
+    public WarrantyRepository(String filePath, SaleRepository saleRepository, ProductService productService) {
         this.filePath = filePath;
-        this.saleService = saleService;
+        this.saleRepository = saleRepository;
         this.productService = productService;
     }
 
     /**
-     * Loads all warranties from the CSV storage file.
-     * Reconstructs relationships using injected Sale and Product services.
+     * Loads all warranties from the CSV storage file, reconstructing
+     * relationships using the injected SaleRepository and ProductService.
      *
      * @return list of stored warranties
      */
@@ -87,8 +89,8 @@ public class WarrantyRepository {
     }
 
     /**
-     * Persists the given list of warranties into the CSV file.
-     * Automatically creates parent directories if they do not exist.
+     * Persists the given list of warranties into the CSV file, creating
+     * parent directories if they do not exist.
      *
      * @param warranties list of warranties to persist
      */
@@ -109,12 +111,6 @@ public class WarrantyRepository {
         }
     }
 
-    /**
-     * Converts a Warranty instance into a CSV string format using a type discriminator.
-     *
-     * @param warranty the warranty instance
-     * @return formatted CSV line string
-     */
     private String toLine(Warranty warranty) {
         String type = (warranty instanceof ExtendedWarranty) ? "EXTENDED" : "BASIC";
 
@@ -126,12 +122,6 @@ public class WarrantyRepository {
                 warranty.getStartDate().toString());
     }
 
-    /**
-     * Parses a CSV string line into a concrete Warranty object instance.
-     *
-     * @param line CSV line string
-     * @return Warranty instance or null if references cannot be resolved
-     */
     private Warranty parseLine(String line) {
         String[] fields = line.split(";", -1);
         if (fields.length < 5) {
@@ -160,17 +150,11 @@ public class WarrantyRepository {
         return null;
     }
 
-    /**
-     * Helper method to search a Sale by its string ID representation from SaleService.
-     *
-     * @param saleId string representation of the sale ID
-     * @return Sale instance or null if not found
-     */
     private Sale findSaleById(String saleId) {
-        if (saleService == null) {
+        if (saleRepository == null) {
             return null;
         }
-        for (Sale sale : saleService.getAllSales()) {
+        for (Sale sale : saleRepository.findAll()) {
             if (String.valueOf(sale.getId()).equals(saleId)) {
                 return sale;
             }
