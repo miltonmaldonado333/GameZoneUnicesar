@@ -10,7 +10,7 @@ public class CategoryDiscount extends Promotion {
     public CategoryDiscount(double percentage, String targetCategory, String id, String name, LocalDate startDate, LocalDate endDate) {
         super(id, name, startDate, endDate);
         this.percentage = percentage;
-        this.targetCategory = targetCategory;
+        setTargetCategory(targetCategory);
     }
 
     public double getPercentage() {
@@ -26,20 +26,28 @@ public class CategoryDiscount extends Promotion {
     }
 
     public void setTargetCategory(String targetCategory) {
-        this.targetCategory = targetCategory;
+        if (!"VIDEOGAME".equalsIgnoreCase(targetCategory)
+                && !"CONSOLE".equalsIgnoreCase(targetCategory)
+                && !"ACCESSORY".equalsIgnoreCase(targetCategory)) {
+            throw new IllegalArgumentException("La categoría objetivo debe ser VIDEOGAME, CONSOLE o ACCESSORY.");
+        }
+        this.targetCategory = targetCategory.toUpperCase();
     }
 
     @Override
     public double calculateDiscount(Sale sale) {
         double applicableSubtotal = 0.0;
+
         for (Product product : sale.getProducts()) {
             if ("VIDEOGAME".equalsIgnoreCase(targetCategory) && product instanceof VideoGame) {
                 applicableSubtotal += product.getPrice();
             } else if ("CONSOLE".equalsIgnoreCase(targetCategory) && product instanceof Console) {
                 applicableSubtotal += product.getPrice();
+            } else if ("ACCESSORY".equalsIgnoreCase(targetCategory) && product instanceof Accessory) {
+                applicableSubtotal += product.getPrice();
             }
-
         }
+
         return applicableSubtotal * (percentage / 100);
     }
 
