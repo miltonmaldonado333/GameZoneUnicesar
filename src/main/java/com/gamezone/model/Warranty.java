@@ -56,17 +56,18 @@ public abstract class Warranty {
      */
     public String generateWarrantyCertificate() {
         StringBuilder certificate = new StringBuilder();
-        certificate.append("=== CERTIFICADO DE GARANTIA ===\n");
-        certificate.append("ID Garantia: ").append(this.id).append("\n");
-        certificate.append("Tipo: ").append(getWarrantyType()).append("\n");
-        certificate.append("Producto: ").append(this.product.getTitle()).append("\n");
-        certificate.append("ID Venta: ").append(this.sale.getId()).append("\n");
-        certificate.append("Fecha De Inicio: ").append(this.startDate).append("\n");
-        certificate.append("Fecha De Vencimiento: ").append(this.endDate).append("\n");
-        certificate.append("Valor adicional $: ").append(getAdditionalCost()).append("\n");
+        certificate.append("=== WARRABTY CERTIFICATE ===\n");
+        certificate.append("Warranty ID: ").append(this.id).append("\n");
+        certificate.append("Tipe: ").append(getWarrantyType()).append("\n");
+        certificate.append("Product: ").append(this.product.getTitle()).append("\n");
+        certificate.append("Sale ID: ").append(this.sale.getId()).append("\n");
+        certificate.append("Start Date: ").append(this.startDate).append("\n");
+        certificate.append("Finish Date: ").append(this.endDate).append("\n");
+        certificate.append("Additional value $: ").append(getAdditionalCost()).append("\n");
         return certificate.toString();
     }
-
+    
+// getersn and setters
     public String getId() {
         return id;
     }

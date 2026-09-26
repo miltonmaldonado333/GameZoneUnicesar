@@ -31,16 +31,35 @@ public class WarrantyRepository {
     private SaleService saleService;
     private ProductService productService;
 
+    /**
+     * Constructs a WarrantyRepository with default file path.
+     *
+     * @param saleService    service to resolve sales
+     * @param productService service to resolve products
+     */
     public WarrantyRepository(SaleService saleService, ProductService productService) {
         this(DEFAULT_FILE_PATH, saleService, productService);
     }
 
+    /**
+     * Constructs a WarrantyRepository with custom file path.
+     *
+     * @param filePath       custom path to CSV storage file
+     * @param saleService    service to resolve sales
+     * @param productService service to resolve products
+     */
     public WarrantyRepository(String filePath, SaleService saleService, ProductService productService) {
         this.filePath = filePath;
         this.saleService = saleService;
         this.productService = productService;
     }
 
+    /**
+     * Loads all warranties from the CSV storage file.
+     * Reconstructs relationships using injected Sale and Product services.
+     *
+     * @return list of stored warranties
+     */
     public List<Warranty> loadAll() {
         List<Warranty> warranties = new ArrayList<>();
         File file = new File(filePath);
@@ -67,8 +86,20 @@ public class WarrantyRepository {
         return warranties;
     }
 
+    /**
+     * Persists the given list of warranties into the CSV file.
+     * Automatically creates parent directories if they do not exist.
+     *
+     * @param warranties list of warranties to persist
+     */
     public void saveAll(List<Warranty> warranties) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+        File file = new File(filePath);
+        File parentDir = file.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             for (Warranty warranty : warranties) {
                 writer.write(toLine(warranty));
                 writer.newLine();
@@ -78,6 +109,12 @@ public class WarrantyRepository {
         }
     }
 
+    /**
+     * Converts a Warranty instance into a CSV string format using a type discriminator.
+     *
+     * @param warranty the warranty instance
+     * @return formatted CSV line string
+     */
     private String toLine(Warranty warranty) {
         String type = (warranty instanceof ExtendedWarranty) ? "EXTENDED" : "BASIC";
 
@@ -89,8 +126,18 @@ public class WarrantyRepository {
                 warranty.getStartDate().toString());
     }
 
+    /**
+     * Parses a CSV string line into a concrete Warranty object instance.
+     *
+     * @param line CSV line string
+     * @return Warranty instance or null if references cannot be resolved
+     */
     private Warranty parseLine(String line) {
         String[] fields = line.split(";", -1);
+        if (fields.length < 5) {
+            return null;
+        }
+
         String type = fields[0];
         String id = fields[1];
         String productId = fields[2];
@@ -104,16 +151,25 @@ public class WarrantyRepository {
             return null;
         }
 
-        if (type.equals("EXTENDED")) {
+        if ("EXTENDED".equalsIgnoreCase(type)) {
             return new ExtendedWarranty(id, product, sale, startDate);
-        } else if (type.equals("BASIC")) {
+        } else if ("BASIC".equalsIgnoreCase(type)) {
             return new BasicWarranty(id, product, sale, startDate);
         }
 
         return null;
     }
 
+    /**
+     * Helper method to search a Sale by its string ID representation from SaleService.
+     *
+     * @param saleId string representation of the sale ID
+     * @return Sale instance or null if not found
+     */
     private Sale findSaleById(String saleId) {
+        if (saleService == null) {
+            return null;
+        }
         for (Sale sale : saleService.getAllSales()) {
             if (String.valueOf(sale.getId()).equals(saleId)) {
                 return sale;
