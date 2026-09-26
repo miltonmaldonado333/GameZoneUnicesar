@@ -25,7 +25,7 @@ import com.gamezone.ui.GameZoneUI;
 public class main {
 
     /**
-     * Application entry point. Initializes persistence repositories, 
+     * Application entry point. Initializes persistence repositories,
      * business services, and user interface before launching the application loop.
      *
      * @param args command line arguments
@@ -34,7 +34,7 @@ public class main {
 
         // 1. Initialize Persistence Layer (Repositories)
         ProductRepository productRepo = new FileProductRepository();
-        PersonRepository personRepo = new FilePersonRepository("persons.txt"); 
+        PersonRepository personRepo = new FilePersonRepository("persons.txt");
         AccessoryRepository accessoryRepo = new AccessoryRepository();
         PromotionRepository promotionRepo = new PromotionRepository();
 
@@ -46,21 +46,20 @@ public class main {
 
         // 3. Initialize Sales Base Layer
         SaleRepository saleRepo = new SaleRepository(personService, productService);
-        
-        // Crear la instancia inicial de SaleService con 4 parámetros
-        SaleService saleService = new SaleService(saleRepo, productService, accessoryService, promotionService);
 
-        // 4. Initialize Warranty Module (pasando saleService en minúsculas)
-        WarrantyRepository warrantyRepository = new WarrantyRepository(saleService, productService);
-        WarrantyService warrantyService = new WarrantyService(warrantyRepository);
+        // 4. Initialize Warranty Module first: WarrantyRepository/WarrantyService now
+        // depend on SaleRepository instead of SaleService, breaking the circular
+        // dependency that previously required constructing SaleService twice.
+        WarrantyRepository warrantyRepository = new WarrantyRepository(saleRepo, productService);
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepo, productService);
+        warrantyService.syncPastConsoleWarranties();
 
-        saleService = new SaleService(saleRepo, productService, accessoryService, promotionService, warrantyService);
-       
+        // 5. Initialize SaleService once, with all dependencies already available
+        SaleService saleService = new SaleService(saleRepo, productService, accessoryService, promotionService, warrantyService);
+
         // 6. Initialize Returns Module
         ReturnRepository returnRepository = new ReturnRepository(saleService, productService);
         ReturnService returnService = new ReturnService(returnRepository, saleService, productService);
-    
-        warrantyService.syncPastConsoleWarranties(saleService);
 
         // 7. Launch UI with all fully configured services
         GameZoneUI ui = new GameZoneUI(saleService, productService, personService, accessoryService, promotionService, returnService, warrantyService);
