@@ -9,26 +9,32 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
+import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 
 /**
  * Service class responsible for managing the business logic of product warranties.
  * Handles the creation, persistence, replacement, and retrieval of basic and extended warranties.
+ * Depends on SaleRepository (rather than SaleService) to avoid a circular dependency,
+ * since SaleService itself depends on WarrantyService.
  */
 public class WarrantyService {
 
-    /**
-     * Repository used for persistent storage of warranty data.
-     */
     private WarrantyRepository warrantyRepository;
+    private SaleRepository saleRepository;
+    private ProductService productService;
 
     /**
-     * Constructs a new WarrantyService with the specified WarrantyRepository.
+     * Constructs a new WarrantyService with its required dependencies.
      *
      * @param warrantyRepository the persistence repository for warranties
+     * @param saleRepository     the persistence repository for sales, used for historical sync
+     * @param productService     the service managing products
      */
-    public WarrantyService(WarrantyRepository warrantyRepository) {
+    public WarrantyService(WarrantyRepository warrantyRepository, SaleRepository saleRepository, ProductService productService) {
         this.warrantyRepository = warrantyRepository;
+        this.saleRepository = saleRepository;
+        this.productService = productService;
     }
 
     /**
@@ -41,7 +47,7 @@ public class WarrantyService {
      */
     public BasicWarranty assignBasicWarranty(Product product, Sale sale, LocalDate startDate) {
         List<Warranty> warranties = warrantyRepository.loadAll();
-        
+
         String warrantyId = "WAR" + String.format("%04d", warranties.size() + 1);
         BasicWarranty warranty = new BasicWarranty(warrantyId, product, sale, startDate);
 
@@ -64,8 +70,7 @@ public class WarrantyService {
     public ExtendedWarranty assignExtendedWarranty(Product product, Sale sale, LocalDate startDate) {
         List<Warranty> warranties = warrantyRepository.loadAll();
 
-        // Remove any existing basic warranty for the same product and sale
-        warranties.removeIf(w -> w.getProduct().getId().equalsIgnoreCase(product.getId()) 
+        warranties.removeIf(w -> w.getProduct().getId().equalsIgnoreCase(product.getId())
                               && String.valueOf(w.getSale().getId()).equalsIgnoreCase(String.valueOf(sale.getId())));
 
         String warrantyId = "WAR" + String.format("%04d", warranties.size() + 1);
@@ -148,33 +153,30 @@ public class WarrantyService {
     }
 
     /**
-     * Scans all historical sales and automatically generates a basic warranty 
+     * Scans all historical sales and automatically generates a basic warranty
      * for any console product that does not already have a warranty assigned.
-     *
-     * @param saleService the sale service used to retrieve past sales history
+     * Uses the injected SaleRepository directly instead of receiving SaleService
+     * as a parameter, since SaleService is not available at this point in
+     * construction without causing a circular dependency.
      */
-    public void syncPastConsoleWarranties(SaleService saleService) {
-        if (saleService == null) {
+    public void syncPastConsoleWarranties() {
+        if (saleRepository == null) {
             return;
         }
 
         List<Warranty> currentWarranties = warrantyRepository.loadAll();
         boolean hasChanges = false;
 
-        // Recorrer todas las ventas históricas registradas
-        for (Sale sale : saleService.getAllSales()) {
+        for (Sale sale : saleRepository.findAll()) {
             LocalDate saleDate = LocalDate.parse(sale.getDate());
 
-            // Recorrer los productos de cada venta
-            for (Product item : sale.getItems()) {
+            for (Product item : sale.getProducts()) {
                 if (item instanceof com.gamezone.model.Console) {
-                    // Verificar si este producto en esta venta específica ya tiene garantía
-                    boolean alreadyHasWarranty = currentWarranties.stream().anyMatch(w -> 
+                    boolean alreadyHasWarranty = currentWarranties.stream().anyMatch(w ->
                         w.getProduct().getId().equalsIgnoreCase(item.getId()) &&
                         String.valueOf(w.getSale().getId()).equalsIgnoreCase(String.valueOf(sale.getId()))
                     );
 
-                    // Si la consola de esa venta pasada no tiene garantía, se la creamos
                     if (!alreadyHasWarranty) {
                         String warrantyId = "WAR" + String.format("%04d", currentWarranties.size() + 1);
                         BasicWarranty basicWarranty = new BasicWarranty(warrantyId, item, sale, saleDate);
@@ -185,7 +187,6 @@ public class WarrantyService {
             }
         }
 
-        // Si se generaron nuevas garantías para ventas pasadas, guardamos en el CSV
         if (hasChanges) {
             warrantyRepository.saveAll(currentWarranties);
         }
