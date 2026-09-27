@@ -144,7 +144,7 @@ public class AccessoryService {
             // Validamos que la lista de consolas no sea nula antes de buscar
             if (compatibleConsoles != null) {
                 for (String id : compatibleConsoles) {
-                    // Hacemos la comparación ignorando mayúsculas/minúsculas por seguridad
+                    // Hacemos la comparaciÃ³n ignorando mayÃºsculas/minÃºsculas por seguridad
                     if (id.equalsIgnoreCase(consoleId)) {
                         result.add(accessory);
                         break; // Salimos del bucle interno si ya hizo match
@@ -190,5 +190,21 @@ public class AccessoryService {
         accessory.setStock(accessory.getStock() - quantity);
         accessoryRepository.saveAll(accessories);
         return true;
+    }
+    /**
+     * Increases the stock of an accessory by the given quantity (e.g. after a
+     * return) and persists the change.
+     *
+     * @param accessoryId the identifier of the accessory to update
+     * @param quantity    the quantity to add to the current stock
+     * @throws IllegalArgumentException if no accessory is found with the given ID
+     */
+    public void restoreStock(String accessoryId, int quantity) {
+        Accessory accessory = findById(accessoryId);
+        if (accessory == null) {
+            throw new IllegalArgumentException("Accessory not found with ID: " + accessoryId);
+        }
+        accessory.setStock(accessory.getStock() + quantity);
+        accessoryRepository.saveAll(accessories);
     }
 }
