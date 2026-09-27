@@ -13,7 +13,8 @@ public class Return {
     private double refundAmount;
 
     /**
-     * Constructs a new Return instance and automatically calculates the refund amount.
+     * Constructs a new Return instance and automatically calculates the refund
+     * amount.
      */
     public Return(String returnId, LocalDate date, Sale originalSale, List<Product> returnedProducts, String reason) {
         this.returnId = returnId;
@@ -25,25 +26,26 @@ public class Return {
     }
 
     /**
-     * Calculates the total refund amount based on the prices of the returned products.
-     * 
+     * Calculates the total refund amount based on the prices of the returned
+     * products.
+     *
      * @return the calculated refund amount
      */
     public double calculateRefundAmount() {
-       double rawSubtotal = 0.0;
-       if(returnedProducts != null){
-           for(Product product : returnedProducts){
-               rawSubtotal += product.getPrice();
-           }
-           
-       }
-       if (originalSale != null && originalSale.getProducts() != null && !originalSale.getProducts().isEmpty()) {
+        double rawSubtotal = 0.0;
+        if (returnedProducts != null) {
+            for (Product product : returnedProducts) {
+                rawSubtotal += product.getPrice();
+            }
+
+        }
+        if (originalSale != null && originalSale.getProducts() != null && !originalSale.getProducts().isEmpty()) {
             double saleSubtotal = 0.0;
             for (Product p : originalSale.getProducts()) {
                 saleSubtotal += p.getPrice();
             }
             double discountAmount = originalSale.getDiscountAmount();
-            
+
             if (saleSubtotal > 0 && discountAmount > 0) {
                 double discountRate = discountAmount / saleSubtotal;
                 this.refundAmount = rawSubtotal * (1.0 - discountRate);
@@ -53,15 +55,15 @@ public class Return {
 
         this.refundAmount = rawSubtotal;
         return this.refundAmount;
-            
+
     }
 
     /**
      * Generates a formatted return receipt in Spanish for the customer.
-     * 
+     *
      * @return the formatted receipt string
      */
-    public String generateReturnReceipt(){
+    public String generateReturnReceipt() {
         StringBuilder receipt = new StringBuilder();
         receipt.append("=== RECIBO DE DEVOLUCION ===\n");
         receipt.append("ID Devolucion: ").append(this.returnId).append("\n");
@@ -69,20 +71,38 @@ public class Return {
         receipt.append("ID Venta Original: ").append(this.originalSale.getId()).append("\n");
         receipt.append("Motivo: ").append(this.reason).append("\n");
         receipt.append("=== Productos Devueltos ===\n");
-        
+
+        double saleSubtotal = 0.0;
+        double discountAmount = 0.0;
+        if (originalSale != null && originalSale.getProducts() != null) {
+            for (Product p : originalSale.getProducts()) {
+                saleSubtotal = p.getPrice();
+            }
+            discountAmount = originalSale.getDiscountAmount();
+        }
+        double discountRate = (saleSubtotal > 0) ? (discountAmount / saleSubtotal) : 0.0;
+
         if (this.returnedProducts != null) {
-            for(Product product : this.returnedProducts){
-                receipt.append("- ").append(product.getTitle()).append(": $ ").append(product.getPrice()).append("\n");
+            for (Product product : this.returnedProducts) {
+                double originalPrice = product.getPrice();
+                double itemDiscount = originalPrice * discountRate;
+                double itemRefund = originalPrice - itemDiscount;
+
+                if (discountRate > 0) {
+                    receipt.append(String.format("- %s: Precio Lista: $%.2f | Desc. Aplicado: -$%.2f | Reembolso: $%.2f%n",
+                            product.getTitle(), originalPrice, itemDiscount, itemRefund));
+                } else {
+                    receipt.append(String.format("- %s: $%.2f%n", product.getTitle(), originalPrice));
+                }
             }
         }
-        
+
         receipt.append("=================\n");
-        receipt.append("Monto Rembolsado: $ ").append(this.refundAmount).append("\n");
+        receipt.append(String.format("Monto Reembolsado Total: $%.2f%n", this.refundAmount));
         receipt.append("=================\n");
-        
+
         return receipt.toString();
     }
-
 
     public String getReturnId() {
         return returnId;
