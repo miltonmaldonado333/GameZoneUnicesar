@@ -72,3 +72,27 @@ Date & Time: Warranty module session
 Context / Prompt: Building WarrantyRepository and WarrantyService, needing to resolve Sale references during CSV loading, but SaleService still had no findSaleById method.
 AI Response / Advice: Reused the same pattern applied in the Return module: resolving the sale lookup inside my own repository and service classes by iterating getAllSales() and comparing IDs as strings.
 Decision Taken: Kept the lookup logic within my own classes, confirmed BUILD SUCCESS for the full project after adding assignBasicWarranty, assignExtendedWarranty, findWarrantyByProduct, listAllWarranties, listActiveWarranties, and listWarrantiesExpiringSoon, and updated docs/layers-diagram.md to include the new Warranty hierarchy and its relationships.
+
+---
+
+## Requerimiento 5 - System Integration
+
+### Entry 1
+Fecha: September 26, 2026
+Herramienta: Claude (Anthropic)
+Fase y rama: Fase 3 - fix/warranty-circular-dependency
+Objetivo: Resolve the circular dependency SaleService -> WarrantyService -> WarrantyRepository -> SaleService described in adjustment A2.
+Consulta: Shared the current WarrantyRepository.java, WarrantyService.java, and Main.java, asking how to break the cycle without losing the ability to resolve Sale references during warranty CSV loading.
+Respuesta: Proposed replacing the WarrantyRepository/WarrantyService dependency on SaleService with a direct dependency on SaleRepository instead, since SaleRepository has no dependency on warranty-related classes. Also proposed removing the SaleService parameter from syncPastConsoleWarranties in favor of using the injected SaleRepository directly, and simplifying Main so SaleService is constructed only once.
+Decision: Accepted the SaleRepository substitution in both WarrantyRepository and WarrantyService. Modified syncPastConsoleWarranties to use sale.getProducts() instead of sale.getItems() to match my own Sale class usage. Verified with mvn clean compile that the full project built successfully after each change.
+Commit relacionado: b59d86a (fix: replace SaleService with SaleRepository in WarrantyRepository to break circular dependency), 035a48a (fix: update WarrantyService to depend on SaleRepository instead of SaleService), b9fbd5e (fix: simplify Main to construct SaleService once after resolving circular dependency)
+
+### Entry 2
+Fecha: September 26, 2026
+Herramienta: Claude (Anthropic)
+Fase y rama: Fase 3 - fix/warranty-circular-dependency
+Objetivo: Document the dependency fix in docs/warranty-class-diagram.md as required by adjustment A2, since this file did not exist yet from Requirement 4.
+Consulta: Asked to verify whether the file already existed before creating it, then to draft the diagram reflecting the corrected dependencies.
+Respuesta: Confirmed via git log that the file had never been committed, then proposed a Mermaid class diagram showing the Warranty hierarchy plus WarrantyRepository and WarrantyService depending on SaleRepository (not SaleService), with a written explanation of the original cycle and the applied fix.
+Decision: Accepted the diagram and explanation as drafted, reviewing it against the actual corrected code before committing.
+Commit relacionado: b16cf58 (docs: create warranty class diagram reflecting the circular dependency fix)
