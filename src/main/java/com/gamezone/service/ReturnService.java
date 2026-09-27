@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.gamezone.model.Accessory;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
@@ -11,43 +12,47 @@ import com.gamezone.persistence.ReturnRepository;
 
 /**
  * Handles the business logic for managing product returns, including
- * deadline validation, ownership validation, stock restoration, and
- * monthly balance reporting.
+ * deadline validation, ownership validation, stock restoration for both
+ * products and accessories, and monthly balance reporting.
  */
 public class ReturnService {
 
     private ReturnRepository returnRepository;
     private SaleService saleService;
     private ProductService productService;
+    private AccessoryService accessoryService;
 
-    public ReturnService(ReturnRepository returnRepository, SaleService saleService, ProductService productService) {
+    /**
+     * Constructs a ReturnService with all required dependencies.
+     *
+     * @param returnRepository  the persistence repository for returns
+     * @param saleService       the service managing sales
+     * @param productService    the service managing products
+     * @param accessoryService  the service managing accessories, used to restore
+     *                          stock when a returned item is an accessory
+     */
+    public ReturnService(ReturnRepository returnRepository, SaleService saleService,
+                          ProductService productService, AccessoryService accessoryService) {
         this.returnRepository = returnRepository;
         this.saleService = saleService;
         this.productService = productService;
+        this.accessoryService = accessoryService;
     }
 
     /**
      * Registers a new return for a set of products belonging to an original sale.
+     * Validates sale existence, the 30-day return window, product ownership, and
+     * prevents returning more units than were originally purchased.
      *
      * @param saleId     the identifier of the original sale
      * @param productIds the identifiers of the products being returned
      * @param reason     the reason for the return
      * @return the registered Return instance
      * @throws IllegalArgumentException if the sale does not exist, the 30-day
-     *                                   window has passed, or any product does
-     *                                   not belong to the original sale
-     */
-    /**
-     * Registers a new return for a set of products belonging to an original sale.
-     * Validates sale existence, 30-day return window, product ownership, and prevents duplicate returns.
-     *
-     * @param saleId     the identifier of the original sale
-     * @param productIds the identifiers of the products being returned
-     * @param reason     the reason for the return
-     * @return the registered Return instance
-     * @throws IllegalArgumentException if the sale does not exist, the 30-day
-     *                                  window has passed, any product does
-     *                                  not belong to the original sale, or item is already returned
+     *                                   window has passed, any product does not
+     *                                   belong to the original sale, or the
+     *                                   requested quantity exceeds what is
+     *                                   available to return
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
         Sale sale = findSaleById(saleId);
@@ -59,18 +64,15 @@ public class ReturnService {
             throw new IllegalArgumentException("The sale has exceeded the 30-day return policy window.");
         }
 
-        // 1. Retrieve all previously registered returns for this sale
         List<Return> previousReturns = viewReturnsBySale(saleId);
 
         List<Product> returnedProducts = new ArrayList<>();
         for (String productId : productIds) {
-            // Verify product belongs to the original sale
             Product product = findProductInSale(sale, productId);
             if (product == null) {
                 throw new IllegalArgumentException("Product " + productId + " does not belong to sale " + saleId);
             }
 
-            // 2. Count total units originally purchased in the sale
             long originalQuantity = 0;
             for (Product p : sale.getProducts()) {
                 if (p.getId().equalsIgnoreCase(productId)) {
@@ -78,7 +80,6 @@ public class ReturnService {
                 }
             }
 
-            // 3. Count total units already returned in previous return transactions
             long alreadyReturnedQuantity = 0;
             for (Return prevReturn : previousReturns) {
                 for (Product p : prevReturn.getReturnedProducts()) {
@@ -88,7 +89,6 @@ public class ReturnService {
                 }
             }
 
-            // 4. Count units requested in the current return batch
             long requestedInCurrentBatch = 0;
             for (String id : productIds) {
                 if (id.equalsIgnoreCase(productId)) {
@@ -96,10 +96,9 @@ public class ReturnService {
                 }
             }
 
-            // 5. Validate that return quantity does not exceed available units
             if (alreadyReturnedQuantity + requestedInCurrentBatch > originalQuantity) {
-                throw new IllegalArgumentException("Product " + productId + 
-                    " has no units available for return in sale " + saleId + 
+                throw new IllegalArgumentException("Product " + productId +
+                    " has no units available for return in sale " + saleId +
                     " (Purchased: " + originalQuantity + ", Previously returned: " + alreadyReturnedQuantity + ").");
             }
 
@@ -109,8 +108,13 @@ public class ReturnService {
         String returnId = "RET" + String.format("%04d", returnRepository.loadAll().size() + 1);
         Return returnRecord = new Return(returnId, LocalDate.now(), sale, returnedProducts, reason);
 
+        // Restore stock, delegating to the appropriate service depending on item type
         for (Product product : returnedProducts) {
-            productService.restoreStock(product.getId(), 1);
+            if (product instanceof Accessory) {
+                accessoryService.restoreStock(product.getId(), 1);
+            } else {
+                productService.restoreStock(product.getId(), 1);
+            }
         }
 
         List<Return> returns = returnRepository.loadAll();
@@ -198,7 +202,7 @@ public class ReturnService {
         return totalSales - totalReturns;
     }
 
-        private Product findProductInSale(Sale sale, String productId) {
+    private Product findProductInSale(Sale sale, String productId) {
         for (Product product : sale.getProducts()) {
             if (product.getId().equalsIgnoreCase(productId)) {
                 return product;
@@ -207,5 +211,3 @@ public class ReturnService {
         return null;
     }
 }
-
-

@@ -96,3 +96,13 @@ Consulta: Asked to verify whether the file already existed before creating it, t
 Respuesta: Confirmed via git log that the file had never been committed, then proposed a Mermaid class diagram showing the Warranty hierarchy plus WarrantyRepository and WarrantyService depending on SaleRepository (not SaleService), with a written explanation of the original cycle and the applied fix.
 Decision: Accepted the diagram and explanation as drafted, reviewing it against the actual corrected code before committing.
 Commit relacionado: b16cf58 (docs: create warranty class diagram reflecting the circular dependency fix)
+
+### Entry 3
+Fecha: September 27, 2026
+Herramienta: Claude (Anthropic)
+Fase y rama: Fase 4 - fix/return-accessory-stock
+Objetivo: Fix adjustment A4 - returns of accessories were not restoring their stock, since ReturnService only called ProductService.restoreStock.
+Consulta: Shared the current AccessoryService.java, ReturnRepository.java, and ReturnService.java, asking how to make returns work for both products and accessories without duplicating logic.
+Respuesta: Proposed adding a restoreStock(String accessoryId, int quantity) method to AccessoryService mirroring the existing ProductService one, injecting AccessoryService into both ReturnRepository (to resolve accessories by ID as a fallback when a product ID is not found) and ReturnService (to check `instanceof Accessory` and delegate stock restoration to the correct service).
+Decision: Accepted all three changes as proposed. Also had to update Main.java to pass accessoryService into the now four-parameter ReturnRepository and ReturnService constructors, since their signatures changed. Verified with mvn clean compile that the full project built successfully after each change.
+Commit relacionado: 0b9cb0d (feat: add restoreStock method to AccessoryService), bf8c4f7 (fix: resolve accessories as returned items in ReturnRepository), 4b7384a (fix: delegate stock restoration to AccessoryService for returned accessories), bf6d0b1 (fix: pass AccessoryService to ReturnRepository and ReturnService in Main)

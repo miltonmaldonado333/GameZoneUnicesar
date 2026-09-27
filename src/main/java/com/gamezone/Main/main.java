@@ -58,11 +58,13 @@ public class main {
         SaleService saleService = new SaleService(saleRepo, productService, accessoryService, promotionService, warrantyService);
 
         // 6. Initialize Returns Module
-        ReturnRepository returnRepository = new ReturnRepository(saleService, productService);
-        ReturnService returnService = new ReturnService(returnRepository, saleService, productService);
+        ReturnRepository returnRepository = new ReturnRepository(saleService, productService, accessoryService);
+        ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService);
 
         // 7. Launch UI with all fully configured services
         GameZoneUI ui = new GameZoneUI(saleService, productService, personService, accessoryService, promotionService, returnService, warrantyService);
         ui.start();
     }
 }
+
+
