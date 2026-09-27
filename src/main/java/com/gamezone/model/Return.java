@@ -58,10 +58,13 @@ public class Return {
 
     }
 
-    /**
-     * Generates a formatted return receipt in Spanish showing original price,
-     * applied discount, and refund.
-     *
+   /**
+     * Generates a formatted return receipt in Spanish for display or printing.
+     * <p>
+     * Itemizes each returned product showing its original list price, the proportional 
+     * discount applied during the sale, and the net refunded amount.
+     * </p>
+
      * @return the formatted receipt string
      */
     public String generateReturnReceipt() {
@@ -105,7 +108,11 @@ public class Return {
 
         return receipt.toString();
     }
-
+    /**
+     * Getters And Setters
+     * 
+     * @return the return ID
+     */
     public String getReturnId() {
         return returnId;
     }
