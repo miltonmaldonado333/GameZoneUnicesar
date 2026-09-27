@@ -15,6 +15,11 @@ public class Return {
     /**
      * Constructs a new Return instance and automatically calculates the refund
      * amount.
+     * @param returnId
+     * @param date
+     * @param originalSale
+     * @param returnedProducts
+     * @param reason
      */
     public Return(String returnId, LocalDate date, Sale originalSale, List<Product> returnedProducts, String reason) {
         this.returnId = returnId;
@@ -22,7 +27,7 @@ public class Return {
         this.originalSale = originalSale;
         this.returnedProducts = returnedProducts;
         this.reason = reason;
-        this.calculateRefundAmount(); // Se calcula automáticamente sin pedirlo como parámetro
+        this.calculateRefundAmount(); 
     }
 
     /**
