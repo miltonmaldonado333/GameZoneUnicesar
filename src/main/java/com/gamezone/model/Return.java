@@ -59,7 +59,8 @@ public class Return {
     }
 
     /**
-     * Generates a formatted return receipt in Spanish for the customer.
+     * Generates a formatted return receipt in Spanish showing original price,
+     * applied discount, and refund.
      *
      * @return the formatted receipt string
      */
@@ -68,7 +69,7 @@ public class Return {
         receipt.append("=== RECIBO DE DEVOLUCION ===\n");
         receipt.append("ID Devolucion: ").append(this.returnId).append("\n");
         receipt.append("Fecha: ").append(this.date).append("\n");
-        receipt.append("ID Venta Original: ").append(this.originalSale.getId()).append("\n");
+        receipt.append("ID Venta Original: ").append(this.originalSale != null ? this.originalSale.getId() : "N/A").append("\n");
         receipt.append("Motivo: ").append(this.reason).append("\n");
         receipt.append("=== Productos Devueltos ===\n");
 
@@ -76,10 +77,11 @@ public class Return {
         double discountAmount = 0.0;
         if (originalSale != null && originalSale.getProducts() != null) {
             for (Product p : originalSale.getProducts()) {
-                saleSubtotal = p.getPrice();
+                saleSubtotal += p.getPrice();
             }
             discountAmount = originalSale.getDiscountAmount();
         }
+
         double discountRate = (saleSubtotal > 0) ? (discountAmount / saleSubtotal) : 0.0;
 
         if (this.returnedProducts != null) {
