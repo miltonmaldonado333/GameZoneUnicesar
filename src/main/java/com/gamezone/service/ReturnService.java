@@ -175,6 +175,44 @@ public class ReturnService {
     }
 
     /**
+     * Calculates the total sales amount for the given month and year, using
+     * each sale's final total (including discounts and extended warranty costs).
+     *
+     * @param month the month to evaluate (1-12)
+     * @param year  the year to evaluate
+     * @return the total sales amount for that period
+     */
+    public double calculateMonthlySales(int month, int year) {
+        double totalSales = 0.0;
+        for (Sale sale : saleService.getAllSales()) {
+            LocalDate saleDate = LocalDate.parse(sale.getDate());
+            if (saleDate.getMonthValue() == month && saleDate.getYear() == year) {
+                totalSales += sale.getTotal();
+            }
+        }
+        return totalSales;
+    }
+
+    /**
+     * Calculates the total refunded amount for returns registered in the given
+     * month and year.
+     *
+     * @param month the month to evaluate (1-12)
+     * @param year  the year to evaluate
+     * @return the total returns amount for that period
+     */
+    public double calculateMonthlyReturns(int month, int year) {
+        double totalReturns = 0.0;
+        for (Return returnRecord : returnRepository.loadAll()) {
+            LocalDate returnDate = returnRecord.getDate();
+            if (returnDate.getMonthValue() == month && returnDate.getYear() == year) {
+                totalReturns += returnRecord.getRefundAmount();
+            }
+        }
+        return totalReturns;
+    }
+
+    /**
      * Generates the net monthly balance for the given month and year, calculated
      * as the total sales minus the total returns recorded within that period.
      *
@@ -183,23 +221,7 @@ public class ReturnService {
      * @return the net balance (total sales minus total returns) for that period
      */
     public double generateMonthlyBalance(int month, int year) {
-        double totalSales = 0.0;
-        for (Sale sale : saleService.getAllSales()) {
-            LocalDate saleDate = LocalDate.parse(sale.getDate());
-            if (saleDate.getMonthValue() == month && saleDate.getYear() == year) {
-                totalSales += sale.getTotal();
-            }
-        }
-
-        double totalReturns = 0.0;
-        for (Return returnRecord : returnRepository.loadAll()) {
-            LocalDate returnDate = returnRecord.getDate();
-            if (returnDate.getMonthValue() == month && returnDate.getYear() == year) {
-                totalReturns += returnRecord.getRefundAmount();
-            }
-        }
-
-        return totalSales - totalReturns;
+        return calculateMonthlySales(month, year) - calculateMonthlyReturns(month, year);
     }
 
     private Product findProductInSale(Sale sale, String productId) {
