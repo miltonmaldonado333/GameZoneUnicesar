@@ -13,13 +13,14 @@ import java.util.List;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
+import com.gamezone.service.AccessoryService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
 
 /**
  * File-based repository for Return objects. Persists all returns in a CSV file,
- * resolving references to Sale and Product during loading through the injected
- * SaleService and ProductService.
+ * resolving references to Sale, Product, and Accessory during loading through
+ * the injected SaleService, ProductService, and AccessoryService.
  */
 public class ReturnRepository {
 
@@ -28,15 +29,32 @@ public class ReturnRepository {
     private String filePath;
     private SaleService saleService;
     private ProductService productService;
+    private AccessoryService accessoryService;
 
-    public ReturnRepository(SaleService saleService, ProductService productService) {
-        this(DEFAULT_FILE_PATH, saleService, productService);
+    /**
+     * Constructs a ReturnRepository with the default file path.
+     *
+     * @param saleService      service to resolve sales
+     * @param productService   service to resolve products
+     * @param accessoryService service to resolve accessories
+     */
+    public ReturnRepository(SaleService saleService, ProductService productService, AccessoryService accessoryService) {
+        this(DEFAULT_FILE_PATH, saleService, productService, accessoryService);
     }
 
-    public ReturnRepository(String filePath, SaleService saleService, ProductService productService) {
+    /**
+     * Constructs a ReturnRepository with a custom file path.
+     *
+     * @param filePath         custom path to the CSV storage file
+     * @param saleService      service to resolve sales
+     * @param productService   service to resolve products
+     * @param accessoryService service to resolve accessories
+     */
+    public ReturnRepository(String filePath, SaleService saleService, ProductService productService, AccessoryService accessoryService) {
         this.filePath = filePath;
         this.saleService = saleService;
         this.productService = productService;
+        this.accessoryService = accessoryService;
     }
 
     public List<Return> loadAll() {
@@ -110,13 +128,28 @@ public class ReturnRepository {
 
         List<Product> products = new ArrayList<>();
         for (String productId : productIdArray) {
-            Product product = productService.findProductById(productId);
+            Product product = resolveItem(productId);
             if (product != null) {
                 products.add(product);
             }
         }
 
         return new Return(returnId, date, sale, products, reason);
+    }
+
+    /**
+     * Resolves a returned item by ID, checking products first and falling back
+     * to accessories, since a returned item may be either kind.
+     *
+     * @param itemId the identifier of the returned item
+     * @return the matching Product or Accessory, or null if not found in either
+     */
+    private Product resolveItem(String itemId) {
+        Product product = productService.findProductById(itemId);
+        if (product != null) {
+            return product;
+        }
+        return accessoryService.findById(itemId);
     }
 
     private Sale findSaleById(String saleId) {
