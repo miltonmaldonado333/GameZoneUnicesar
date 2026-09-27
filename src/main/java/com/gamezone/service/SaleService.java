@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Service handling sales transaction business logic, stock validation,
  * automatic inventory updates, promotion discount evaluation, and warranty
- * assignments.
+ * assignments following the unified sale registration flow (A3 adjustment).
  */
 public class SaleService {
 
@@ -27,14 +27,13 @@ public class SaleService {
     private final WarrantyService warrantyService;
 
     /**
-     * Constructs a SaleService with all required dependencies including
-     * WarrantyService.
+     * Constructs a SaleService instance with all required dependencies including WarrantyService.
      *
-     * @param saleRepository the persistence repository for sales
-     * @param productService the service managing products
-     * @param accessoryService the service managing accessories
-     * @param promotionService the service evaluating active promotions
-     * @param warrantyService the service managing warranties
+     * @param saleRepository the persistence repository for managing sales records
+     * @param productService the service managing product catalog operations
+     * @param accessoryService the service managing accessory inventory operations
+     * @param promotionService the service evaluating active promotions and discounts
+     * @param warrantyService the service managing basic and extended warranties
      */
     public SaleService(SaleRepository saleRepository, ProductService productService,
                         AccessoryService accessoryService, PromotionService promotionService,
@@ -47,12 +46,12 @@ public class SaleService {
     }
 
     /**
-     * Constructs a SaleService without warranty service (supports 4 parameters in Main).
+     * Constructs a SaleService instance without warranty service support.
      *
-     * @param saleRepository the persistence repository for sales
-     * @param productService the service managing products
-     * @param accessoryService the service managing accessories
-     * @param promotionService the service evaluating active promotions
+     * @param saleRepository the persistence repository for managing sales records
+     * @param productService the service managing product catalog operations
+     * @param accessoryService the service managing accessory inventory operations
+     * @param promotionService the service evaluating active promotions and discounts
      */
     public SaleService(SaleRepository saleRepository, ProductService productService,
                         AccessoryService accessoryService, PromotionService promotionService) {
@@ -60,19 +59,19 @@ public class SaleService {
     }
 
     /**
-     * Constructs a SaleService without promotion and warranty services (supports 3 parameters).
+     * Constructs a SaleService instance without promotion and warranty services support.
      *
-     * @param saleRepository the persistence repository for sales
-     * @param productService the service managing products
-     * @param accessoryService the service managing accessories
+     * @param saleRepository the persistence repository for managing sales records
+     * @param productService the service managing product catalog operations
+     * @param accessoryService the service managing accessory inventory operations
      */
     public SaleService(SaleRepository saleRepository, ProductService productService, AccessoryService accessoryService) {
         this(saleRepository, productService, accessoryService, null, null);
     }
 
     /**
-     * Overloaded registerSale for backward compatibility (no extended
-     * warranties requested).
+     * Overloaded registerSale method for backward compatibility when no extended
+     * warranties are requested.
      *
      * @param client the purchasing customer
      * @param seller the attending salesperson
@@ -84,33 +83,92 @@ public class SaleService {
     }
 
     /**
-     * Registers a new sale transaction. Evaluates stock availability, deducts
-     * inventory, applies warranties, evaluates promotions, and persists the
-     * sale record.
+     * Registers a new unified sale transaction according to the A3 integration sequence:
+     * <ol>
+     *   <li>Validates that the sale contains at least one item.</li>
+     *   <li>Resolves each item as product or accessory and validates stock availability.</li>
+     *   <li>Creates the sale instance and calculates the initial subtotal.</li>
+     *   <li>Queries PromotionService for the best promotion and applies discount strictly on subtotal.</li>
+     *   <li>Generates basic warranty for each console and requested extended warranties, summing additional costs.</li>
+     *   <li>Calculates the final total: subtotal - discount + extended warranty costs.</li>
+     *   <li>Updates inventory delegating to ProductService or AccessoryService according to item type.</li>
+     *   <li>Persists the sale and warranty records.</li>
+     * </ol>
      *
      * @param client the purchasing customer
      * @param seller the attending salesperson
      * @param items the list of products and accessories included in the sale
-     * @param extendedWarrantyProductIds the list of product IDs requesting
-     * extended warranty
+     * @param extendedWarrantyProductIds the list of console product IDs requesting extended warranty
      * @return the processed and registered Sale instance
-     * @throws IllegalArgumentException if items list is empty or stock is
-     * insufficient
+     * @throws IllegalArgumentException if the items list is null/empty or if any item has insufficient stock
      */
     public Sale registerSale(Client client, Seller seller, List<Product> items, List<String> extendedWarrantyProductIds) {
-        // Business Rule: A sale must contain at least one item
+        
+        // Step 1: Validate that the sale has at least one item
         if (items == null || items.isEmpty()) {
             throw new IllegalArgumentException("A sale must contain at least one product or accessory.");
         }
 
-        // Validate stock for all items prior to transaction processing
+        // Step 2: Resolve each item as product or accessory and validate stock
         for (Product item : items) {
             if (item.getStock() < 1) {
                 throw new IllegalArgumentException("Insufficient stock for item: " + item.getTitle());
             }
         }
 
-        // Deduct inventory for sold items
+        // Step 3: Create the sale and calculate the subtotal
+        int nextId = saleRepository.findAll().size() + 1;
+        LocalDate saleDate = LocalDate.now();
+        String currentDate = saleDate.toString();
+
+        Sale sale = new Sale(nextId, currentDate, client, seller, items);
+        sale.calculateTotal(); // Computes initial subtotal from item list
+
+        // Step 4: Consult PromotionService for best promotion and apply discount strictly on subtotal
+        double discountAmount = 0.0;
+        if (promotionService != null) {
+            Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
+            if (bestPromotion != null) {
+                discountAmount = bestPromotion.calculateDiscount(sale);
+                if (discountAmount > 0) {
+                    sale.setAppliedPromotionName(bestPromotion.getName());
+                    sale.setDiscountAmount(discountAmount);
+                }
+            }
+        }
+
+        // Step 5: Generate basic warranty for each console and requested extended warranties, summing costs
+        double totalExtendedWarrantyCost = 0.0;
+        if (warrantyService != null) {
+            List<String> remainingExtendedIds = (extendedWarrantyProductIds != null) 
+                    ? new ArrayList<>(extendedWarrantyProductIds) 
+                    : new ArrayList<>();
+
+            for (Product item : items) {
+                if (item instanceof Console) {
+                    boolean wantsExtended = remainingExtendedIds.contains(item.getId());
+
+                    if (wantsExtended) {
+                        // Assign extended warranty and accumulate additional cost
+                        var warranty = warrantyService.assignExtendedWarranty(item, sale, saleDate);
+                        if (warranty != null) {
+                            totalExtendedWarrantyCost += warranty.getAdditionalCost();
+                        }
+                        remainingExtendedIds.remove(item.getId());
+                    } else {
+                        // Assign automatic basic warranty for console
+                        warrantyService.assignBasicWarranty(item, sale, saleDate);
+                    }
+                }
+            }
+        }
+
+        // Step 6: Calculate final total: subtotal - discount + extended warranty costs
+        double subtotal = sale.getSubtotal();
+        double finalTotal = subtotal - discountAmount + totalExtendedWarrantyCost;
+        sale.setTotal(finalTotal);
+
+        // Step 7: Update inventory delegating to ProductService or AccessoryService according to item type
         int quantitySold = 1;
         for (Product item : items) {
             if (item instanceof Accessory && accessoryService != null) {
@@ -123,64 +181,7 @@ public class SaleService {
             }
         }
 
-        // Generate unique Sale ID and capture current transaction date
-        int nextId = saleRepository.findAll().size() + 1;
-        LocalDate saleDate = LocalDate.now();
-        String currentDate = saleDate.toString();
-
-        // Instantiate initial Sale entity
-        Sale sale = new Sale(nextId, currentDate, client, seller, items);
-        sale.calculateTotal();
-
-        // Evaluate and apply active promotions (Requirement 2)
-        if (promotionService != null) {
-            Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
-            if (bestPromotion != null) {
-                double discount = bestPromotion.calculateDiscount(sale);
-                if (discount > 0) {
-                    sale.setAppliedPromotionName(bestPromotion.getName());
-                    sale.setDiscountAmount(discount);
-                    sale.setTotal(sale.getSubtotal() - discount);
-                }
-            }
-        }
-
-        // Process warranties (Requirement 4)
-        if (warrantyService != null) {
-            double extraWarrantyCost = 0.0;
-
-            // Extended warranty IDs ki editable copy banayi gayi hai
-            List<String> remainingExtendedIds = (extendedWarrantyProductIds != null) 
-                    ? new ArrayList<>(extendedWarrantyProductIds) 
-                    : new ArrayList<>();
-
-            for (Product item : items) {
-                if (item instanceof Console) {
-                    // Check ki kya is console ID ko extended warranty chahiye
-                    boolean wantsExtended = remainingExtendedIds.contains(item.getId());
-
-                    if (wantsExtended) {
-                        // Extended warranty assign karein aur 10% cost add karein
-                        var warranty = warrantyService.assignExtendedWarranty(item, sale, saleDate);
-                        if (warranty != null) {
-                            extraWarrantyCost += warranty.getAdditionalCost();
-                        }
-                        // ID ko remove karein taaki doosra same product basic warranty le sake
-                        remainingExtendedIds.remove(item.getId());
-                    } else {
-                        // Automatic basic warranty assign karein console ke liye
-                        warrantyService.assignBasicWarranty(item, sale, saleDate);
-                    }
-                }
-            }
-
-            // Extended warranty ke total cost ko final total mein add karein
-            if (extraWarrantyCost > 0) {
-                sale.setTotal(sale.getTotal() + extraWarrantyCost);
-            }
-        }
-
-        // Persist the completed sale
+        // Step 8: Persist the sale and warranties
         saleRepository.save(sale);
 
         return sale;
@@ -189,7 +190,7 @@ public class SaleService {
     /**
      * Retrieves all recorded sales in the system.
      *
-     * @return list of all sales
+     * @return a list containing all recorded sales
      */
     public List<Sale> getAllSales() {
         return saleRepository.findAll();
@@ -198,8 +199,8 @@ public class SaleService {
     /**
      * Retrieves sales associated with a specific client identification.
      *
-     * @param clientId the customer identification
-     * @return list of sales matching the client
+     * @param clientId the customer identification number
+     * @return a list of sales matching the given client identification
      */
     public List<Sale> getSalesByClient(String clientId) {
         return saleRepository.findAll().stream()
@@ -210,8 +211,8 @@ public class SaleService {
     /**
      * Retrieves sales attended by a specific seller employee code.
      *
-     * @param sellerCode the seller employee code
-     * @return list of sales matching the seller
+     * @param sellerCode the employee code of the seller
+     * @return a list of sales matching the given seller code
      */
     public List<Sale> getSalesBySeller(String sellerCode) {
         return saleRepository.findAll().stream()

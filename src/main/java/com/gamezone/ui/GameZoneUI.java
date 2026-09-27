@@ -412,12 +412,13 @@ public class GameZoneUI {
     }
 
     /**
-     * Registers a new sale transaction. Prompts for extended warranties when
-     * adding consoles.
+     * Registers a new sale transaction (A3 Specification).
+     * Prompts for products and accessories, evaluates stock, and prompts for
+     * extended warranty options when consoles are added.
      */
     private void registerSale() {
         try {
-            System.out.println("\n--- REGISTER NEW SALE ---");
+            System.out.println("\n--- REGISTER NEW UNIFIED SALE ---");
 
             // Validate client existence
             System.out.print("Enter Client ID: ");
@@ -446,15 +447,15 @@ public class GameZoneUI {
                 String itemId = reader.readLine();
 
                 Product item = productService.findProductById(itemId);
-                if (item == null) {
+                if (item == null && accessoryService != null) {
                     item = accessoryService.findById(itemId);
                 }
 
                 if (item != null) {
                     products.add(item);
-                    System.out.println("Item added to cart.");
+                    System.out.println("Item added to cart: " + item.getTitle());
 
-                    // If item is a console, ask whether to add extended warranty
+                    // If item is a console, prompt for extended warranty (+10% cost)
                     if (item instanceof Console) {
                         System.out.print("¿Desea agregar garantía extendida (+10% del costo) a la consola '"
                                 + item.getTitle() + "'? (s/n): ");
@@ -464,7 +465,7 @@ public class GameZoneUI {
                         }
                     }
                 } else {
-                    System.out.println("Error: Product or Accessory not found.");
+                    System.out.println("Error: Product or Accessory not found with ID: " + itemId);
                 }
 
                 System.out.print("Add another item? (y/n): ");
@@ -476,14 +477,10 @@ public class GameZoneUI {
                 return;
             }
 
-            // Delegate creation to SaleService using the updated registerSale method
+            // Delegate creation to SaleService using unified registerSale method
             Sale registeredSale = saleService.registerSale(client, seller, products, extendedWarrantyProductIds);
-            System.out.println("Sale registered successfully with ID: " + registeredSale.getId());
-            if (registeredSale.getAppliedPromotionName() != null) {
-                System.out.println("Applied Promotion: " + registeredSale.getAppliedPromotionName()
-                        + " | Discount: $" + registeredSale.getDiscountAmount());
-            }
-            System.out.println("Final Total: $" + registeredSale.getTotal());
+            System.out.println("\nSale registered successfully!");
+            System.out.println(registeredSale.generateReceipt());
 
         } catch (IllegalArgumentException e) {
             System.out.println("Validation Error: " + e.getMessage());
@@ -532,7 +529,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Helper method to print formatted list of sales.
+     * Helper method to print formatted list of sales using generated receipts.
      *
      * @param sales the list of sales to format and print
      */
@@ -541,28 +538,8 @@ public class GameZoneUI {
             System.out.println("No sales records found.");
         } else {
             for (Sale s : sales) {
-                String promoInfo = (s.getAppliedPromotionName() != null)
-                        ? " | Promo: " + s.getAppliedPromotionName() + " (-$" + s.getDiscountAmount() + ")"
-                        : "";
-
-                System.out.println("------------------------------------------------------------------");
-                System.out.println("Sale ID: " + s.getId()
-                        + " | Date: " + s.getDate()
-                        + " | Client: " + s.getClient().getName()
-                        + " | Seller: " + s.getSeller().getName()
-                        + promoInfo
-                        + " | Total: $" + s.getTotal());
-
-                System.out.println("  Items Sold:");
-                if (s.getProducts() != null && !s.getProducts().isEmpty()) {
-                    for (Product item : s.getProducts()) {
-                        System.out.println("    - [ID: " + item.getId() + "] " + item.getTitle() + " ($" + item.getPrice() + ")");
-                    }
-                } else {
-                    System.out.println("    (No items listed)");
-                }
+                System.out.println(s.generateReceipt());
             }
-            System.out.println("------------------------------------------------------------------");
         }
     }
 
@@ -811,11 +788,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Registers a category discount promotion.
-     */
-    /**
-     * Registers a category discount promotion (Updated for A1: includes
-     * Accessories).
+     * Registers a category discount promotion (Updated for A1: includes Accessories).
      */
     private void registerCategoryDiscount() {
         try {
@@ -1063,7 +1036,7 @@ public class GameZoneUI {
 
     // ================= WARRANTY SUBMENU =================
     /**
-     * Handles warranty management options loop (Requirement 4).
+     * Handles warranty management options loop.
      */
     private void handleWarrantyMenu() {
         int option = -1;
