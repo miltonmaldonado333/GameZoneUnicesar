@@ -30,14 +30,30 @@ public class Return {
      * @return the calculated refund amount
      */
     public double calculateRefundAmount() {
-        double total = 0.0;
-        if (this.returnedProducts != null) {
-            for (Product product : this.returnedProducts) {
-                total += product.getPrice();
+       double rawSubtotal = 0.0;
+       if(returnedProducts != null){
+           for(Product product : returnedProducts){
+               rawSubtotal += product.getPrice();
+           }
+           
+       }
+       if (originalSale != null && originalSale.getProducts() != null && !originalSale.getProducts().isEmpty()) {
+            double saleSubtotal = 0.0;
+            for (Product p : originalSale.getProducts()) {
+                saleSubtotal += p.getPrice();
+            }
+            double discountAmount = originalSale.getDiscountAmount();
+            
+            if (saleSubtotal > 0 && discountAmount > 0) {
+                double discountRate = discountAmount / saleSubtotal;
+                this.refundAmount = rawSubtotal * (1.0 - discountRate);
+                return this.refundAmount;
             }
         }
-        this.refundAmount = total;
+
+        this.refundAmount = rawSubtotal;
         return this.refundAmount;
+            
     }
 
     /**
