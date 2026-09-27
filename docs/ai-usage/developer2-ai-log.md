@@ -106,3 +106,13 @@ Consulta: Shared the current AccessoryService.java, ReturnRepository.java, and R
 Respuesta: Proposed adding a restoreStock(String accessoryId, int quantity) method to AccessoryService mirroring the existing ProductService one, injecting AccessoryService into both ReturnRepository (to resolve accessories by ID as a fallback when a product ID is not found) and ReturnService (to check `instanceof Accessory` and delegate stock restoration to the correct service).
 Decision: Accepted all three changes as proposed. Also had to update Main.java to pass accessoryService into the now four-parameter ReturnRepository and ReturnService constructors, since their signatures changed. Verified with mvn clean compile that the full project built successfully after each change.
 Commit relacionado: 0b9cb0d (feat: add restoreStock method to AccessoryService), bf8c4f7 (fix: resolve accessories as returned items in ReturnRepository), 4b7384a (fix: delegate stock restoration to AccessoryService for returned accessories), bf6d0b1 (fix: pass AccessoryService to ReturnRepository and ReturnService in Main)
+
+### Entry 4
+Fecha: September 27, 2026
+Herramienta: Claude (Anthropic)
+Fase y rama: Fase 4 - fix/monthly-balance-report
+Objetivo: Fix adjustment A6 - generateMonthlyBalance only returned the net balance, but the requirement needs total sales, total returns, and net balance shown separately.
+Consulta: Confirmed A6 had no dependency on A5 (Developer 1's pending adjustment to Return.calculateRefundAmount) before starting, since A6 only touches ReturnService and reads Return.getRefundAmount() as a black box. Asked how to split the existing method without breaking its public signature.
+Respuesta: Proposed extracting the sales-total loop into calculateMonthlySales(int, int) and the returns-total loop into calculateMonthlyReturns(int, int), then having generateMonthlyBalance(int, int) simply call both and subtract, preserving its original signature so no caller needs to change.
+Decision: Accepted the split as proposed. Verified with mvn clean compile that the full project built successfully.
+Commit relacionado: c72037d (fix: split monthly balance into separate sales and returns calculations)
