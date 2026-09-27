@@ -4,3 +4,4 @@ CONTROLLER;11;ps5;2000.0;20;wireless;
 CONTROLLER;c1;opo;10.0;10;wireless;c1
 CABLE;c1;opo;100.0;29;2.0;hdmi;c1
 MEMORY;19;memory;20.0;19;1000;sd;c1
+CONTROLLER;AC2;ps3;1000.0;5;wired;c1
