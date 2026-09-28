@@ -116,3 +116,26 @@ Consulta: Confirmed A6 had no dependency on A5 (Developer 1's pending adjustment
 Respuesta: Proposed extracting the sales-total loop into calculateMonthlySales(int, int) and the returns-total loop into calculateMonthlyReturns(int, int), then having generateMonthlyBalance(int, int) simply call both and subtract, preserving its original signature so no caller needs to change.
 Decision: Accepted the split as proposed. Verified with mvn clean compile that the full project built successfully.
 Commit relacionado: c72037d (fix: split monthly balance into separate sales and returns calculations)
+
+
+## Phase 4 - feature/return-warranty-cancellation (A7)
+
+### Entry: plan for cancelling warranties on returned consoles
+- **Date:** 2026-09-28
+- **Tool:** Claude
+- **Phase and branch:** Phase 4 - feature/return-warranty-cancellation
+- **Objective:** Understand what A7 requires and how to split it into atomic commits across the warranty, return model, persistence and service layers.
+- **Query:** Asked how to implement WarrantyService.cancelWarranties and connect it to ReturnService.registerReturn, sharing the current Warranty, Return and ReturnService code.
+- **Response:** Proposed cancelWarranties(productId, saleId) returning the refundable cost (zero for basic, additional cost for extended), a warrantyRefundAmount field in Return, persistence in returns.csv, and a call per returned console in registerReturn.
+- **Decision:** Accepted the four-commit split. Kept the original 5-argument Return constructor delegating to the new 6-argument one so existing code keeps compiling. Ran mvn clean compile before every commit.
+- **Related commit:** feat: add cancelWarranties to WarrantyService (6a73ae5); feat: include warranty refund in Return amount and receipt (8edd494)
+
+### Entry: persistence and service integration for A7
+- **Date:** 2026-09-28
+- **Tool:** Claude
+- **Phase and branch:** Phase 4 - feature/return-warranty-cancellation
+- **Objective:** Persist the warranty refund without breaking the existing data/returns.csv, and wire WarrantyService into ReturnService and Main.
+- **Query:** Shared ReturnRepository.java and main.java and asked for the remaining changes.
+- **Response:** Suggested a seventh CSV column read as 0.0 when missing, and passing WarrantyService to the ReturnService constructor, adjusting main.java in the same commit so the project still compiles.
+- **Decision:** Accepted both. Verified with mvn clean compile after each change. Known limitation understood: cancelWarranties removes every warranty of that product in that sale, even for units that were not returned.
+- **Related commit:** feat: persist warranty refund amount in ReturnRepository (813deec); feat: cancel warranties of returned consoles in ReturnService (89a0381)
