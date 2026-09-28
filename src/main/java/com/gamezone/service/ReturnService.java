@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.gamezone.model.Accessory;
+import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
@@ -21,6 +22,7 @@ public class ReturnService {
     private SaleService saleService;
     private ProductService productService;
     private AccessoryService accessoryService;
+    private WarrantyService warrantyService;
 
     /**
      * Constructs a ReturnService with all required dependencies.
@@ -30,19 +32,25 @@ public class ReturnService {
      * @param productService    the service managing products
      * @param accessoryService  the service managing accessories, used to restore
      *                          stock when a returned item is an accessory
+     * @param warrantyService   the service managing warranties, used to cancel
+     *                          the warranties of returned consoles
      */
     public ReturnService(ReturnRepository returnRepository, SaleService saleService,
-                          ProductService productService, AccessoryService accessoryService) {
+                          ProductService productService, AccessoryService accessoryService,
+                          WarrantyService warrantyService) {
         this.returnRepository = returnRepository;
         this.saleService = saleService;
         this.productService = productService;
         this.accessoryService = accessoryService;
+        this.warrantyService = warrantyService;
     }
 
     /**
      * Registers a new return for a set of products belonging to an original sale.
      * Validates sale existence, the 30-day return window, product ownership, and
      * prevents returning more units than were originally purchased.
+     * Cancels the warranties of every returned console and adds their refundable
+     * cost to the refund.
      *
      * @param saleId     the identifier of the original sale
      * @param productIds the identifiers of the products being returned
@@ -106,7 +114,15 @@ public class ReturnService {
         }
 
         String returnId = "RET" + String.format("%04d", returnRepository.loadAll().size() + 1);
-        Return returnRecord = new Return(returnId, LocalDate.now(), sale, returnedProducts, reason);
+        // Cancel the warranties of every returned console and collect the refundable cost
+        double warrantyRefund = 0.0;
+        for (Product product : returnedProducts) {
+            if (product instanceof Console) {
+                warrantyRefund += warrantyService.cancelWarranties(product.getId(), saleId);
+            }
+        }
+
+        Return returnRecord = new Return(returnId, LocalDate.now(), sale, returnedProducts, reason, warrantyRefund);
 
         // Restore stock, delegating to the appropriate service depending on item type
         for (Product product : returnedProducts) {
