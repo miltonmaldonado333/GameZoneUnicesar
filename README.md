@@ -1,6 +1,6 @@
 # GameZone Unicesar - Information System
 
-GameZone Unicesar is a layered Java application designed for managing products, sales, customers, staff, commercial promotions, and product warranties for a video game store located in Valledupar, Colombia[cite: 1]. The system provides persistent file-based data management, strict domain validation rules, and an interactive console interface[cite: 1].
+GameZone Unicesar is a layered Java application designed for managing products, sales, customers, staff, commercial promotions, product warranties, and returns for a video game store located in Valledupar, Colombia[cite: 1]. The system provides persistent file-based data management, strict domain validation rules, and an interactive console interface[cite: 1].
 
 ---
 
@@ -8,9 +8,9 @@ GameZone Unicesar is a layered Java application designed for managing products, 
 
 The application is built using a **4-Layer Architecture** to enforce separation of concerns, maintainability, and clean code principles[cite: 1]:
 
-1. **Model Layer (`com.gamezone.model`):** Core domain entities (`Person`, `Client`, `Seller`, `Product`, `VideoGame`, `Console`, `Accessory`, `Controller`, `Cable`, `Memory`, `Sale`, `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`, `Warranty`, `BasicWarranty`, `ExtendedWarranty`)[cite: 1].
+1. **Model Layer (`com.gamezone.model`):** Core domain entities (`Person`, `Client`, `Seller`, `Product`, `VideoGame`, `Console`, `Accessory`, `Controller`, `Cable`, `Memory`, `Sale`, `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`, `Warranty`, `BasicWarranty`, `ExtendedWarranty`, `Return`).
 2. **Persistence Layer (`com.gamezone.persistence`):** Handles file-based data reading and writing (`data/*.csv`, `data/*.txt`)[cite: 1].
-3. **Service Layer (`com.gamezone.service`):** Contains business logic, inventory updates, promotion/discount calculations, warranty lifecycle management, and transaction rules[cite: 1].
+3. **Service Layer (`com.gamezone.service`):** Contains business logic, inventory updates, promotion/discount calculations, warranty lifecycle management, return processing, and transaction rules[cite: 1].
 4. **UI Layer (`com.gamezone.ui`):** Console-based user interface (`GameZoneUI`, `ConsoleMenu`)[cite: 1].
 
 ---
@@ -34,21 +34,21 @@ The system manages video game accessories integrated into the existing product h
 - **Console Compatibility:** Accessories track compatible console IDs, allowing users to query compatible accessories for specific consoles[cite: 1].
 - **Unified Sales:** Sales transactions seamlessly combine Video Games, Consoles, and Accessories within a single purchase order with unified inventory deduction[cite: 1].
 
-### Feature 2: Promotion & Discount Module (Requirement 2)
+### Feature 2: Promotion & Discount Module (Requirement 2 & Adjustment A1)
 
-The system supports automated marketing campaigns and discount calculations applied during checkout[cite: 1]:
+The system supports automated marketing campaigns and discount calculations applied during checkout[cite: 1, 3]:
 
 - **Promotion Types:**
   - **Percentage Discount (`PercentageDiscount`):** Applies a global percentage discount across the entire sale total[cite: 1].
-  - **Category Discount (`CategoryDiscount`):** Applies a percentage discount exclusively to items belonging to a specific product category (e.g., `VIDEOGAME` or `CONSOLE`)[cite: 1].
+  - **Category Discount (`CategoryDiscount`):** Applies a percentage discount exclusively to items belonging to a specific product category (`VIDEOGAME`, `CONSOLE`, or `ACCESSORY`)[cite: 1, 3].
   - **Bulk Purchase Discount (`BulkPurchaseDiscount`):** Applies a percentage discount when the total item count in a sale meets or exceeds a minimum threshold[cite: 1].
 - **Validity Check:** Promotions feature start and end dates (`LocalDate`), ensuring discounts are applied only when active on the transaction date[cite: 1].
 - **Automatic Best-Discount Engine:** When processing a sale, the system evaluates all active promotions and automatically applies the single campaign that yields the highest monetary savings for the customer (promotions are non-cumulative)[cite: 1].
 - **Itemized Receipts:** Generated sale receipts display the subtotal, applied promotion name, discount amount saved, and final net total[cite: 1].
 
-### Feature 3: Warranty Module (Requirement 4)
+### Feature 3: Warranty Module (Requirement 4 & Adjustment A2)
 
-The system manages formal warranty registration, extended coverage options, and expiration tracking[cite: 1]:
+The system manages formal warranty registration, extended coverage options, and expiration tracking[cite: 1, 3]:
 
 - **Warranty Types:**
   - **Basic Warranty (`BasicWarranty`):** Automatically assigned to all sold consoles[cite: 1]. Covers factory defects for 6 months from the sale date at no extra charge[cite: 1].
@@ -56,15 +56,24 @@ The system manages formal warranty registration, extended coverage options, and 
 - **Validity & Expiration Engine:** Calculates start and end dates (`LocalDate`) and evaluates whether a warranty is active on the current date or expiring within a defined timeframe[cite: 1].
 - **Warranty Management Submenu:** Offers options to query specific product warranties within a sale, list all warranties, filter currently active warranties, and list warranties expiring within a custom number of days[cite: 1].
 
+### Feature 4: Return & Monthly Balance Module (Requirement 3 & Adjustments A4–A7)
+
+The system handles partial or full item returns, inventory restorations, warranty cancellations, and monthly balance reports[cite: 4, 5]:
+
+- **Item Return Processing:** Processes returns for products and accessories, automatically restoring stock to inventory[cite: 4].
+- **Proportional Refund Engine:** Reimburses returned items taking into account original promotional discounts applied at checkout[cite: 4, 5].
+- **Automatic Warranty Cancellation:** Cancels active warranties associated with returned consoles and refunds extended warranty fees[cite: 5].
+- **Monthly Balance Reporting:** Calculates gross monthly sales, total refund deductions, and net store revenue[cite: 5].
+
 ---
 
 ## Technical Specifications & Stack
 
 - **Language:** Java 17+[cite: 1]
 - **Build Tool:** Apache Maven (`pom.xml`)[cite: 1]
-- **Version Control:** Git Flow (`main`, `develop`, `feature/*`)[cite: 1]
-- **Commit Standard:** Conventional Commits[cite: 1]
-- **Data Storage:** Delimited CSV/text files in `data/` (`accessories.csv`, `promotions.csv`, `warranties.csv`, `persons.txt`, `products.txt`)[cite: 1]
+- **Version Control:** Git Flow (`main`, `develop`, `feature/*`, `fix/*`, `refactor/*`, `docs/*`)[cite: 1, 2, 3]
+- **Commit Standard:** Conventional Commits[cite: 1, 6]
+- **Data Storage:** Delimited CSV/text files in `data/` (`accessories.csv`, `promotions.csv`, `warranties.csv`, `returns.csv`, `persons.txt`, `products.txt`)[cite: 1, 3, 7]
 
 ---
 
@@ -83,6 +92,10 @@ GameZoneUnicesar/
 │   ├── promotion-class-diagram.md
 │   ├── warranty-analysis.md
 │   ├── warranty-class-diagram.md
+│   ├── return-analysis.md
+│   ├── return-class-diagram.md
+│   ├── integration-analysis.md
+│   ├── integrated-class-diagram.md
 │   └── layers-diagram.md
 └── src/
     └── main/
@@ -90,6 +103,7 @@ GameZoneUnicesar/
         │   ├── accessories.csv
         │   ├── promotions.csv
         │   ├── warranties.csv
+        │   ├── returns.csv
         │   ├── persons.txt
         │   └── products.txt
         └── java/
@@ -114,21 +128,24 @@ GameZoneUnicesar/
                     │   ├── BulkPurchaseDiscount.java
                     │   ├── Warranty.java
                     │   ├── BasicWarranty.java
-                    │   └── ExtendedWarranty.java
+                    │   ├── ExtendedWarranty.java
+                    │   └── Return.java
                     ├── persistence/
                     │   ├── PersonRepository.java
                     │   ├── ProductRepository.java
                     │   ├── AccessoryRepository.java
                     │   ├── SaleRepository.java
                     │   ├── PromotionRepository.java
-                    │   └── WarrantyRepository.java
+                    │   ├── WarrantyRepository.java
+                    │   └── ReturnRepository.java
                     ├── service/
                     │   ├── PersonService.java
                     │   ├── ProductService.java
                     │   ├── AccessoryService.java
                     │   ├── SaleService.java
                     │   ├── PromotionService.java
-                    │   └── WarrantyService.java
+                    │   ├── WarrantyService.java
+                    │   └── ReturnService.java
                     └── ui/
                         ├── GameZoneUI.java
                         └── ConsoleMenu.java
