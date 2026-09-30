@@ -4,7 +4,7 @@
 - **Author**: Jesus Manuel Martinez Baute
 - **Role**: Developer 1 (Product Module)
 - **Assigned Module**: `com.gamezone` (`model`, `persistence`, `service` for Products)
-- **Branch**: `feature/product-module`
+- **Branch**: `feature/product-module`, `feature/accessory-category-discount` (A1), `fix/return-discounted-refund` (A5)
 
 ---
 
@@ -51,3 +51,21 @@
 - **Context / Prompt**: Structuring the AI usage log file (`developer1-ai-log.md`) with accurate timestamps and detailed interaction histories.
 - **AI Response / Advice**: Structured the log entries chronologically with timestamps, context, suggestions, and explicit decisions taken for academic audit compliance.
 - **Decision Taken**: Saved and committed `docs/ai-usage/developer1-ai-log.md` into the repository.
+
+### 8. Adjustment A1: Accessory Category Discount Support
+- **Date & Time**: September 27, 2026
+- **Context / Prompt**: Extending `CategoryDiscount` and `PromotionService` to support the "ACCESSORY" category, updating the UI dropdown logic, and preloading an active promotion in CSV format.
+- **AI Response / Advice**: Provided the logic to safely extract and standardize categories using `.toUpperCase()`. Fixed a `NullPointerException` risk in `GameZoneUI.java` by checking `p != null` and fetching items from `accessoryService`. Advised on standardizing the CSV delimiter (`;`) to match the existing `PromotionRepository`.
+- **Decision Taken**: Integrated the "ACCESSORY" category into `CategoryDiscount.java` and `PromotionService.java`. Refactored `GameZoneUI.registerCategoryDiscount()` to dynamically load accessory categories. Added `PROM04` to `data/promotions.csv`. 
+
+### 9. Adjustment A5: Proportional Refund for Discounted Sales
+- **Date & Time**: September 27, 2026
+- **Context / Prompt**: Fixing a bug in `Return.java` where refunds for discounted sales returned the full list price instead of the proportionally discounted amount paid by the customer.
+- **AI Response / Advice**: Provided the mathematical formula (`discountRate = discountAmount / saleSubtotal`) to calculate proportional refunds. Detected and fixed a critical bug in `generateReturnReceipt()` where the accumulator used `=` instead of `+=`, which overwrote the subtotal for multi-item sales. Provided updated Javadoc.
+- **Decision Taken**: Updated `calculateRefundAmount()` and `generateReturnReceipt()` in `Return.java` to implement accurate proportional math. Verified that `ReturnService.java` was correctly passing the complete `originalSale` object. Pushed atomic commits to the `fix/return-discounted-refund` branch.
+
+### 10. PR Documentation & Git Branch Cleanup (A1 & A5)
+- **Date & Time**: September 27, 2026
+- **Context / Prompt**: Creating structured Pull Request descriptions for adjustments A1 and A5 and learning how to cleanly remove merged branches.
+- **AI Response / Advice**: Provided bilingual (English/Spanish) PR templates highlighting changes made and verification steps. Supplied git commands for safely deleting local and remote branches (`git branch -d` and `git push origin --delete`) after the PR is merged into `develop`.
+- **Decision Taken**: Opened standard-compliant Pull Requests for both adjustments. Executed branch deletion protocols to keep the repository clean.
