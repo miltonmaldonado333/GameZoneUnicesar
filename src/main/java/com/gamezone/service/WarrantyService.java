@@ -191,4 +191,42 @@ public class WarrantyService {
             warrantyRepository.saveAll(currentWarranties);
         }
     }
+
+    /**
+     * Cancels every warranty attached to the given product within the given sale
+     * and returns the amount that can be refunded to the customer for them.
+     * A basic warranty is free, so it contributes zero; an extended warranty
+     * contributes its additional cost.
+     *
+     * @param productId unique identifier of the returned product
+     * @param saleId    unique identifier of the sale the product was bought in
+     * @return the refundable warranty cost, or 0.0 if no warranty was found
+     */
+    public double cancelWarranties(String productId, String saleId) {
+        if (productId == null || saleId == null) {
+            return 0.0;
+        }
+
+        List<Warranty> remaining = new ArrayList<>();
+        double refundableCost = 0.0;
+        boolean removedAny = false;
+
+        for (Warranty warranty : warrantyRepository.loadAll()) {
+            boolean matchesProduct = warranty.getProduct().getId().equalsIgnoreCase(productId);
+            boolean matchesSale = String.valueOf(warranty.getSale().getId()).equalsIgnoreCase(saleId);
+
+            if (matchesProduct && matchesSale) {
+                refundableCost += warranty.getAdditionalCost();
+                removedAny = true;
+            } else {
+                remaining.add(warranty);
+            }
+        }
+
+        if (removedAny) {
+            warrantyRepository.saveAll(remaining);
+        }
+
+        return refundableCost;
+    }
 }

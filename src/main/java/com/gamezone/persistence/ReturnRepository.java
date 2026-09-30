@@ -21,6 +21,8 @@ import com.gamezone.service.SaleService;
  * File-based repository for Return objects. Persists all returns in a CSV file,
  * resolving references to Sale, Product, and Accessory during loading through
  * the injected SaleService, ProductService, and AccessoryService.
+ * Each line stores the amount refunded for cancelled warranties as its last
+ * column; lines written before that column existed are loaded with zero.
  */
 public class ReturnRepository {
 
@@ -57,6 +59,12 @@ public class ReturnRepository {
         this.accessoryService = accessoryService;
     }
 
+    /**
+     * Loads all returns stored in the CSV file. If the file does not exist,
+     * an empty list is returned.
+     *
+     * @return the list of returns loaded from the file
+     */
     public List<Return> loadAll() {
         List<Return> returns = new ArrayList<>();
         File file = new File(filePath);
@@ -83,6 +91,11 @@ public class ReturnRepository {
         return returns;
     }
 
+    /**
+     * Saves the given list of returns to the CSV file, overwriting its content.
+     *
+     * @param returns the list of returns to save
+     */
     public void saveAll(List<Return> returns) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Return returnRecord : returns) {
@@ -110,7 +123,8 @@ public class ReturnRepository {
                 String.valueOf(returnRecord.getOriginalSale().getId()),
                 productIds.toString(),
                 returnRecord.getReason(),
-                String.valueOf(returnRecord.getRefundAmount()));
+                String.valueOf(returnRecord.getRefundAmount()),
+                String.valueOf(returnRecord.getWarrantyRefundAmount()));
     }
 
     private Return parseLine(String line) {
@@ -120,6 +134,7 @@ public class ReturnRepository {
         String saleId = fields[2];
         String[] productIdArray = fields[3].isBlank() ? new String[0] : fields[3].split(",");
         String reason = fields[4];
+        double warrantyRefund = (fields.length > 6 && !fields[6].isBlank()) ? Double.parseDouble(fields[6]) : 0.0;
 
         Sale sale = findSaleById(saleId);
         if (sale == null) {
@@ -134,7 +149,7 @@ public class ReturnRepository {
             }
         }
 
-        return new Return(returnId, date, sale, products, reason);
+        return new Return(returnId, date, sale, products, reason, warrantyRefund);
     }
 
     /**
