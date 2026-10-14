@@ -69,3 +69,21 @@
 - **Context / Prompt**: Creating structured Pull Request descriptions for adjustments A1 and A5 and learning how to cleanly remove merged branches.
 - **AI Response / Advice**: Provided bilingual (English/Spanish) PR templates highlighting changes made and verification steps. Supplied git commands for safely deleting local and remote branches (`git branch -d` and `git push origin --delete`) after the PR is merged into `develop`.
 - **Decision Taken**: Opened standard-compliant Pull Requests for both adjustments. Executed branch deletion protocols to keep the repository clean.
+
+### 11. Custom Exception Hierarchy & Custom Error Code Design (Req. 6)
+- **Date & Time**: October 14, 2026 at 01:15 PM COT
+- **Context / Prompt**: Defining and implementing the custom domain exception layer in `com.gamezone.exceptions` to replace generic `IllegalArgumentException` and `IOException` usages.
+- **AI Response / Advice**: Advised creating an abstract `GameZoneException` base class extending `RuntimeException` (unchecked exception) with encapsulated `errorCode` attributes and double constructors. Recommended specializing four subclasses (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, and `PersistenceException`) with clear, formatted Spanish error messages for end-user readability.
+- **Decision Taken**: Built `GameZoneException.java` as root, along with `ResourceNotFoundException.java`, `BusinessRuleException.java`, `InvalidDataException.java`, and `PersistenceException.java` inside `com.gamezone.exceptions`.
+
+### 12. Validator Layer Implementation & Model Integration (Req. 6)
+- **Date & Time**: October 14, 2026 at 01:30 PM COT
+- **Context / Prompt**: Designing static validation utilities in `com.gamezone.validation` (`ProductValidator`, `PersonValidator`, and `SaleValidator`) for pre-checking domain constraints before service execution.
+- **AI Response / Advice**: Provided static validation methods ensuring layer separation (validators do not touch persistence/repositories). Adapted `PersonValidator` and `SaleValidator` to align strictly with existing domain getters (`getIdentification()` in `Person` and `Client` entity usage in `Sale`).
+- **Decision Taken**: Created `ProductValidator.java`, `PersonValidator.java`, and `SaleValidator.java` in `com.gamezone.validation`, ensuring full compatibility with existing domain models and throwing specialized exceptions.
+
+### 13. Exception Analysis Documentation & Atomic Conventional Commits (Req. 6)
+- **Date & Time**: October 14, 2026 at 01:38 PM COT
+- **Context / Prompt**: Completing architectural analysis documentation in English (`docs/exception-analysis.md`) answering prompt questions and establishing an atomic Git commit workflow.
+- **AI Response / Advice**: Provided theoretical justifications in English regarding Checked vs. Unchecked exceptions, SRP/OCP design benefits, architectural placement of validators, behavior preservation, and multi-catch strategy in `ConsoleMenu`. Guided atomic commit sequence (`feat(exceptions)`, `feat(validation)`, `docs`) and push protocol for Developer 1 tasks.
+- **Decision Taken**: Drafted and committed `docs/exception-analysis.md`. Executed individual atomic commits for each exception and validator class on branch `feature/exception-handling`.
