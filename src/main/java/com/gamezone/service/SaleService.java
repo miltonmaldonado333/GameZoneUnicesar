@@ -1,5 +1,7 @@
 package com.gamezone.service;
 
+import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Client;
 import com.gamezone.model.Console;
@@ -8,6 +10,8 @@ import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.SaleRepository;
+import com.gamezone.validation.ProductValidator;
+import com.gamezone.validation.SaleValidator;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -17,6 +21,7 @@ import java.util.List;
  * Service handling sales transaction business logic, stock validation,
  * automatic inventory updates, promotion discount evaluation, and warranty
  * assignments following the unified sale registration flow (A3 adjustment).
+ * Sale and stock checks are delegated to SaleValidator and ProductValidator.
  */
 public class SaleService {
 
@@ -77,6 +82,8 @@ public class SaleService {
      * @param seller the attending salesperson
      * @param items the list of products and accessories included in the sale
      * @return the processed and registered Sale instance
+     * @throws InvalidDataException if the client or the seller is null
+     * @throws BusinessRuleException if the sale has no items or an item has insufficient stock
      */
     public Sale registerSale(Client client, Seller seller, List<Product> items) {
         return registerSale(client, seller, items, null);
@@ -100,20 +107,18 @@ public class SaleService {
      * @param items the list of products and accessories included in the sale
      * @param extendedWarrantyProductIds the list of console product IDs requesting extended warranty
      * @return the processed and registered Sale instance
-     * @throws IllegalArgumentException if the items list is null/empty or if any item has insufficient stock
+     * @throws InvalidDataException if the client or the seller is null
+     * @throws BusinessRuleException if the items list is null or empty, if any item has
+     *                               insufficient stock, or if an accessory stock update fails
      */
     public Sale registerSale(Client client, Seller seller, List<Product> items, List<String> extendedWarrantyProductIds) {
-        
-        // Step 1: Validate that the sale has at least one item
-        if (items == null || items.isEmpty()) {
-            throw new IllegalArgumentException("A sale must contain at least one product or accessory.");
-        }
+
+        // Step 1: Validate that the sale has a client, a seller and at least one item
+        SaleValidator.validateSaleData(client, seller, items);
 
         // Step 2: Resolve each item as product or accessory and validate stock
         for (Product item : items) {
-            if (item.getStock() < 1) {
-                throw new IllegalArgumentException("Insufficient stock for item: " + item.getTitle());
-            }
+            ProductValidator.validateStockAvailability(item, 1);
         }
 
         // Step 3: Create the sale and calculate the subtotal
@@ -140,8 +145,8 @@ public class SaleService {
         // Step 5: Generate basic warranty for each console and requested extended warranties, summing costs
         double totalExtendedWarrantyCost = 0.0;
         if (warrantyService != null) {
-            List<String> remainingExtendedIds = (extendedWarrantyProductIds != null) 
-                    ? new ArrayList<>(extendedWarrantyProductIds) 
+            List<String> remainingExtendedIds = (extendedWarrantyProductIds != null)
+                    ? new ArrayList<>(extendedWarrantyProductIds)
                     : new ArrayList<>();
 
             for (Product item : items) {
@@ -174,7 +179,7 @@ public class SaleService {
             if (item instanceof Accessory && accessoryService != null) {
                 boolean updated = accessoryService.updateStock(item.getId(), quantitySold);
                 if (!updated) {
-                    throw new IllegalArgumentException("Could not update stock for accessory: " + item.getTitle());
+                    throw new BusinessRuleException("No se pudo actualizar el stock del accesorio: " + item.getTitle());
                 }
             } else if (productService != null) {
                 productService.updateStock(item.getId(), quantitySold);
