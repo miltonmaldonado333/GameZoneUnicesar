@@ -9,12 +9,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Person;
 import com.gamezone.model.Seller;
 
 /**
  * Handles text file persistence operations for person records (clients and sellers).
+ * Any IOException raised while reading or writing the file is wrapped in a
+ * PersistenceException that names the file and the failed operation.
  */
 public class FilePersonRepository implements PersonRepository {
 
@@ -24,7 +27,7 @@ public class FilePersonRepository implements PersonRepository {
     /**
      * Constructs a FilePersonRepository and ensures the file path is resolved
      * relative to the project's root directory.
-     * 
+     *
      * @param filePath relative path of the file
      */
     public FilePersonRepository(String filePath) {
@@ -34,8 +37,9 @@ public class FilePersonRepository implements PersonRepository {
 
     /**
      * Loads all person records from the text file.
-     * 
+     *
      * @return a list of parsed Person objects (Clients and Sellers)
+     * @throws PersistenceException if the file cannot be read
      */
     @Override
     public List<Person> loadPersons() {
@@ -60,7 +64,8 @@ public class FilePersonRepository implements PersonRepository {
                 }
             }
         } catch (IOException e) {
-            System.out.println("Error reading person data: " + e.getMessage());
+            throw new PersistenceException(
+                    "Error al leer el archivo '" + file.getName() + "' (operacion: lectura de personas): " + e.getMessage(), e);
         }
 
         return persons;
@@ -68,8 +73,9 @@ public class FilePersonRepository implements PersonRepository {
 
     /**
      * Saves a complete list of person records to the text file.
-     * 
+     *
      * @param persons the list of persons to be written
+     * @throws PersistenceException if the file cannot be written
      */
     @Override
     public void savePersons(List<Person> persons) {
@@ -80,13 +86,14 @@ public class FilePersonRepository implements PersonRepository {
                 writer.newLine();
             }
         } catch (IOException e) {
-            System.out.println("Error writing person data: " + e.getMessage());
+            throw new PersistenceException(
+                    "Error al escribir el archivo '" + new File(filePath).getName() + "' (operacion: guardado de personas): " + e.getMessage(), e);
         }
     }
 
     /**
      * Converts a Person object into a semicolon-delimited string format.
-     * 
+     *
      * @param person the person instance to format
      * @return string representation for text file storage
      */
@@ -112,7 +119,7 @@ public class FilePersonRepository implements PersonRepository {
 
     /**
      * Parses a single text line into either a Client or Seller object.
-     * 
+     *
      * @param line the text line from the file
      * @return the reconstructed Person object, or null if type is unrecognized
      */

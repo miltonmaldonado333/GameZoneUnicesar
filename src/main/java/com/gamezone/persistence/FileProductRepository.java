@@ -1,5 +1,6 @@
 package com.gamezone.persistence;
 
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
@@ -15,11 +16,20 @@ import java.util.Locale;
 
 /**
  * Concrete implementation of ProductRepository handling file-based persistence.
+ * Any IOException raised while reading or writing the products file is wrapped
+ * in a PersistenceException that names the file and the failed operation.
  */
 public class FileProductRepository implements ProductRepository {
 
-    private static final String FILE_PATH = System.getProperty("user.dir") + java.io.File.separator + "products.txt";
+    private static final String FILE_NAME = "products.txt";
+    private static final String FILE_PATH = System.getProperty("user.dir") + java.io.File.separator + FILE_NAME;
 
+    /**
+     * Loads all products from the products file.
+     *
+     * @return the list of products read from the file
+     * @throws PersistenceException if the file cannot be read
+     */
     @Override
     public List<Product> loadProducts() {
         List<Product> products = new ArrayList<>();
@@ -63,12 +73,19 @@ public class FileProductRepository implements ProductRepository {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error reading products file: " + e.getMessage());
+            throw new PersistenceException(
+                    "Error al leer el archivo '" + FILE_NAME + "' (operacion: lectura de productos): " + e.getMessage(), e);
         }
 
         return products;
     }
 
+    /**
+     * Saves the given products to the products file, overwriting its content.
+     *
+     * @param products the list of products to save
+     * @throws PersistenceException if the file cannot be written
+     */
     @Override
     public void saveProducts(List<Product> products) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
@@ -87,7 +104,8 @@ public class FileProductRepository implements ProductRepository {
                 writer.newLine();
             }
         } catch (IOException ex) {
-            System.err.println("Error writing products file: " + ex.getMessage());
+            throw new PersistenceException(
+                    "Error al escribir el archivo '" + FILE_NAME + "' (operacion: guardado de productos): " + ex.getMessage(), ex);
         }
     }
 }

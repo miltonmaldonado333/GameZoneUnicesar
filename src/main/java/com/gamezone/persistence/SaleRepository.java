@@ -1,5 +1,6 @@
 package com.gamezone.persistence;
 
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
@@ -17,6 +18,8 @@ import java.util.Scanner;
 
 /**
  * Handles text file persistence operations for sales transactions.
+ * Any IOException raised while reading or writing the sales file is wrapped
+ * in a PersistenceException that names the file and the failed operation.
  */
 public class SaleRepository {
     // File name used for storing sales records
@@ -27,7 +30,7 @@ public class SaleRepository {
     /**
      * Constructs a SaleRepository linked with the required person and product services
      * to reconstruct sale associations.
-     * 
+     *
      * @param personService service used to look up clients and sellers
      * @param productService service used to look up purchased products
      */
@@ -38,43 +41,46 @@ public class SaleRepository {
 
     /**
      * Appends a new sale record to the text file using semicolon-separated IDs.
-     * 
+     *
      * @param sale the sale object to be saved
+     * @throws PersistenceException if the sales file cannot be written
      */
     public void save(Sale sale) {
         // Open file writer in append mode
         try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_NAME, true))) {
             StringBuilder sb = new StringBuilder();
-            
+
             // Format: id;date;client_id;seller_code;product_id_1;product_id_2...
             sb.append(sale.getId()).append(";")
               .append(sale.getDate()).append(";")
               .append(sale.getClient().getIdentification()).append(";")
               .append(sale.getSeller().getEmployeeCode());
-            
+
             // Append all product IDs linked to this sale
             for (Product p : sale.getProducts()) {
                 sb.append(";").append(p.getId());
             }
-            
+
             writer.println(sb.toString());
         } catch (IOException e) {
-            throw new RuntimeException("Error saving sale to file: " + e.getMessage(), e);
+            throw new PersistenceException(
+                    "Error al escribir el archivo '" + FILE_NAME + "' (operacion: guardado de venta): " + e.getMessage(), e);
         }
     }
 
     /**
      * Reads all recorded sales from the text file and rebuilds the corresponding objects.
-     * 
+     *
      * @return a list containing all successfully parsed sales
+     * @throws PersistenceException if the sales file cannot be read
      */
     public List<Sale> findAll() {
         List<Sale> sales = new ArrayList<>();
         File file = new File(FILE_NAME);
-        
+
         // Return an empty list if the persistence file doesn't exist yet
         if (!file.exists()) {
-            return sales; 
+            return sales;
         }
 
         // Read records line by line using a scanner
@@ -82,18 +88,18 @@ public class SaleRepository {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 if (line.isBlank()) continue;
-                
+
                 String[] parts = line.split(";");
-                
+
                 // Ensure the line contains at least the base sale fields plus one product
                 if (parts.length >= 5) {
                     int id = Integer.parseInt(parts[0]);
                     String date = parts[1];
-                    
+
                     // Rebuild relationships using their respective service lookups
                     Client client = personService.findClientById(parts[2]);
                     Seller seller = personService.findSellerByCode(parts[3]);
-                    
+
                     List<Product> products = new ArrayList<>();
                     for (int i = 4; i < parts.length; i++) {
                         Product p = productService.findProductById(parts[i]);
@@ -101,7 +107,7 @@ public class SaleRepository {
                             products.add(p);
                         }
                     }
-                    
+
                     // Add the sale only if all core entities are valid and products were found
                     if (client != null && seller != null && !products.isEmpty()) {
                         Sale sale = new Sale(id, date, client, seller, products);
@@ -110,9 +116,10 @@ public class SaleRepository {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error reading sales from file: " + e.getMessage(), e);
+            throw new PersistenceException(
+                    "Error al leer el archivo '" + FILE_NAME + "' (operacion: lectura de ventas): " + e.getMessage(), e);
         }
-        
+
         return sales;
     }
 }
