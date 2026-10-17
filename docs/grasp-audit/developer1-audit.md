@@ -12,6 +12,9 @@
 - `com.gamezone.model.Cable`
 - `com.gamezone.model.Controller`
 - `com.gamezone.model.Memory`
+- `com.gamezone.model.Warranty`
+- `com.gamezone.model.BasicWarranty`
+- `com.gamezone.model.ExtendedWarranty`
 
 ---
 
@@ -33,6 +36,18 @@
 | `Memory` | Information Expert | ✅ Compliant | Encapsulates `capacityGB` and `storageType`, generating its formatted state via `getFullDescription()`. | None required. |
 | `Memory` | Polymorphism | ✅ Compliant | Overrides `getFullDescription()` and `getCategory()` returning `"Memory"`. | None required. |
 | `Memory` | High Cohesion | ✅ Compliant | Holds state and behavior strictly related to memory accessories. | None required. |
+| `Warranty` | Information Expert | ✅ Compliant | Encapsulates warranty period (`startDate`, `endDate`) and checks validity in `isActive()`. | None required. |
+| `Warranty` | Polymorphism | ✅ Compliant | Defines abstract methods (`getDurationInMonths()`, `getWarrantyType()`, `getAdditionalCost()`) for concrete subclasses. | None required. |
+| `Warranty` | High Cohesion | ✅ Compliant | Focuses strictly on warranty metadata and certificate generation logic. | None required. |
+| `Warranty` | Protected Variations | ✅ Compliant | Abstract class isolates callers from variations in basic vs extended warranties. | None required. |
+| `BasicWarranty` | Information Expert | ✅ Compliant | Encapsulates basic warranty defaults (6-month duration, $0.0 additional cost). | None required. |
+| `BasicWarranty` | Polymorphism | ✅ Compliant | Implements `getDurationInMonths()`, `getWarrantyType()`, and `getAdditionalCost()` without type-checking conditionals. | None required. |
+| `BasicWarranty` | High Cohesion | ✅ Compliant | Focused solely on basic warranty specific rules and parameters. | None required. |
+| `BasicWarranty` | Creator | ✅ Compliant | Provides a parameterized constructor delegating state initialization to `super(...)`. | None required. |
+| `ExtendedWarranty` | Information Expert | ✅ Compliant | Encapsulates extended warranty logic (12-month duration, calculates 10% additional cost based on product price). | None required. |
+| `ExtendedWarranty` | Polymorphism | ✅ Compliant | Polymorphically implements `getDurationInMonths()`, `getWarrantyType()`, and `getAdditionalCost()` without type conditional checks. | None required. |
+| `ExtendedWarranty` | High Cohesion | ✅ Compliant | Focused exclusively on rules, pricing calculations, and parameters for extended warranties. | None required. |
+| `ExtendedWarranty` | Creator | ✅ Compliant | Provides a parameterized constructor delegating state initialization to `super(...)`. | None required. |
 
 ---
 
@@ -71,3 +86,24 @@
   - *Current State:* Concrete domain entity extending `Accessory` to manage storage capacity (`capacityGB`) and type (`storageType`).
   - *Identified Issues:* None. The class is highly cohesive, encapsulates its state as an Information Expert, and exhibits low coupling.
   - *Proposed Refactoring:* None required. Complies with all applicable GRASP principles.
+
+  ### 5. `com.gamezone.model.Warranty`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Abstract base class representing a product warranty. It automatically computes its expiration date (`endDate`) using the polymorphic `getDurationInMonths()` method upon construction, encapsulates validity checks via `isActive(LocalDate)`, and generates a formatted warranty certificate in `generateWarrantyCertificate()`.
+  - *Identified Issues:* None. Creator and Controller do not apply as this is an abstract domain class. Pure Fabrication is not applicable as it represents a core business entity.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 6. `com.gamezone.model.BasicWarranty`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete implementation of `Warranty` representing a standard 6-month free warranty. It polymorphically overrides `getDurationInMonths()`, `getWarrantyType()`, and `getAdditionalCost()` to supply default values.
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns are not applicable. Low coupling is maintained by depending strictly on its abstract parent class `Warranty`.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 7. `com.gamezone.model.ExtendedWarranty`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete subclass extending `Warranty` to represent a premium 12-month extended warranty. It acts as an Information Expert by computing its additional cost (10% of the associated product price) directly in `getAdditionalCost()`, and polymorphically overrides `getDurationInMonths()` and `getWarrantyType()`.
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns are not applicable. Low coupling is maintained by interacting strictly with its inherited `Warranty` state and `Product` interface methods.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
