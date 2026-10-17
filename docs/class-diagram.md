@@ -1,3 +1,4 @@
+```mermaid
 classDiagram
 direction TB
 
@@ -354,3 +355,4 @@ direction TB
     PromotionRepository ..> Promotion
     SaleRepository ..> Sale
     ReturnRepository ..> Return
+```
