@@ -1,5 +1,10 @@
 package com.gamezone.ui;
 
+import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.GameZoneException;
+import com.gamezone.exceptions.InvalidDataException;
+import com.gamezone.exceptions.PersistenceException;
+import com.gamezone.exceptions.ResourceNotFoundException;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Client;
 import com.gamezone.model.Console;
@@ -21,19 +26,19 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * Handles the interactive console user interface for the GameZone system. It
- * provides menus to execute all required operations, grouping them into
- * Product, Person, Sales, Accessory, Promotion, Return, and Warranty
- * management.
+ * Handles the interactive console user interface for the GameZone system.
+ * Serves as the main presentation controller (GRASP), delegating business 
+ * logic to the respective services and handling centralized console I/O 
+ * (Applying Single Responsibility Principle).
  */
 public class GameZoneUI {
 
-    // Service and input dependencies
     private final BufferedReader reader;
     private final SaleService saleService;
     private final ProductService productService;
@@ -45,6 +50,8 @@ public class GameZoneUI {
 
     /**
      * Constructs a GameZoneUI with all required service dependencies.
+     * Applies Dependency Inversion (SOLID), relying on abstractions or 
+     * externalized service instances rather than creating them internally.
      *
      * @param saleService the service managing sales
      * @param productService the service managing products
@@ -70,472 +77,539 @@ public class GameZoneUI {
 
     /**
      * Starts the main interactive application loop.
+     * Maintains the lifecycle of the user session until the exit option is chosen.
      */
     public void start() {
         int option = -1;
 
         System.out.println("===========================================");
-        System.out.println("         WELCOME TO GAMEZONE SYSTEM        ");
+        System.out.println("        BIENVENIDO AL SISTEMA GAMEZONE     ");
         System.out.println("===========================================");
 
-        // Main menu loop
         do {
             displayMainMenu();
             option = readOption();
             processMainMenuOption(option);
         } while (option != 0);
 
-        System.out.println("Exiting GameZone system... Goodbye!");
+        System.out.println("Saliendo del sistema GameZone... ¡Adiós!");
 
-        // Close the input reader safely
         try {
             reader.close();
         } catch (IOException e) {
-            System.out.println("Error closing reader: " + e.getMessage());
+            System.out.println("Error al cerrar el lector: " + e.getMessage());
         }
     }
+
+    // ================= I/O HELPER METHODS (SRP / GRASP) =================
+
+    /**
+     * Prompts the user and reads a string input from the console.
+     * Centralizes I/O operations to maintain High Cohesion.
+     *
+     * @param message the message to display to the user
+     * @return the string entered by the user
+     * @throws IOException if an I/O error occurs
+     */
+    private String promptString(String message) throws IOException {
+        System.out.print(message);
+        return reader.readLine();
+    }
+
+    /**
+     * Prompts the user and parses an integer input from the console.
+     *
+     * @param message the message to display to the user
+     * @return the integer entered by the user
+     * @throws IOException if an I/O error occurs
+     * @throws NumberFormatException if the input is not a valid integer
+     */
+    private int promptInt(String message) throws IOException, NumberFormatException {
+        System.out.print(message);
+        return Integer.parseInt(reader.readLine());
+    }
+
+    /**
+     * Prompts the user and parses a double input from the console.
+     *
+     * @param message the message to display to the user
+     * @return the double entered by the user
+     * @throws IOException if an I/O error occurs
+     * @throws NumberFormatException if the input is not a valid double
+     */
+    private double promptDouble(String message) throws IOException, NumberFormatException {
+        System.out.print(message);
+        return Double.parseDouble(reader.readLine());
+    }
+
+    /**
+     * Prompts the user and parses a LocalDate input from the console.
+     *
+     * @param message the message to display to the user
+     * @return the LocalDate entered by the user
+     * @throws IOException if an I/O error occurs
+     * @throws DateTimeParseException if the input does not match the YYYY-MM-DD format
+     */
+    private LocalDate promptDate(String message) throws IOException, DateTimeParseException {
+        System.out.print(message);
+        return LocalDate.parse(reader.readLine());
+    }
+
+    // ================= MAIN MENU =================
 
     /**
      * Displays the main menu options to the console.
      */
     private void displayMainMenu() {
-        System.out.println("\n---------------- MAIN MENU ----------------");
-        System.out.println("1. Product Management (Consoles and Video Games)");
-        System.out.println("2. Person Management");
-        System.out.println("3. Sales Management");
-        System.out.println("4. Accessory Management");
-        System.out.println("5. Promotion Management");
-        System.out.println("6. Return Management");
-        System.out.println("7. Consult Monthly Balance");
-        System.out.println("8. Warranty Management");
-        System.out.println("0. Exit");
-        System.out.print("Select an option: ");
+        System.out.println("\n---------------- MENÚ PRINCIPAL ----------------");
+        System.out.println("1. Gestión de Productos (Consolas y Videojuegos)");
+        System.out.println("2. Gestión de Personas");
+        System.out.println("3. Gestión de Ventas");
+        System.out.println("4. Gestión de Accesorios");
+        System.out.println("5. Gestión de Promociones");
+        System.out.println("6. Gestión de Devoluciones");
+        System.out.println("7. Consultar Balance Mensual");
+        System.out.println("8. Gestión de Garantías");
+        System.out.println("0. Salir");
+        System.out.print("Seleccione una opción: ");
     }
 
     /**
-     * Reads and parses a numeric user input from the console.
+     * Reads and safely parses the user's numeric selection for menus.
      *
-     * @return the entered option or -1 if input is invalid
+     * @return the selected option, or -1 if invalid
      */
     private int readOption() {
         try {
-            String input = reader.readLine();
-            return Integer.parseInt(input);
+            return Integer.parseInt(reader.readLine());
         } catch (NumberFormatException e) {
-            System.out.println("Error: Please enter a valid numeric option.");
+            System.out.println("Error: Por favor, ingrese una opción numérica válida.");
             return -1;
         } catch (IOException e) {
-            System.out.println("Error reading input: " + e.getMessage());
+            System.out.println("Error leyendo la entrada: " + e.getMessage());
             return -1;
         }
     }
 
     /**
-     * Routes the main menu selection to its respective submenu handler.
+     * Routes the user's main menu choice to the appropriate subsystem handler.
      *
-     * @param option the selected menu option
+     * @param option the user's selected menu option
      */
     private void processMainMenuOption(int option) {
         switch (option) {
-            case 1 ->
-                handleProductMenu();
-            case 2 ->
-                handlePersonMenu();
-            case 3 ->
-                handleSalesMenu();
-            case 4 ->
-                handleAccessoryMenu();
-            case 5 ->
-                handlePromotionMenu();
-            case 6 ->
-                handleReturnMenu();
-            case 7 ->
-                generateMonthlyBalance();
-            case 8 ->
-                handleWarrantyMenu();
+            case 1 -> handleProductMenu();
+            case 2 -> handlePersonMenu();
+            case 3 -> handleSalesMenu();
+            case 4 -> handleAccessoryMenu();
+            case 5 -> handlePromotionMenu();
+            case 6 -> handleReturnMenu();
+            case 7 -> generateMonthlyBalance();
+            case 8 -> handleWarrantyMenu();
             case 0, -1 -> {
             }
-            default ->
-                System.out.println("Invalid option. Please try again.");
+            default -> System.out.println("Opción inválida. Por favor, intente de nuevo.");
         }
     }
 
     // ================= PRODUCT SUBMENU =================
+
     /**
-     * Handles product management options loop.
+     * Handles the product management submenu loop.
      */
     private void handleProductMenu() {
         int option = -1;
         do {
-            System.out.println("\n============= PRODUCT MANAGEMENT ==============");
-            System.out.println("1. Register a new video game");
-            System.out.println("2. Register a new console");
-            System.out.println("3. List all available products in inventory");
-            System.out.println("0. Return to Main Menu");
-            System.out.print("Select an option: ");
+            System.out.println("\n============= GESTIÓN DE PRODUCTOS ==============");
+            System.out.println("1. Registrar un nuevo videojuego");
+            System.out.println("2. Registrar una nueva consola");
+            System.out.println("3. Listar todos los productos en inventario");
+            System.out.println("0. Volver al Menú Principal");
+            System.out.print("Seleccione una opción: ");
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerVideoGame();
-                case 2 ->
-                    registerConsole();
-                case 3 ->
-                    listProducts();
+                case 1 -> registerVideoGame();
+                case 2 -> registerConsole();
+                case 3 -> listProducts();
                 case 0 -> {
                 }
-                default ->
-                    System.out.println("Invalid option.");
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Registers a new video game into the inventory.
+     * Orchestrates the interactive registration of a new video game.
      */
     private void registerVideoGame() {
         try {
-            System.out.println("\n--- REGISTER VIDEO GAME ---");
-            System.out.print("ID: ");
-            String id = reader.readLine();
-            System.out.print("Title: ");
-            String title = reader.readLine();
-            System.out.print("Price: ");
-            double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: ");
-            int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Platform: ");
-            String platform = reader.readLine();
-            System.out.print("Genre: ");
-            String genre = reader.readLine();
-            System.out.print("Age Rating: ");
-            String ageRating = reader.readLine();
+            System.out.println("\n--- REGISTRAR VIDEOJUEGO ---");
+            String id = promptString("ID: ");
+            String title = promptString("Título: ");
+            double price = promptDouble("Precio: ");
+            int stock = promptInt("Stock: ");
+            String platform = promptString("Plataforma: ");
+            String genre = promptString("Género: ");
+            String ageRating = promptString("Clasificación de Edad: ");
 
             boolean registered = productService.registerVideoGame(platform, genre, ageRating, id, title, price, stock);
             if (registered) {
-                System.out.println("Video game registered and saved successfully!");
+                System.out.println("¡Videojuego registrado y guardado exitosamente!");
             } else {
-                System.out.println("Error: A product with this ID already exists.");
+                System.out.println("Error: Ya existe un producto con este ID.");
             }
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (NumberFormatException e) {
+            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error registering video game: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Registers a new console into the inventory.
+     * Orchestrates the interactive registration of a new console.
      */
     private void registerConsole() {
         try {
-            System.out.println("\n--- REGISTER CONSOLE ---");
-            System.out.print("ID: ");
-            String id = reader.readLine();
-            System.out.print("Title: ");
-            String title = reader.readLine();
-            System.out.print("Price: ");
-            double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: ");
-            int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Brand: ");
-            String brand = reader.readLine();
-            System.out.print("Model: ");
-            String model = reader.readLine();
-            System.out.print("Generation: ");
-            String generation = reader.readLine();
+            System.out.println("\n--- REGISTRAR CONSOLA ---");
+            String id = promptString("ID: ");
+            String title = promptString("Título: ");
+            double price = promptDouble("Precio: ");
+            int stock = promptInt("Stock: ");
+            String brand = promptString("Marca: ");
+            String model = promptString("Modelo: ");
+            String generation = promptString("Generación: ");
 
             boolean registered = productService.registerConsole(brand, model, generation, id, title, price, stock);
             if (registered) {
-                System.out.println("Console registered and saved successfully!");
+                System.out.println("¡Consola registrada y guardada exitosamente!");
             } else {
-                System.out.println("Error: A product with this ID already exists.");
+                System.out.println("Error: Ya existe un producto con este ID.");
             }
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (NumberFormatException e) {
+            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error registering console: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists all registered products in the inventory.
+     * Retrieves and displays the full list of products from the inventory.
      */
     private void listProducts() {
-        System.out.println("\n--- PRODUCT INVENTORY ---");
-        List<Product> products = productService.getAllProducts();
-        if (products == null || products.isEmpty()) {
-            System.out.println("Inventory is empty.");
-        } else {
-            for (Product p : products) {
-                System.out.println(p.getFullDescription());
+        try {
+            System.out.println("\n--- INVENTARIO DE PRODUCTOS ---");
+            List<Product> products = productService.getAllProducts();
+            if (products == null || products.isEmpty()) {
+                System.out.println("El inventario está vacío.");
+            } else {
+                for (Product p : products) {
+                    System.out.println(p.getFullDescription());
+                }
             }
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     // ================= PERSON SUBMENU =================
+
     /**
-     * Handles person management options loop (Clients and Sellers).
+     * Handles the person management submenu loop.
      */
     private void handlePersonMenu() {
         int option = -1;
         do {
-            System.out.println("\n============= PERSON MANAGEMENT ==============");
-            System.out.println("1. Register a new client");
-            System.out.println("2. Register a new seller");
-            System.out.println("3. List all registered clients");
-            System.out.println("4. List all registered sellers");
-            System.out.println("0. Return to Main Menu");
-            System.out.print("Select an option: ");
+            System.out.println("\n============= GESTIÓN DE PERSONAS ==============");
+            System.out.println("1. Registrar un nuevo cliente");
+            System.out.println("2. Registrar un nuevo vendedor");
+            System.out.println("3. Listar todos los clientes registrados");
+            System.out.println("4. Listar todos los vendedores registrados");
+            System.out.println("0. Volver al Menú Principal");
+            System.out.print("Seleccione una opción: ");
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerClient();
-                case 2 ->
-                    registerSeller();
-                case 3 ->
-                    listClients();
-                case 4 ->
-                    listSellers();
+                case 1 -> registerClient();
+                case 2 -> registerSeller();
+                case 3 -> listClients();
+                case 4 -> listSellers();
                 case 0 -> {
                 }
-                default ->
-                    System.out.println("Invalid option.");
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Registers a new client in the system.
+     * Orchestrates the interactive registration of a new client.
      */
     private void registerClient() {
         try {
-            System.out.println("\n--- REGISTER CLIENT ---");
-            System.out.print("Name: ");
-            String name = reader.readLine();
-            System.out.print("Identification: ");
-            String id = reader.readLine();
-            System.out.print("Phone: ");
-            String phone = reader.readLine();
-            System.out.print("Email: ");
-            String email = reader.readLine();
+            System.out.println("\n--- REGISTRAR CLIENTE ---");
+            String name = promptString("Nombre: ");
+            String id = promptString("Identificación: ");
+            String phone = promptString("Teléfono: ");
+            String email = promptString("Correo Electrónico: ");
 
             personService.registerClient(name, id, phone, email);
-            System.out.println("Client registered successfully!");
+            System.out.println("¡Cliente registrado exitosamente!");
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error registering client: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Registers a new seller in the system.
+     * Orchestrates the interactive registration of a new seller.
      */
     private void registerSeller() {
         try {
-            System.out.println("\n--- REGISTER SELLER ---");
-            System.out.print("Name: ");
-            String name = reader.readLine();
-            System.out.print("Identification: ");
-            String identification = reader.readLine();
-            System.out.print("Phone: ");
-            String phone = reader.readLine();
-            System.out.print("Employee Code: ");
-            String employeeCode = reader.readLine();
-            System.out.print("Work Shift: ");
-            String workShift = reader.readLine();
+            System.out.println("\n--- REGISTRAR VENDEDOR ---");
+            String name = promptString("Nombre: ");
+            String identification = promptString("Identificación: ");
+            String phone = promptString("Teléfono: ");
+            String employeeCode = promptString("Código de Empleado: ");
+            String workShift = promptString("Turno de Trabajo: ");
 
             personService.registerSeller(name, identification, phone, employeeCode, workShift);
-            System.out.println("Seller registered successfully!");
+            System.out.println("¡Vendedor registrado exitosamente!");
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error registering seller: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists all registered clients.
+     * Retrieves and displays the list of all registered clients.
      */
     private void listClients() {
-        System.out.println("\n--- CLIENT LIST ---");
-        List<Client> clients = personService.getAllClients();
-        if (clients == null || clients.isEmpty()) {
-            System.out.println("No clients registered.");
-        } else {
-            for (Client c : clients) {
-                System.out.println("ID: " + c.getIdentification() + " | Name: " + c.getName() + " | Email: " + c.getEmail());
+        try {
+            System.out.println("\n--- LISTA DE CLIENTES ---");
+            List<Client> clients = personService.getAllClients();
+            if (clients == null || clients.isEmpty()) {
+                System.out.println("No hay clientes registrados.");
+            } else {
+                for (Client c : clients) {
+                    System.out.println("ID: " + c.getIdentification() + " | Nombre: " + c.getName() + " | Correo: " + c.getEmail());
+                }
             }
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists all registered sellers.
+     * Retrieves and displays the list of all registered sellers.
      */
     private void listSellers() {
-        System.out.println("\n--- SELLER LIST ---");
-        List<Seller> sellers = personService.getAllSellers();
-        if (sellers == null || sellers.isEmpty()) {
-            System.out.println("No sellers registered.");
-        } else {
-            for (Seller s : sellers) {
-                System.out.println("Code: " + s.getEmployeeCode() + " | Name: " + s.getName() + " | Shift: " + s.getWorkShift());
+        try {
+            System.out.println("\n--- LISTA DE VENDEDORES ---");
+            List<Seller> sellers = personService.getAllSellers();
+            if (sellers == null || sellers.isEmpty()) {
+                System.out.println("No hay vendedores registrados.");
+            } else {
+                for (Seller s : sellers) {
+                    System.out.println("Código: " + s.getEmployeeCode() + " | Nombre: " + s.getName() + " | Turno: " + s.getWorkShift());
+                }
             }
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     // ================= SALES SUBMENU =================
+
     /**
-     * Handles sales management options loop.
+     * Handles the sales management submenu loop.
      */
     private void handleSalesMenu() {
         int option = -1;
         do {
-            System.out.println("\n============= SALES MANAGEMENT ==============");
-            System.out.println("1. Register a new sale");
-            System.out.println("2. Consult complete sales history");
-            System.out.println("3. Consult purchase history of a specific client");
-            System.out.println("4. Consult sales attended by a specific seller");
-            System.out.println("0. Return to Main Menu");
-            System.out.print("Select an option: ");
+            System.out.println("\n============= GESTIÓN DE VENTAS ==============");
+            System.out.println("1. Registrar una nueva venta");
+            System.out.println("2. Consultar el historial completo de ventas");
+            System.out.println("3. Consultar el historial de compras de un cliente");
+            System.out.println("4. Consultar las ventas atendidas por un vendedor");
+            System.out.println("0. Volver al Menú Principal");
+            System.out.print("Seleccione una opción: ");
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerSale();
-                case 2 ->
-                    listAllSales();
-                case 3 ->
-                    listSalesByClient();
-                case 4 ->
-                    listSalesBySeller();
+                case 1 -> registerSale();
+                case 2 -> listAllSales();
+                case 3 -> listSalesByClient();
+                case 4 -> listSalesBySeller();
                 case 0 -> {
                 }
-                default ->
-                    System.out.println("Invalid option.");
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Registers a new sale transaction (A3 Specification).
-     * Prompts for products and accessories, evaluates stock, and prompts for
-     * extended warranty options when consoles are added.
+     * Orchestrates the interactive registration of a unified sale, allowing 
+     * multiple products and extended warranties to be added to a cart.
      */
     private void registerSale() {
         try {
-            System.out.println("\n--- REGISTER NEW UNIFIED SALE ---");
+            System.out.println("\n--- REGISTRAR NUEVA VENTA UNIFICADA ---");
 
-            // Validate client existence
-            System.out.print("Enter Client ID: ");
-            String clientId = reader.readLine();
+            String clientId = promptString("Ingrese la Identificación del Cliente: ");
             Client client = personService.findClientById(clientId);
-            if (client == null) {
-                System.out.println("Error: Client not found.");
-                return;
-            }
 
-            // Validate seller existence
-            System.out.print("Enter Seller Employee Code: ");
-            String sellerCode = reader.readLine();
+            String sellerCode = promptString("Ingrese el Código de Empleado del Vendedor: ");
             Seller seller = personService.findSellerByCode(sellerCode);
-            if (seller == null) {
-                System.out.println("Error: Seller not found.");
-                return;
-            }
 
-            // Add products and accessories to cart loop
             List<Product> products = new ArrayList<>();
             List<String> extendedWarrantyProductIds = new ArrayList<>();
             String addMore;
             do {
-                System.out.print("Enter Product or Accessory ID to add: ");
-                String itemId = reader.readLine();
+                String itemId = promptString("Ingrese el ID del Producto o Accesorio a añadir: ");
 
-                Product item = productService.findProductById(itemId);
+                Product item = null;
+                try {
+                    item = productService.findProductById(itemId);
+                } catch (ResourceNotFoundException ignored) {
+                }
+                
                 if (item == null && accessoryService != null) {
-                    item = accessoryService.findById(itemId);
+                    try {
+                        item = accessoryService.findById(itemId);
+                    } catch (ResourceNotFoundException ignored) {
+                    }
                 }
 
                 if (item != null) {
                     products.add(item);
-                    System.out.println("Item added to cart: " + item.getTitle());
+                    System.out.println("Artículo añadido al carrito: " + item.getTitle());
 
-                    // If item is a console, prompt for extended warranty (+10% cost)
                     if (item instanceof Console) {
-                        System.out.print("¿Desea agregar garantía extendida (+10% del costo) a la consola '"
+                        String extendedChoice = promptString("¿Desea agregar garantía extendida (+10% del costo) a la consola '" 
                                 + item.getTitle() + "'? (s/n): ");
-                        String extendedChoice = reader.readLine();
                         if (extendedChoice.equalsIgnoreCase("s")) {
                             extendedWarrantyProductIds.add(item.getId());
                         }
                     }
                 } else {
-                    System.out.println("Error: Product or Accessory not found with ID: " + itemId);
+                    System.out.println("Error: Producto o Accesorio no encontrado con ID: " + itemId);
                 }
 
-                System.out.print("Add another item? (y/n): ");
-                addMore = reader.readLine();
-            } while (addMore.equalsIgnoreCase("y"));
+                addMore = promptString("¿Agregar otro artículo? (s/n): ");
+            } while (addMore.equalsIgnoreCase("s"));
 
-            if (products.isEmpty()) {
-                System.out.println("Error: Sale aborted. At least one item is required.");
-                return;
-            }
-
-            // Delegate creation to SaleService using unified registerSale method
             Sale registeredSale = saleService.registerSale(client, seller, products, extendedWarrantyProductIds);
-            System.out.println("\nSale registered successfully!");
+            System.out.println("\n¡Venta registrada exitosamente!");
             System.out.println(registeredSale.generateReceipt());
 
-        } catch (IllegalArgumentException e) {
-            System.out.println("Validation Error: " + e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error registering sale: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists all recorded sales transactions.
+     * Retrieves and displays the complete sales history of the store.
      */
     private void listAllSales() {
-        System.out.println("\n--- COMPLETE SALES HISTORY ---");
-        List<Sale> allSales = saleService.getAllSales();
-        printSalesList(allSales);
+        try {
+            System.out.println("\n--- HISTORIAL COMPLETO DE VENTAS ---");
+            List<Sale> allSales = saleService.getAllSales();
+            printSalesList(allSales);
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
+        }
     }
 
     /**
-     * Consults and prints sales history filtered by customer ID.
+     * Prompts for a client ID and displays their specific purchase history.
      */
     private void listSalesByClient() {
         try {
-            System.out.print("Enter Client Identification: ");
-            String searchClientId = reader.readLine();
+            String searchClientId = promptString("Ingrese la Identificación del Cliente: ");
             List<Sale> clientSales = saleService.getSalesByClient(searchClientId);
-            System.out.println("\n--- CLIENT PURCHASE HISTORY ---");
+            System.out.println("\n--- HISTORIAL DE COMPRAS DEL CLIENTE ---");
             printSalesList(clientSales);
-        } catch (IOException e) {
-            System.out.println("Error reading input: " + e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Consults and prints sales history filtered by seller employee code.
+     * Prompts for a seller ID and displays the history of sales they attended.
      */
     private void listSalesBySeller() {
         try {
-            System.out.print("Enter Seller Employee Code: ");
-            String searchSellerId = reader.readLine();
+            String searchSellerId = promptString("Ingrese el Código del Vendedor: ");
             List<Sale> sellerSales = saleService.getSalesBySeller(searchSellerId);
-            System.out.println("\n--- SELLER SALES HISTORY ---");
+            System.out.println("\n--- HISTORIAL DE VENTAS DEL VENDEDOR ---");
             printSalesList(sellerSales);
-        } catch (IOException e) {
-            System.out.println("Error reading input: " + e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Helper method to print formatted list of sales using generated receipts.
+     * Formats and prints a given list of sales to the console.
      *
-     * @param sales the list of sales to format and print
+     * @param sales the list of sales to display
      */
     private void printSalesList(List<Sale> sales) {
         if (sales == null || sales.isEmpty()) {
-            System.out.println("No sales records found.");
+            System.out.println("No se encontraron registros de ventas.");
         } else {
             for (Sale s : sales) {
                 System.out.println(s.generateReceipt());
@@ -544,427 +618,453 @@ public class GameZoneUI {
     }
 
     // ================= ACCESSORY SUBMENU =================
+
     /**
-     * Handles accessory management options loop.
+     * Handles the accessory management submenu loop.
      */
     private void handleAccessoryMenu() {
         int option = -1;
         do {
-            System.out.println("\n============= ACCESSORY MANAGEMENT ==============");
-            System.out.println("1. Register a new controller");
-            System.out.println("2. Register a new cable");
-            System.out.println("3. Register a new memory");
-            System.out.println("4. List all accessories");
-            System.out.println("5. List accessories by type");
-            System.out.println("6. Consult compatible accessories for a console");
-            System.out.println("0. Return to Main Menu");
-            System.out.print("Select an option: ");
+            System.out.println("\n============= GESTIÓN DE ACCESORIOS ==============");
+            System.out.println("1. Registrar un nuevo control");
+            System.out.println("2. Registrar un nuevo cable");
+            System.out.println("3. Registrar una nueva memoria");
+            System.out.println("4. Listar todos los accesorios");
+            System.out.println("5. Listar accesorios por tipo");
+            System.out.println("6. Consultar accesorios compatibles para una consola");
+            System.out.println("0. Volver al Menú Principal");
+            System.out.print("Seleccione una opción: ");
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerController();
-                case 2 ->
-                    registerCable();
-                case 3 ->
-                    registerMemory();
-                case 4 ->
-                    listAllAccessories();
-                case 5 ->
-                    listAccessoriesByType();
-                case 6 ->
-                    consultCompatibleAccessories();
+                case 1 -> registerController();
+                case 2 -> registerCable();
+                case 3 -> registerMemory();
+                case 4 -> listAllAccessories();
+                case 5 -> listAccessoriesByType();
+                case 6 -> consultCompatibleAccessories();
                 case 0 -> {
                 }
-                default ->
-                    System.out.println("Invalid option.");
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Registers a new controller accessory.
+     * Orchestrates the interactive registration of a game controller.
      */
     private void registerController() {
         try {
-            System.out.println("\n--- REGISTER CONTROLLER ---");
-            System.out.print("ID: ");
-            String id = reader.readLine();
-            System.out.print("Title: ");
-            String title = reader.readLine();
-            System.out.print("Price: ");
-            double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: ");
-            int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Connection Type (wireless/wired): ");
-            String connection = reader.readLine();
+            System.out.println("\n--- REGISTRAR CONTROL ---");
+            String id = promptString("ID: ");
+            String title = promptString("Título: ");
+            double price = promptDouble("Precio: ");
+            int stock = promptInt("Stock: ");
+            String connection = promptString("Tipo de Conexión (inalámbrico/cableado): ");
 
-            System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
-            String consolesInput = reader.readLine();
+            String consolesInput = promptString("IDs de Consolas Compatibles (separados por coma, ej., 11,12) [Dejar vacío si no hay]: ");
             List<String> compatibleConsoles = new ArrayList<>();
             if (!consolesInput.isBlank()) {
                 compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
             }
 
             accessoryService.registerController(id, title, price, stock, connection, compatibleConsoles);
-            System.out.println("Controller registered successfully!");
+            System.out.println("¡Control registrado exitosamente!");
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (NumberFormatException e) {
+            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Registers a new cable accessory.
+     * Orchestrates the interactive registration of a cable accessory.
      */
     private void registerCable() {
         try {
-            System.out.println("\n--- REGISTER CABLE ---");
-            System.out.print("ID: ");
-            String id = reader.readLine();
-            System.out.print("Title: ");
-            String title = reader.readLine();
-            System.out.print("Price: ");
-            double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: ");
-            int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Length (meters): ");
-            double length = Double.parseDouble(reader.readLine());
-            System.out.print("Connector Type (e.g., HDMI, USB): ");
-            String type = reader.readLine();
+            System.out.println("\n--- REGISTRAR CABLE ---");
+            String id = promptString("ID: ");
+            String title = promptString("Título: ");
+            double price = promptDouble("Precio: ");
+            int stock = promptInt("Stock: ");
+            double length = promptDouble("Longitud (metros): ");
+            String type = promptString("Tipo de Conector (ej., HDMI, USB): ");
 
-            System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
-            String consolesInput = reader.readLine();
+            String consolesInput = promptString("IDs de Consolas Compatibles (separados por coma) [Dejar vacío si no hay]: ");
             List<String> compatibleConsoles = new ArrayList<>();
             if (!consolesInput.isBlank()) {
                 compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
             }
 
             accessoryService.registerCable(id, title, price, stock, length, type, compatibleConsoles);
-            System.out.println("Cable registered successfully!");
+            System.out.println("¡Cable registrado exitosamente!");
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (NumberFormatException e) {
+            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Registers a new memory storage accessory.
+     * Orchestrates the interactive registration of a memory storage accessory.
      */
     private void registerMemory() {
         try {
-            System.out.println("\n--- REGISTER MEMORY ---");
-            System.out.print("ID: ");
-            String id = reader.readLine();
-            System.out.print("Title: ");
-            String title = reader.readLine();
-            System.out.print("Price: ");
-            double price = Double.parseDouble(reader.readLine());
-            System.out.print("Stock: ");
-            int stock = Integer.parseInt(reader.readLine());
-            System.out.print("Capacity (GB): ");
-            int capacity = Integer.parseInt(reader.readLine());
-            System.out.print("Memory Type (e.g., SD, microSD): ");
-            String type = reader.readLine();
-            System.out.print("Compatible Console IDs (separated by commas, e.g., 11,12) [Leave empty if none]: ");
-            String consolesInput = reader.readLine();
+            System.out.println("\n--- REGISTRAR MEMORIA ---");
+            String id = promptString("ID: ");
+            String title = promptString("Título: ");
+            double price = promptDouble("Precio: ");
+            int stock = promptInt("Stock: ");
+            int capacity = promptInt("Capacidad (GB): ");
+            String type = promptString("Tipo de Memoria (ej., SD, microSD): ");
+            
+            String consolesInput = promptString("IDs de Consolas Compatibles (separados por coma) [Dejar vacío si no hay]: ");
             List<String> compatibleConsoles = new ArrayList<>();
             if (!consolesInput.isBlank()) {
                 compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
             }
 
             accessoryService.registerMemory(id, title, price, stock, capacity, type, compatibleConsoles);
-            System.out.println("Memory registered successfully!");
+            System.out.println("¡Memoria registrada exitosamente!");
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (NumberFormatException e) {
+            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists all registered accessories.
+     * Retrieves and displays all accessories registered in the inventory.
      */
     private void listAllAccessories() {
-        System.out.println("\n--- ALL ACCESSORIES ---");
-        List<Accessory> accessories = accessoryService.listAllAccessories();
-        if (accessories == null || accessories.isEmpty()) {
-            System.out.println("No accessories registered.");
-        } else {
-            accessories.forEach(a -> System.out.println(a.getFullDescription()));
+        try {
+            System.out.println("\n--- TODOS LOS ACCESORIOS ---");
+            List<Accessory> accessories = accessoryService.listAllAccessories();
+            if (accessories == null || accessories.isEmpty()) {
+                System.out.println("No hay accesorios registrados.");
+            } else {
+                accessories.forEach(a -> System.out.println(a.getFullDescription()));
+            }
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists accessories filtered by type.
+     * Prompts for an accessory type and lists all matches in the inventory.
      */
     private void listAccessoriesByType() {
         try {
-            System.out.print("Enter accessory type (Controller/Cable/Memory): ");
-            String type = reader.readLine();
+            String type = promptString("Ingrese el tipo de accesorio (Controller/Cable/Memory): ");
             List<Accessory> accessories = accessoryService.listAccessoriesByType(type);
             if (accessories == null || accessories.isEmpty()) {
-                System.out.println("No accessories of that type found.");
+                System.out.println("No se encontraron accesorios de ese tipo.");
             } else {
                 accessories.forEach(a -> System.out.println(a.getFullDescription()));
             }
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists accessories compatible with a specific console ID.
+     * Prompts for a console ID and displays all accessories declared compatible with it.
      */
     private void consultCompatibleAccessories() {
         try {
-            System.out.print("Enter Console ID to check compatibility: ");
-            String consoleId = reader.readLine();
+            String consoleId = promptString("Ingrese el ID de la Consola para comprobar compatibilidad: ");
             List<Accessory> accessories = accessoryService.findAccessoriesCompatibleWith(consoleId);
             if (accessories == null || accessories.isEmpty()) {
-                System.out.println("No compatible accessories found.");
+                System.out.println("No se encontraron accesorios compatibles.");
             } else {
                 accessories.forEach(a -> System.out.println(a.getFullDescription()));
             }
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     // ================= PROMOTION SUBMENU =================
+
     /**
-     * Handles promotion management options loop.
+     * Handles the promotion management submenu loop.
      */
     private void handlePromotionMenu() {
         int option = -1;
         do {
-            System.out.println("\n============= PROMOTION MANAGEMENT ==============");
-            System.out.println("1. Register a percentage discount promotion");
-            System.out.println("2. Register a category discount promotion");
-            System.out.println("3. Register a bulk purchase discount promotion");
-            System.out.println("4. List all active promotions");
-            System.out.println("5. List all promotions (active & inactive)");
-            System.out.println("0. Return to Main Menu");
-            System.out.print("Select an option: ");
+            System.out.println("\n============= GESTIÓN DE PROMOCIONES ==============");
+            System.out.println("1. Registrar promoción de descuento por porcentaje");
+            System.out.println("2. Registrar promoción de descuento por categoría");
+            System.out.println("3. Registrar promoción de descuento por compra al por mayor");
+            System.out.println("4. Listar todas las promociones activas");
+            System.out.println("5. Listar todas las promociones (activas e inactivas)");
+            System.out.println("0. Volver al Menú Principal");
+            System.out.print("Seleccione una opción: ");
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerPercentageDiscount();
-                case 2 ->
-                    registerCategoryDiscount();
-                case 3 ->
-                    registerBulkPurchaseDiscount();
-                case 4 ->
-                    listActivePromotions();
-                case 5 ->
-                    listAllPromotions();
+                case 1 -> registerPercentageDiscount();
+                case 2 -> registerCategoryDiscount();
+                case 3 -> registerBulkPurchaseDiscount();
+                case 4 -> listActivePromotions();
+                case 5 -> listAllPromotions();
                 case 0 -> {
                 }
-                default ->
-                    System.out.println("Invalid option.");
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Registers a global percentage discount promotion.
+     * Orchestrates the interactive registration of a global percentage discount.
      */
     private void registerPercentageDiscount() {
         try {
-            System.out.println("\n--- REGISTER PERCENTAGE DISCOUNT ---");
-            System.out.print("ID: ");
-            String id = reader.readLine();
-            System.out.print("Name: ");
-            String name = reader.readLine();
-            System.out.print("Start Date (YYYY-MM-DD): ");
-            LocalDate startDate = LocalDate.parse(reader.readLine());
-            System.out.print("End Date (YYYY-MM-DD): ");
-            LocalDate endDate = LocalDate.parse(reader.readLine());
-            System.out.print("Discount Percentage (e.g., 10 or 15.5): ");
-            double percentage = Double.parseDouble(reader.readLine());
+            System.out.println("\n--- REGISTRAR DESCUENTO POR PORCENTAJE ---");
+            String id = promptString("ID: ");
+            String name = promptString("Nombre: ");
+            LocalDate startDate = promptDate("Fecha de Inicio (YYYY-MM-DD): ");
+            LocalDate endDate = promptDate("Fecha de Fin (YYYY-MM-DD): ");
+            double percentage = promptDouble("Porcentaje de Descuento (ej., 10 o 15.5): ");
 
             promotionService.registerPercentageDiscount(id, name, startDate, endDate, percentage);
-            System.out.println("Percentage discount registered successfully!");
+            System.out.println("¡Descuento por porcentaje registrado exitosamente!");
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (NumberFormatException | DateTimeParseException e) {
+            System.out.println("Los datos ingresados no son válidos: Formato de número o fecha incorrecto.");
         } catch (Exception e) {
-            System.out.println("Error registering percentage discount: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Registers a category discount promotion (Updated for A1: includes Accessories).
+     * Orchestrates the interactive registration of a category-specific discount.
      */
     private void registerCategoryDiscount() {
         try {
-            System.out.println("\n--- REGISTER CATEGORY DISCOUNT ---");
-            System.out.print("ID: ");
-            String id = reader.readLine();
-            System.out.print("Name: ");
-            String name = reader.readLine();
-            System.out.print("Start Date (YYYY-MM-DD): ");
-            LocalDate startDate = LocalDate.parse(reader.readLine());
-            System.out.print("End Date (YYYY-MM-DD): ");
-            LocalDate endDate = LocalDate.parse(reader.readLine());
-            System.out.print("Discount Percentage (e.g., 10 or 15.5): ");
-            double percentage = Double.parseDouble(reader.readLine());
+            System.out.println("\n--- REGISTRAR DESCUENTO POR CATEGORÍA ---");
+            String id = promptString("ID: ");
+            String name = promptString("Nombre: ");
+            LocalDate startDate = promptDate("Fecha de Inicio (YYYY-MM-DD): ");
+            LocalDate endDate = promptDate("Fecha de Fin (YYYY-MM-DD): ");
+            double percentage = promptDouble("Porcentaje de Descuento (ej., 10 o 15.5): ");
 
             List<String> availableCategories = new ArrayList<>();
             List<Product> products = productService.getAllProducts();
 
             if (products != null) {
                 for (Product p : products) {
-                    String category = (p.getCategory() != null) ? p.getCategory() : p.getClass().getSimpleName();
-                    if (!availableCategories.contains(category)) {
-                        availableCategories.add(category);
+                    String cat = (p.getCategory() != null) ? p.getCategory() : p.getClass().getSimpleName();
+                    if (!availableCategories.contains(cat)) {
+                        availableCategories.add(cat);
                     }
                 }
             }
 
-            // A1 Adjustment: Include Accessories category if accessories exist in inventory
             if (accessoryService != null && accessoryService.listAllAccessories() != null && !accessoryService.listAllAccessories().isEmpty()) {
                 if (!availableCategories.contains("ACCESSORY")) {
                     availableCategories.add("ACCESSORY");
                 }
             }
 
-            System.out.println("\nAvailable categories in inventory: " + availableCategories);
-            System.out.print("Enter Target Category from the list above (VIDEOGAME, CONSOLE, ACCESSORY): ");
-            String category = reader.readLine();
+            System.out.println("\nCategorías disponibles en inventario: " + availableCategories);
+            String category = promptString("Ingrese la Categoría Objetivo de la lista anterior (VIDEOGAME, CONSOLE, ACCESSORY): ");
 
             promotionService.registerCategoryDiscount(id, name, startDate, endDate, percentage, category);
-            System.out.println("Category discount registered successfully!");
+            System.out.println("¡Descuento por categoría registrado exitosamente!");
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (NumberFormatException | DateTimeParseException e) {
+            System.out.println("Los datos ingresados no son válidos: Formato de número o fecha incorrecto.");
         } catch (Exception e) {
-            System.out.println("Error registering category discount: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Registers a bulk purchase discount promotion.
+     * Orchestrates the interactive registration of a bulk purchase discount.
      */
     private void registerBulkPurchaseDiscount() {
         try {
-            System.out.println("\n--- REGISTER BULK PURCHASE DISCOUNT ---");
-            System.out.print("ID: ");
-            String id = reader.readLine();
-            System.out.print("Name: ");
-            String name = reader.readLine();
-            System.out.print("Start Date (YYYY-MM-DD): ");
-            LocalDate startDate = LocalDate.parse(reader.readLine());
-            System.out.print("End Date (YYYY-MM-DD): ");
-            LocalDate endDate = LocalDate.parse(reader.readLine());
-            System.out.print("Minimum Quantity: ");
-            int minQuantity = Integer.parseInt(reader.readLine());
-            System.out.print("Discount Percentage (e.g., 10 or 15.5): ");
-            double percentage = Double.parseDouble(reader.readLine());
+            System.out.println("\n--- REGISTRAR DESCUENTO POR COMPRA AL POR MAYOR ---");
+            String id = promptString("ID: ");
+            String name = promptString("Nombre: ");
+            LocalDate startDate = promptDate("Fecha de Inicio (YYYY-MM-DD): ");
+            LocalDate endDate = promptDate("Fecha de Fin (YYYY-MM-DD): ");
+            int minQuantity = promptInt("Cantidad Mínima: ");
+            double percentage = promptDouble("Porcentaje de Descuento (ej., 10 o 15.5): ");
 
             promotionService.registerBulkPurchaseDiscount(id, name, startDate, endDate, minQuantity, percentage);
-            System.out.println("Bulk purchase discount registered successfully!");
+            System.out.println("¡Descuento por compra al por mayor registrado exitosamente!");
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (NumberFormatException | DateTimeParseException e) {
+            System.out.println("Los datos ingresados no son válidos: Formato de número o fecha incorrecto.");
         } catch (Exception e) {
-            System.out.println("Error registering bulk purchase discount: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists currently active promotions.
+     * Retrieves and displays all promotions currently active based on the system date.
      */
     private void listActivePromotions() {
-        System.out.println("\n--- ACTIVE PROMOTIONS ---");
-        List<Promotion> activePromos = promotionService.listActivePromotions();
+        try {
+            System.out.println("\n--- PROMOCIONES ACTIVAS ---");
+            List<Promotion> activePromos = promotionService.listActivePromotions();
 
-        if (activePromos == null || activePromos.isEmpty()) {
-            System.out.println("No active promotions available at the moment.");
-            return;
-        }
+            if (activePromos == null || activePromos.isEmpty()) {
+                System.out.println("No hay promociones activas disponibles en este momento.");
+                return;
+            }
 
-        for (Promotion promo : activePromos) {
-            System.out.printf("ID: %s | Name: %s | Active: %s to %s | %s%n",
-                    promo.getId(),
-                    promo.getName(),
-                    promo.getStartDate(),
-                    promo.getEndDate(),
-                    promo.getDetails());
+            for (Promotion promo : activePromos) {
+                System.out.printf("ID: %s | Nombre: %s | Activa: %s a %s | %s%n",
+                        promo.getId(),
+                        promo.getName(),
+                        promo.getStartDate(),
+                        promo.getEndDate(),
+                        promo.getDetails());
+            }
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists all registered promotions.
+     * Retrieves and displays all promotions (both active and inactive).
      */
     private void listAllPromotions() {
-        System.out.println("\n--- ALL PROMOTIONS ---");
-        List<Promotion> promotions = promotionService.listAllPromotions();
-        if (promotions == null || promotions.isEmpty()) {
-            System.out.println("No promotions recorded.");
-        } else {
-            for (Promotion p : promotions) {
-                System.out.println("ID: " + p.getId() + " | Name: " + p.getName()
-                        + " | Active: " + p.getStartDate() + " to " + p.getEndDate());
+        try {
+            System.out.println("\n--- TODAS LAS PROMOCIONES ---");
+            List<Promotion> promotions = promotionService.listAllPromotions();
+            if (promotions == null || promotions.isEmpty()) {
+                System.out.println("No hay promociones registradas.");
+            } else {
+                for (Promotion p : promotions) {
+                    System.out.println("ID: " + p.getId() + " | Nombre: " + p.getName()
+                            + " | Activa: " + p.getStartDate() + " a " + p.getEndDate());
+                }
             }
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     // ================= RETURN SUBMENU =================
+
     /**
-     * Handles return management options loop.
+     * Handles the return management submenu loop.
      */
     private void handleReturnMenu() {
         int option = -1;
         do {
-            System.out.println("\n============= RETURN MANAGEMENT ==============");
-            System.out.println("1. Register a new return");
-            System.out.println("2. Consult all returns");
-            System.out.println("3. Consult returns by client");
-            System.out.println("4. Consult returns by sale");
-            System.out.println("0. Return to Main Menu");
-            System.out.print("Select an option: ");
+            System.out.println("\n============= GESTIÓN DE DEVOLUCIONES ==============");
+            System.out.println("1. Registrar una nueva devolución");
+            System.out.println("2. Consultar todas las devoluciones");
+            System.out.println("3. Consultar devoluciones por cliente");
+            System.out.println("4. Consultar devoluciones por venta");
+            System.out.println("0. Volver al Menú Principal");
+            System.out.print("Seleccione una opción: ");
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerReturn();
-                case 2 ->
-                    listAllReturns();
-                case 3 ->
-                    listReturnsByClient();
-                case 4 ->
-                    listReturnsBySale();
+                case 1 -> registerReturn();
+                case 2 -> listAllReturns();
+                case 3 -> listReturnsByClient();
+                case 4 -> listReturnsBySale();
                 case 0 -> {
                 }
-                default ->
-                    System.out.println("Invalid option.");
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Processes a new product return transaction.
+     * Orchestrates the interactive registration of a product return linked to a sale.
      */
     private void registerReturn() {
         try {
-            System.out.println("\n--- REGISTER NEW RETURN ---");
-            System.out.print("Enter Sale ID: ");
-            String saleId = reader.readLine();
-
-            System.out.print("Enter Product IDs to return (comma-separated, e.g., P01,P02): ");
-            String inputProducts = reader.readLine();
+            System.out.println("\n--- REGISTRAR NUEVA DEVOLUCIÓN ---");
+            String saleId = promptString("Ingrese el ID de la Venta: ");
+            String inputProducts = promptString("Ingrese los IDs de los Productos a devolver (separados por coma, ej., P01,P02): ");
             List<String> productIds = Arrays.asList(inputProducts.split("\\s*,\\s*"));
-
-            System.out.print("Enter Return Reason: ");
-            String reason = reader.readLine();
+            String reason = promptString("Ingrese el Motivo de la Devolución: ");
 
             Return processedReturn = returnService.registerReturn(saleId, productIds, reason);
-            System.out.println("\nReturn processed successfully!");
+            System.out.println("\n¡Devolución procesada exitosamente!");
             System.out.println(processedReturn.generateReturnReceipt());
-        } catch (IllegalArgumentException e) {
-            System.out.println("Validation Error: " + e.getMessage());
+
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error processing return: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Helper method to print formatted lists of returns.
+     * Formats and prints a given list of returns to the console.
      *
-     * @param returns the list of returns to print
+     * @param returns the list of returns to display
      */
     private void printReturnList(List<Return> returns) {
         if (returns == null || returns.isEmpty()) {
-            System.out.println("No return records found.");
+            System.out.println("No se encontraron registros de devoluciones.");
         } else {
             for (Return r : returns) {
                 System.out.println(r.generateReturnReceipt());
@@ -974,188 +1074,215 @@ public class GameZoneUI {
     }
 
     /**
-     * Lists all recorded product returns.
+     * Retrieves and displays all returns processed by the system.
      */
     private void listAllReturns() {
-        System.out.println("\n--- ALL RETURNS ---");
-        List<Return> returns = returnService.viewAllReturns();
-        printReturnList(returns);
+        try {
+            System.out.println("\n--- TODAS LAS DEVOLUCIONES ---");
+            List<Return> returns = returnService.viewAllReturns();
+            printReturnList(returns);
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
+        }
     }
 
     /**
-     * Consults returns made by a specific customer.
+     * Prompts for a client ID and displays their history of returned products.
      */
     private void listReturnsByClient() {
         try {
-            System.out.print("Enter Client ID: ");
-            String customerId = reader.readLine();
+            String customerId = promptString("Ingrese el ID del Cliente: ");
             List<Return> returns = returnService.viewReturnsByCustomer(customerId);
-            System.out.println("\n--- RETURNS BY CLIENT ---");
+            System.out.println("\n--- DEVOLUCIONES POR CLIENTE ---");
             printReturnList(returns);
-        } catch (IOException e) {
-            System.out.println("Error reading input: " + e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Consults returns associated with a specific sale transaction.
+     * Prompts for a sale ID and displays any returns associated with that specific transaction.
      */
     private void listReturnsBySale() {
         try {
-            System.out.print("Enter Sale ID: ");
-            String saleId = reader.readLine();
+            String saleId = promptString("Ingrese el ID de la Venta: ");
             List<Return> returns = returnService.viewReturnsBySale(saleId);
-            System.out.println("\n--- RETURNS BY SALE ---");
+            System.out.println("\n--- DEVOLUCIONES POR VENTA ---");
             printReturnList(returns);
-        } catch (IOException e) {
-            System.out.println("Error reading input: " + e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Calculates and displays net monthly financial balance (Sales minus
-     * Returns).
+     * Calculates and displays the net financial balance for a given month and year.
      */
     private void generateMonthlyBalance() {
         try {
-            System.out.println("\n--- MONTHLY BALANCE REPORT ---");
-            System.out.print("Enter Month (1-12): ");
-            int month = Integer.parseInt(reader.readLine());
-            System.out.print("Enter Year (e.g., 2026): ");
-            int year = Integer.parseInt(reader.readLine());
+            System.out.println("\n--- REPORTE DE BALANCE MENSUAL ---");
+            int month = promptInt("Ingrese el Mes (1-12): ");
+            int year = promptInt("Ingrese el Año (ej., 2026): ");
 
             double netBalance = returnService.generateMonthlyBalance(month, year);
-            System.out.println(String.format("\n=== MONTHLY BALANCE (%02d/%d) ===", month, year));
-            System.out.println(String.format("Net Balance (Sales - Returns): $%.2f", netBalance));
+            System.out.println(String.format("\n=== BALANCE MENSUAL (%02d/%d) ===", month, year));
+            System.out.println(String.format("Balance Neto (Ventas - Devoluciones): $%.2f", netBalance));
+            
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (NumberFormatException e) {
-            System.out.println("Error: Please enter valid numeric values for month and year.");
+            System.out.println("Los datos ingresados no son válidos: Por favor, ingrese valores numéricos para mes y año.");
         } catch (Exception e) {
-            System.out.println("Error generating balance: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     // ================= WARRANTY SUBMENU =================
+
     /**
-     * Handles warranty management options loop.
+     * Handles the warranty management submenu loop.
      */
     private void handleWarrantyMenu() {
         int option = -1;
         do {
-            System.out.println("\n============= WARRANTY MANAGEMENT ==============");
-            System.out.println("1. Consult warranty for a specific product in a sale");
-            System.out.println("2. List all registered warranties");
-            System.out.println("3. List active warranties as of today");
-            System.out.println("4. List warranties expiring soon");
-            System.out.println("0. Return to Main Menu");
-            System.out.print("Select an option: ");
+            System.out.println("\n============= GESTIÓN DE GARANTÍAS ==============");
+            System.out.println("1. Consultar garantía para un producto específico en una venta");
+            System.out.println("2. Listar todas las garantías registradas");
+            System.out.println("3. Listar las garantías activas al día de hoy");
+            System.out.println("4. Listar las garantías que expirarán pronto");
+            System.out.println("0. Volver al Menú Principal");
+            System.out.print("Seleccione una opción: ");
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    consultWarrantyByProductAndSale();
-                case 2 ->
-                    listAllWarranties();
-                case 3 ->
-                    listActiveWarranties();
-                case 4 ->
-                    listWarrantiesExpiringSoon();
+                case 1 -> consultWarrantyByProductAndSale();
+                case 2 -> listAllWarranties();
+                case 3 -> listActiveWarranties();
+                case 4 -> listWarrantiesExpiringSoon();
                 case 0 -> {
                 }
-                default ->
-                    System.out.println("Invalid option.");
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Consults and prints the warranty certificate associated with a product in
-     * a given sale.
+     * Prompts for a sale ID and a product ID to retrieve and print a specific warranty certificate.
      */
     private void consultWarrantyByProductAndSale() {
         try {
-            System.out.println("\n--- CONSULT PRODUCT WARRANTY ---");
-            System.out.print("Enter Sale ID: ");
-            String saleId = reader.readLine();
-            System.out.print("Enter Product ID: ");
-            String productId = reader.readLine();
+            System.out.println("\n--- CONSULTAR GARANTÍA DE PRODUCTO ---");
+            String saleId = promptString("Ingrese el ID de la Venta: ");
+            String productId = promptString("Ingrese el ID del Producto: ");
 
             if (warrantyService == null) {
-                System.out.println("Error: Warranty service is not available.");
+                System.out.println("Error: El servicio de garantías no está disponible.");
                 return;
             }
 
             Warranty warranty = warrantyService.findWarrantyByProduct(productId, saleId);
             if (warranty != null) {
-                System.out.println("\n--- WARRANTY CERTIFICATE ---");
+                System.out.println("\n--- CERTIFICADO DE GARANTÍA ---");
                 System.out.println(warranty.generateWarrantyCertificate());
             } else {
-                System.out.println("No warranty found for Product ID '" + productId + "' in Sale ID '" + saleId + "'.");
+                System.out.println("No se encontró garantía para el ID de Producto '" + productId + "' en el ID de Venta '" + saleId + "'.");
             }
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error searching warranty: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Lists all warranties registered in the system.
+     * Retrieves and displays all warranty records issued by the store.
      */
     private void listAllWarranties() {
-        System.out.println("\n--- ALL REGISTERED WARRANTIES ---");
-        if (warrantyService == null) {
-            System.out.println("Error: Warranty service is not available.");
-            return;
-        }
+        try {
+            System.out.println("\n--- TODAS LAS GARANTÍAS REGISTRADAS ---");
+            if (warrantyService == null) {
+                System.out.println("Error: El servicio de garantías no está disponible.");
+                return;
+            }
 
-        List<Warranty> warranties = warrantyService.listAllWarranties();
-        printWarrantyList(warranties);
+            List<Warranty> warranties = warrantyService.listAllWarranties();
+            printWarrantyList(warranties);
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
+        }
     }
 
     /**
-     * Lists all warranties currently active on today's date.
+     * Retrieves and displays all warranties that have not yet expired as of the current system date.
      */
     private void listActiveWarranties() {
-        System.out.println("\n--- ACTIVE WARRANTIES (TODAY) ---");
-        if (warrantyService == null) {
-            System.out.println("Error: Warranty service is not available.");
-            return;
-        }
+        try {
+            System.out.println("\n--- GARANTÍAS ACTIVAS (HOY) ---");
+            if (warrantyService == null) {
+                System.out.println("Error: El servicio de garantías no está disponible.");
+                return;
+            }
 
-        List<Warranty> activeWarranties = warrantyService.listActiveWarranties();
-        printWarrantyList(activeWarranties);
+            List<Warranty> activeWarranties = warrantyService.listActiveWarranties();
+            printWarrantyList(activeWarranties);
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
+        }
     }
 
     /**
-     * Prompts for threshold days and lists warranties expiring within that time
-     * frame.
+     * Prompts for a threshold of days and displays warranties expiring within that time frame.
      */
     private void listWarrantiesExpiringSoon() {
         try {
-            System.out.println("\n--- WARRANTIES EXPIRING SOON ---");
-            System.out.print("Enter number of days ahead to evaluate (e.g., 30): ");
-            int daysAhead = Integer.parseInt(reader.readLine());
+            System.out.println("\n--- GARANTÍAS PRÓXIMAS A EXPIRAR ---");
+            int daysAhead = promptInt("Ingrese el número de días a futuro para evaluar (ej., 30): ");
 
             if (warrantyService == null) {
-                System.out.println("Error: Warranty service is not available.");
+                System.out.println("Error: El servicio de garantías no está disponible.");
                 return;
             }
 
             List<Warranty> expiringWarranties = warrantyService.listWarrantiesExpiringSoon(daysAhead);
             printWarrantyList(expiringWarranties);
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (NumberFormatException e) {
-            System.out.println("Error: Please enter a valid number of days.");
+            System.out.println("Los datos ingresados no son válidos: Por favor, ingrese un número válido de días.");
         } catch (Exception e) {
-            System.out.println("Error querying expiring warranties: " + e.getMessage());
+            System.out.println("Error inesperado: " + e.getMessage());
         }
     }
 
     /**
-     * Helper method to display formatted warranty certificates in console.
+     * Formats and prints a given list of warranties to the console.
      *
-     * @param warranties list of warranties to print
+     * @param warranties the list of warranties to display
      */
     private void printWarrantyList(List<Warranty> warranties) {
         if (warranties == null || warranties.isEmpty()) {
-            System.out.println("No warranties found.");
+            System.out.println("No se encontraron garantías.");
         } else {
             for (Warranty w : warranties) {
                 System.out.println("------------------------------------------------------------------");
