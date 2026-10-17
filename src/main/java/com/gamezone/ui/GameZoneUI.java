@@ -25,6 +25,8 @@ import com.gamezone.service.WarrantyService;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -52,6 +54,7 @@ public class GameZoneUI {
      * Constructs a GameZoneUI with all required service dependencies.
      * Applies Dependency Inversion (SOLID), relying on abstractions or 
      * externalized service instances rather than creating them internally.
+     * Configures the console streams to use UTF-8 for proper special character display.
      *
      * @param saleService the service managing sales
      * @param productService the service managing products
@@ -65,7 +68,17 @@ public class GameZoneUI {
             PersonService personService, AccessoryService accessoryService,
             PromotionService promotionService, ReturnService returnService,
             WarrantyService warrantyService) {
-        this.reader = new BufferedReader(new InputStreamReader(System.in));
+        
+        // Configure output stream (System.out) to support UTF-8
+        try {
+            System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8.name()));
+        } catch (java.io.UnsupportedEncodingException e) {
+            System.out.println("No se pudo configurar UTF-8 en la consola: " + e.getMessage());
+        }
+
+        // Configure input stream (System.in) to support UTF-8
+        this.reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+        
         this.saleService = saleService;
         this.productService = productService;
         this.personService = personService;
