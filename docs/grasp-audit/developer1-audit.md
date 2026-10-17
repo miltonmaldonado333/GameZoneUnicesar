@@ -29,11 +29,9 @@
 - `com.gamezone.exceptions.InvalidDataException`
 - `com.gamezone.exceptions.PersistenceException`
 - `com.gamezone.exceptions.ResourceNotFoundException`
-
-
-
-
-
+- `com.gamezone.validation.PersonValidator`
+- `com.gamezone.validation.ProductValidator`
+- `com.gamezone.validation.SaleValidator`
 ---
 
 ## GRASP Evaluation Matrix
@@ -129,6 +127,18 @@
 | `ResourceNotFoundException` | Creator | ✅ Compliant | Formats user-friendly Spanish messages upon instantiation and delegates state to `GameZoneException`. | None required. |
 | `ResourceNotFoundException` | Low Coupling | ✅ Compliant | Extends `GameZoneException` without coupling domain entities to UI or persistence packages. | None required. |
 | `ResourceNotFoundException` | High Cohesion | ✅ Compliant | Dedicated strictly to encapsulating missing entity search failures across all system modules. | None required. |
+| `PersonValidator` | Pure Fabrication | ✅ Compliant | Utility validation class created as a pure design construct to absorb input validation logic. | None required. |
+| `PersonValidator` | High Cohesion | ✅ Compliant | Dedicated strictly to encapsulating validation rules for Person attributes, existence, and uniqueness. | None required. |
+| `PersonValidator` | Low Coupling | ✅ Compliant | Stateless utility class depending only on `Person` domain model and custom exceptions, avoiding persistence or UI couplings. | None required. |
+| `PersonValidator` | Information Expert | ✅ Compliant | Expert in asserting constraint invariants (non-empty strings, email formats, unique identifiers) and throwing specific domain exceptions. | None required. |
+| `ProductValidator` | Pure Fabrication | ✅ Compliant | Utility class created specifically to encapsulate validation logic and constraints for Product instances. | None required. |
+| `ProductValidator` | High Cohesion | ✅ Compliant | Dedicated strictly to verifying product primitive data constraints, stock availability, and existence assertions. | None required. |
+| `ProductValidator` | Low Coupling | ✅ Compliant | Stateless helper class depending strictly on the `Product` model and custom domain exceptions. | None required. |
+| `ProductValidator` | Information Expert | ✅ Compliant | Expert in asserting inventory rules and throwing specialized `InvalidDataException`, `BusinessRuleException`, or `ResourceNotFoundException`. | None required. |
+| `SaleValidator` | Pure Fabrication | ✅ Compliant | Utility validation class created as a pure design construct to absorb transaction validation logic. | None required. |
+| `SaleValidator` | High Cohesion | ✅ Compliant | Dedicated strictly to verifying sale transaction rules, participant non-null assertions, and existence checks. | None required. |
+| `SaleValidator` | Low Coupling | ✅ Compliant | Stateless utility class depending only on domain entities (`Client`, `Seller`, `Product`, `Sale`) and custom domain exceptions. | None required. |
+| `SaleValidator` | Information Expert | ✅ Compliant | Expert in asserting transaction invariant rules and throwing specialized `InvalidDataException`, `BusinessRuleException`, or `ResourceNotFoundException`. | None required. |
 ---
 
 ## Detailed Findings & Justifications
@@ -306,3 +316,26 @@
   - *Current State:* Concrete domain exception extending `GameZoneException`. It generates formatted Spanish error messages (e.g., `"El/La producto con identificador 'X' no fue encontrado."`) and assigns the `"NOT_FOUND"` error code when a queried entity does not exist in memory or storage.
   - *Identified Issues:* None. Controller and Pure Fabrication patterns do not apply.
   - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 24. `com.gamezone.validation.PersonValidator`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Utility class in `com.gamezone.validation` providing static validation methods for Person entities. It acts as a Pure Fabrication to relieve services and domain entities of input format checks, existence assertions, and uniqueness verification.
+  - *Identified Issues:* None. Controller, Indirection, and Polymorphism patterns do not apply to this static validator class.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 25. `com.gamezone.validation.ProductValidator`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Utility class in `com.gamezone.validation` providing static validation methods for products. It acts as a Pure Fabrication to relieve services of inline argument checking (`price > 0`, non-empty titles), stock sufficiency checks, and missing entity assertions.
+  - *Identified Issues:* None. Controller, Indirection, and Polymorphism patterns do not apply to this utility class.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 26. `com.gamezone.validation.SaleValidator`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Utility class in `com.gamezone.validation` providing static validation methods for sales transactions[cite: 1, 5]. It acts as a Pure Fabrication to relieve `SaleService` of inline null checks for participants (client, seller), non-empty product list verification, and missing sale instance assertions[cite: 1, 3, 5].
+  - *Identified Issues:* None. Controller, Indirection, and Polymorphism patterns do not apply to this static validator class.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  
