@@ -1,6 +1,48 @@
-```mermaid
 classDiagram
-    direction TB
+direction TB
+
+    namespace com.gamezone.exceptions {
+        class GameZoneException {
+            <<abstract>>
+            -String errorCode
+            +getErrorCode() String
+        }
+
+        class ResourceNotFoundException {
+            +ResourceNotFoundException(resourceType, id)
+        }
+
+        class BusinessRuleException {
+            +BusinessRuleException(message)
+        }
+
+        class InvalidDataException {
+            +InvalidDataException(fieldName, reason)
+        }
+
+        class PersistenceException {
+            +PersistenceException(message, cause)
+        }
+    }
+
+    namespace com.gamezone.validation {
+        class ProductValidator {
+            +validateProductData(id, title, price, stock)$
+            +validateStockAvailability(product, requestedQuantity)$
+            +validateProductExists(product, productId)$
+        }
+
+        class PersonValidator {
+            +validatePersonData(id, name, email, phone)$
+            +validatePersonExists(person, personId)$
+            +validateUniquePerson(existing, newId)$
+        }
+
+        class SaleValidator {
+            +validateSaleData(customer, seller, products)$
+            +validateSaleExists(sale, saleId)$
+        }
+    }
 
     namespace com.gamezone.model {
         class Person {
@@ -121,10 +163,11 @@ classDiagram
         }
     }
 
-
     namespace com.gamezone.persistence {
         class PersonRepository {
             <<interface>>
+            +saveAll(List~Person~)
+            +loadAll() List~Person~
         }
         class FilePersonRepository {
             +saveAll(List~Person~)
@@ -132,6 +175,8 @@ classDiagram
         }
         class ProductRepository {
             <<interface>>
+            +saveAll(List~Product~)
+            +loadAll() List~Product~
         }
         class FileProductRepository {
             +saveAll(List~Product~)
@@ -154,7 +199,6 @@ classDiagram
             +loadAll() List~Return~
         }
     }
-
 
     namespace com.gamezone.service {
         class PersonService {
@@ -199,9 +243,8 @@ classDiagram
         }
     }
 
-
     namespace com.gamezone.ui {
-        class GameZoneUI {
+        class ConsoleMenu {
             +start()
             -showMainMenu()
             -showAccessoryMenu()
@@ -210,7 +253,14 @@ classDiagram
         }
     }
 
+    %% Exception Hierarchy
+    RuntimeException <|-- GameZoneException
+    GameZoneException <|-- ResourceNotFoundException
+    GameZoneException <|-- BusinessRuleException
+    GameZoneException <|-- InvalidDataException
+    GameZoneException <|-- PersistenceException
 
+    %% Model Inheritance
     Person <|-- Client
     Person <|-- Seller
 
@@ -226,10 +276,11 @@ classDiagram
     Promotion <|-- CategoryDiscount
     Promotion <|-- BulkPurchaseDiscount
 
+    %% Persistence Implementation
     PersonRepository <|.. FilePersonRepository
     ProductRepository <|.. FileProductRepository
 
-
+    %% Model Relationships
     Sale o-- Client : "places"
     Sale o-- Seller : "handles"
     Sale o-- Product : "contains"
@@ -237,15 +288,41 @@ classDiagram
     Return o-- Sale : "references"
     Return o-- Product : "contains partial"
 
+    %% UI to Service
+    ConsoleMenu ..> PersonService
+    ConsoleMenu ..> ProductService
+    ConsoleMenu ..> SaleService
+    ConsoleMenu ..> AccessoryService
+    ConsoleMenu ..> PromotionService
+    ConsoleMenu ..> ReturnService
 
-    GameZoneUI ..> PersonService
-    GameZoneUI ..> ProductService
-    GameZoneUI ..> SaleService
-    GameZoneUI ..> AccessoryService
-    GameZoneUI ..> PromotionService
-    GameZoneUI ..> ReturnService
+    %% UI to Exception Hierarchy (Catching specific exceptions)
+    ConsoleMenu ..> GameZoneException : "catches"
 
+    %% Service to Validation Layer
+    ProductService ..> ProductValidator : "invokes"
+    PersonService ..> PersonValidator : "invokes"
+    SaleService ..> SaleValidator : "invokes"
 
+    %% Validation Layer throwing Exceptions
+    ProductValidator ..> InvalidDataException : "throws"
+    ProductValidator ..> BusinessRuleException : "throws"
+    ProductValidator ..> ResourceNotFoundException : "throws"
+
+    PersonValidator ..> InvalidDataException : "throws"
+    PersonValidator ..> BusinessRuleException : "throws"
+    PersonValidator ..> ResourceNotFoundException : "throws"
+
+    SaleValidator ..> InvalidDataException : "throws"
+    SaleValidator ..> BusinessRuleException : "throws"
+    SaleValidator ..> ResourceNotFoundException : "throws"
+
+    %% Services throwing Exceptions
+    ProductService ..> GameZoneException : "throws"
+    PersonService ..> GameZoneException : "throws"
+    SaleService ..> GameZoneException : "throws"
+
+    %% Service Inter-Dependencies
     SaleService ..> PersonService : "validates"
     SaleService ..> ProductService : "updates stock"
     SaleService ..> AccessoryService : "updates stock"
@@ -256,16 +333,24 @@ classDiagram
     ReturnService ..> ProductService : "restores stock"
     ReturnService ..> ReturnRepository
 
+    %% Service to Persistence
     PersonService ..> FilePersonRepository
     ProductService ..> FileProductRepository
     AccessoryService ..> AccessoryRepository
     PromotionService ..> PromotionRepository
 
+    %% Repositories throwing PersistenceException
+    FilePersonRepository ..> PersistenceException : "throws"
+    FileProductRepository ..> PersistenceException : "throws"
+    SaleRepository ..> PersistenceException : "throws"
+    AccessoryRepository ..> PersistenceException : "throws"
+    PromotionRepository ..> PersistenceException : "throws"
+    ReturnRepository ..> PersistenceException : "throws"
 
+    %% Persistence to Model
     FilePersonRepository ..> Person
     FileProductRepository ..> Product
     AccessoryRepository ..> Accessory
     PromotionRepository ..> Promotion
     SaleRepository ..> Sale
     ReturnRepository ..> Return
-```
