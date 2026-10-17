@@ -23,6 +23,7 @@
 - `com.gamezone.model.VideoGame`
 - `com.gamezone.model.Console`
 - `com.gamezone.persistence.ProductRepository`
+- `com.gamezone.model.Return`
 
 
 
@@ -96,6 +97,13 @@
 | `ProductService` | High Cohesion / Pure Fabrication | ⚠️ Violation | `registerVideoGame()` and `registerConsole()` perform inline duplicate ID checks (`findProductById(id) != null`) instead of delegating to `ProductValidator`. | Delegate unique ID and existence validations to `ProductValidator`. |
 | `ProductService` | Low Coupling | ✅ Compliant | Depends on `ProductRepository` interface rather than concrete file persistence classes. | None required. |
 | `ProductService` | Indirection | ✅ Compliant | Acts as an intermediate service layer between UI components and persistence repositories. | None required. |
+| `Return` | Information Expert | ⚠️ Violation | `calculateRefundAmount()` and `generateReturnReceipt()` manually iterate over `originalSale.getProducts()` to calculate sale subtotals instead of asking `Sale`. | Delegate sale subtotal calculations to a method inside `Sale` (e.g., `originalSale.getSubtotal()`). |
+| `Return` | Low Coupling | ⚠️ Violation | Directly inspects the internal product collection of `originalSale` to compute discount rates. | Query `Sale` high-level methods to retrieve subtotals and discount rates. |
+| `Return` | High Cohesion | ✅ Compliant | Dedicated strictly to encapsulating return metadata, refund calculations, and receipt formatting. | None required. |
+| `Return` | Creator | ✅ Compliant | Provides overloaded constructors to initialize return instances with or without warranty refunds. | None required. |
+| `Sale.canBeReturned()` | Information Expert | ✅ Compliant | `Sale` holds its own transaction date and legitimately evaluates its 30-day return window. | None required. |
+| `Sale.canBeReturned()` | High Cohesion | ⚠️ Violation | Manually parses String dates (`LocalDate.parse(this.date)`) inside domain logic instead of encapsulating date formats. | Refactor `Sale.date` attribute type or extract date parsing to a dedicated utility / validator. |
+| `Sale.canBeReturned()` | Protected Variations | ⚠️ Violation | Couples return deadline evaluation to the system clock via `LocalDate.now()`, hindering testability. | Overload `canBeReturned(LocalDate evaluationDate)` to pass the target date explicitly. |
 
 ---
 
@@ -213,7 +221,7 @@
   - *Current State:* Domain persistence interface defining contracts to load and save product collections (`loadProducts()`, `saveProducts()`). It applies Indirection and Protected Variations by decoupling `ProductService` from underlying storage mechanisms.
   - *Identified Issues:* None. Creator, Controller, and Pure Fabrication do not apply directly to interface definitions.
   - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
-  
+
 ### 16. `com.gamezone.service.ProductService`
 - **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
 - **Analysis:**
@@ -222,3 +230,20 @@
     1. **Information Expert Violation in `updateStock()`:** Manually calculates `product.getStock() - quantitySold` outside the entity instead of delegating stock reduction to `Product`.
     2. **High Cohesion / Pure Fabrication Violation in Registration:** Performs inline duplicate checks (`findProductById(id) != null`) directly in registration methods instead of delegating all existence checks to `ProductValidator`.
   - *Proposed Refactoring:* Delegate stock reduction to `Product` and move all product existence and uniqueness checks to `ProductValidator`.
+
+  ### 17. `com.gamezone.model.Return`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Domain model class representing product returns, computing proportional refunds based on original sale discounts, and generating return receipts.
+  - *Identified Issues:* 
+    1. **Information Expert & Low Coupling Violation:** In both `calculateRefundAmount()` and `generateReturnReceipt()`, the `Return` class extracts `originalSale.getProducts()` and loops over it to calculate the raw subtotal of the original sale. Since `Sale` is the Information Expert regarding its own items and pricing, `Return` should query `Sale` directly for its subtotal instead of performing external iteration over `Sale`'s internal data.
+  - *Proposed Refactoring:* Add a getter or helper method in `Sale` to expose the gross subtotal, allowing `Return` to request the value without directly traversing `Sale`'s internal product list.
+  
+  ### 18. `com.gamezone.model.Sale.canBeReturned()`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Domain method in `Sale` checking if the transaction occurred within the allowable 30-day return policy.
+  - *Identified Issues:* 
+    1. **High Cohesion Violation:** It performs string parsing (`LocalDate.parse(this.date)`) directly inside the domain method, mixing string manipulation with return policy evaluation.
+    2. **Protected Variations Violation:** Direct coupling to system time through `LocalDate.now()` makes return policy checks non-deterministic and harder to test for historical or simulated dates.
+  - *Proposed Refactoring:* Overload the method to accept a reference date parameter `canBeReturned(LocalDate returnDate)` and delegate String parsing to input validation layers or standard date formatters.
