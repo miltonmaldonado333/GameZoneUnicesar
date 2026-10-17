@@ -15,6 +15,11 @@
 - `com.gamezone.model.Warranty`
 - `com.gamezone.model.BasicWarranty`
 - `com.gamezone.model.ExtendedWarranty`
+- `com.gamezone.model.Promotion`
+- `com.gamezone.model.PercentageDiscount`
+- `com.gamezone.model.CategoryDiscount`
+- `com.gamezone.model.BulkPurchaseDiscount`
+
 
 ---
 
@@ -48,6 +53,22 @@
 | `ExtendedWarranty` | Polymorphism | ✅ Compliant | Polymorphically implements `getDurationInMonths()`, `getWarrantyType()`, and `getAdditionalCost()` without type conditional checks. | None required. |
 | `ExtendedWarranty` | High Cohesion | ✅ Compliant | Focused exclusively on rules, pricing calculations, and parameters for extended warranties. | None required. |
 | `ExtendedWarranty` | Creator | ✅ Compliant | Provides a parameterized constructor delegating state initialization to `super(...)`. | None required. |
+| `Promotion` | Information Expert | ✅ Compliant | Encapsulates promotion validity dates (`startDate`, `endDate`) and checks active state in `isActive()`. | None required. |
+| `Promotion` | Polymorphism | ✅ Compliant | Defines abstract contracts (`calculateDiscount()`, `getDetails()`) to enforce polymorphic discount evaluations. | None required. |
+| `Promotion` | High Cohesion | ✅ Compliant | Focused exclusively on promotion metadata and core date-validity rules. | None required. |
+| `Promotion` | Protected Variations | ✅ Compliant | Abstract base class protects caller services from concrete promotion type implementations. | None required. |
+| `PercentageDiscount` | Information Expert | ✅ Compliant | Encapsulates the discount percentage and calculates monetary savings on a sale in `calculateDiscount()`. | None required. |
+| `PercentageDiscount` | Polymorphism | ✅ Compliant | Polymorphically overrides `calculateDiscount()` and `getDetails()` without using conditional logic. | None required. |
+| `PercentageDiscount` | High Cohesion | ✅ Compliant | Focuses exclusively on flat percentage discount rules and calculations. | None required. |
+| `PercentageDiscount` | Creator | ✅ Compliant | Provides a parameterized constructor delegating parent initialization to `super(...)`. | None required. |
+| `CategoryDiscount` | Polymorphism | ⚠️ Violation | Uses `instanceof` checks (`product instanceof VideoGame`, etc.) inside `calculateDiscount()` instead of polymorphic category evaluation. | Refactor `calculateDiscount()` to rely on `product.getCategory()` polymorphically instead of type checking. |
+| `CategoryDiscount` | Information Expert | ✅ Compliant | Encapsulates `targetCategory` and `percentage` to compute savings on matching products. | None required. |
+| `CategoryDiscount` | High Cohesion | ✅ Compliant | Focused strictly on category-specific promotional discount rules. | None required. |
+| `CategoryDiscount` | Creator | ✅ Compliant | Provides a constructor delegating parent initialization and validating category input. | None required. |
+| `BulkPurchaseDiscount` | Information Expert | ✅ Compliant | Encapsulates `minQuantity` and `percentage` to evaluate volume-based discounts in `calculateDiscount()`. | None required. |
+| `BulkPurchaseDiscount` | Polymorphism | ✅ Compliant | Polymorphically overrides `calculateDiscount()` and `getDetails()` without using type checks. | None required. |
+| `BulkPurchaseDiscount` | High Cohesion | ✅ Compliant | Focused exclusively on bulk purchase discount rules and minimum item count conditions. | None required. |
+| `BulkPurchaseDiscount` | Creator | ✅ Compliant | Provides a parameterized constructor delegating parent initialization to `super(...)`. | None required. |
 
 ---
 
@@ -106,4 +127,32 @@
 - **Analysis:**
   - *Current State:* Concrete subclass extending `Warranty` to represent a premium 12-month extended warranty. It acts as an Information Expert by computing its additional cost (10% of the associated product price) directly in `getAdditionalCost()`, and polymorphically overrides `getDurationInMonths()` and `getWarrantyType()`.
   - *Identified Issues:* None. Controller and Pure Fabrication patterns are not applicable. Low coupling is maintained by interacting strictly with its inherited `Warranty` state and `Product` interface methods.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 8. `com.gamezone.model.Promotion`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Abstract base class representing a general promotion. It encapsulates promotion identity (`id`, `name`) and validity period (`startDate`, `endDate`), serving as an Information Expert in `isActive(LocalDate)`. It defines abstract contracts for `calculateDiscount(Sale)` and `getDetails()`.
+  - *Identified Issues:* None. Creator and Controller do not apply as this is an abstract domain class that cannot receive UI events directly. Pure Fabrication is not applicable as it represents a core domain model concept.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 9. `com.gamezone.model.PercentageDiscount`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete implementation of `Promotion` applying a flat percentage discount to the entire total of a sale. It acts as an Information Expert in `calculateDiscount(Sale)` by using its `percentage` attribute alongside the sale total.
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns are not applicable. Low coupling is maintained by depending strictly on abstract interfaces and model objects.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 10. `com.gamezone.model.CategoryDiscount`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete implementation of `Promotion` applying discounts to specific product categories (`VIDEOGAME`, `CONSOLE`, `ACCESSORY`).
+  - *Identified Issues:* **Polymorphism Violation.** The `calculateDiscount(Sale)` method uses `if-else` branching combined with `instanceof` checks (`product instanceof VideoGame`, `product instanceof Console`, `product instanceof Accessory`) to identify eligible items. This violates GRASP Polymorphism by inspecting concrete runtime types instead of relying on polymorphic dispatch (e.g., calling `product.getCategory()`).
+  - *Proposed Refactoring:* Replace the `instanceof` conditional cascade with a polymorphic call to `product.getCategory()` to evaluate eligibility cleanly without type inspection.
+
+  ### 11. `com.gamezone.model.BulkPurchaseDiscount`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete implementation of `Promotion` applying a percentage discount when the total quantity of items in a sale meets or exceeds `minQuantity`. It acts as an Information Expert in `calculateDiscount(Sale)` by checking the product count against `minQuantity`.
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns are not applicable. Low coupling is maintained by interacting strictly with domain interfaces.
   - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
