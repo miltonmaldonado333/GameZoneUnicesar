@@ -24,6 +24,11 @@
 - `com.gamezone.model.Console`
 - `com.gamezone.persistence.ProductRepository`
 - `com.gamezone.model.Return`
+- `com.gamezone.exceptions.GameZoneException`
+- `com.gamezone.exceptions.BusinessRuleException`
+- `com.gamezone.exceptions.InvalidDataException`
+- `com.gamezone.exceptions.PersistenceException`
+- `com.gamezone.exceptions.ResourceNotFoundException`
 
 
 
@@ -104,7 +109,26 @@
 | `Sale.canBeReturned()` | Information Expert | ✅ Compliant | `Sale` holds its own transaction date and legitimately evaluates its 30-day return window. | None required. |
 | `Sale.canBeReturned()` | High Cohesion | ⚠️ Violation | Manually parses String dates (`LocalDate.parse(this.date)`) inside domain logic instead of encapsulating date formats. | Refactor `Sale.date` attribute type or extract date parsing to a dedicated utility / validator. |
 | `Sale.canBeReturned()` | Protected Variations | ⚠️ Violation | Couples return deadline evaluation to the system clock via `LocalDate.now()`, hindering testability. | Overload `canBeReturned(LocalDate evaluationDate)` to pass the target date explicitly. |
-
+| `GameZoneException` | Information Expert | ✅ Compliant | Encapsulates exception details (`message`, `errorCode`) as the root domain exception. | None required. |
+| `GameZoneException` | Protected Variations | ✅ Compliant | Unchecked root exception protecting method signatures across services and repositories from checked throws. | None required. |
+| `GameZoneException` | Low Coupling | ✅ Compliant | Extends standard `RuntimeException` with no dependencies on UI or persistence layers. | None required. |
+| `GameZoneException` | High Cohesion | ✅ Compliant | Dedicated strictly to encapsulating domain error state and classification codes. | None required. |
+| `BusinessRuleException` | Information Expert | ✅ Compliant | Encapsulates the `"BUSINESS_RULE_VIOLATION"` error code and detailed message for domain invariant breaches. | None required. |
+| `BusinessRuleException` | Creator | ✅ Compliant | Provides a specialized constructor delegating message and error code to `GameZoneException`. | None required. |
+| `BusinessRuleException` | Low Coupling | ✅ Compliant | Extends `GameZoneException` without introducing coupling to UI or persistence layers. | None required. |
+| `BusinessRuleException` | High Cohesion | ✅ Compliant | Dedicated strictly to representing domain business rule violation failures. | None required. |
+| `InvalidDataException` | Information Expert | ✅ Compliant | Encapsulates field name, issue detail, and the `"INVALID_DATA"` error code. | None required. |
+| `InvalidDataException` | Creator | ✅ Compliant | Formats user-friendly Spanish error messages upon construction and delegates to `GameZoneException`. | None required. |
+| `InvalidDataException` | Low Coupling | ✅ Compliant | Extends `GameZoneException` without introducing coupling to UI or persistence layers. | None required. |
+| `InvalidDataException` | High Cohesion | ✅ Compliant | Dedicated strictly to encapsulating input formatting and range validation errors. | None required. |
+| `PersistenceException` | Information Expert | ✅ Compliant | Encapsulates the `"PERSISTENCE_ERROR"` error code, contextual error message, and original root cause. | None required. |
+| `PersistenceException` | Creator | ✅ Compliant | Specialized constructor setting error code and preserving cause trace via `initCause()`. | None required. |
+| `PersistenceException` | Low Coupling | ✅ Compliant | Wraps low-level I/O exceptions into domain-specific exceptions, decoupling caller layers from file/storage technicalities. | None required. |
+| `PersistenceException` | High Cohesion | ✅ Compliant | Dedicated strictly to encapsulating file and storage persistence operational failures. | None required. |
+| `ResourceNotFoundException` | Information Expert | ✅ Compliant | Encapsulates resource type, missing identifier, and the `"NOT_FOUND"` error code. | None required. |
+| `ResourceNotFoundException` | Creator | ✅ Compliant | Formats user-friendly Spanish messages upon instantiation and delegates state to `GameZoneException`. | None required. |
+| `ResourceNotFoundException` | Low Coupling | ✅ Compliant | Extends `GameZoneException` without coupling domain entities to UI or persistence packages. | None required. |
+| `ResourceNotFoundException` | High Cohesion | ✅ Compliant | Dedicated strictly to encapsulating missing entity search failures across all system modules. | None required. |
 ---
 
 ## Detailed Findings & Justifications
@@ -238,7 +262,7 @@
   - *Identified Issues:* 
     1. **Information Expert & Low Coupling Violation:** In both `calculateRefundAmount()` and `generateReturnReceipt()`, the `Return` class extracts `originalSale.getProducts()` and loops over it to calculate the raw subtotal of the original sale. Since `Sale` is the Information Expert regarding its own items and pricing, `Return` should query `Sale` directly for its subtotal instead of performing external iteration over `Sale`'s internal data.
   - *Proposed Refactoring:* Add a getter or helper method in `Sale` to expose the gross subtotal, allowing `Return` to request the value without directly traversing `Sale`'s internal product list.
-  
+
   ### 18. `com.gamezone.model.Sale.canBeReturned()`
 - **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
 - **Analysis:**
@@ -247,3 +271,38 @@
     1. **High Cohesion Violation:** It performs string parsing (`LocalDate.parse(this.date)`) directly inside the domain method, mixing string manipulation with return policy evaluation.
     2. **Protected Variations Violation:** Direct coupling to system time through `LocalDate.now()` makes return policy checks non-deterministic and harder to test for historical or simulated dates.
   - *Proposed Refactoring:* Overload the method to accept a reference date parameter `canBeReturned(LocalDate returnDate)` and delegate String parsing to input validation layers or standard date formatters.
+
+  ### 19. `com.gamezone.exceptions.GameZoneException`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Abstract base exception extending `RuntimeException`. It encapsulates the descriptive error message and an optional domain `errorCode`. It serves as the root class for all application-specific exceptions.
+  - *Identified Issues:* None. Creator and Controller patterns do not apply as this is an exception class. Pure Fabrication is not applicable.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 20. `com.gamezone.exceptions.BusinessRuleException`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete exception extending `GameZoneException`. It encapsulates the `"BUSINESS_RULE_VIOLATION"` error code to signal domain rule failures (e.g., insufficient stock, duplicate entity registration).
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns do not apply.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 21. `com.gamezone.exceptions.InvalidDataException`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete domain exception extending `GameZoneException`. It formats descriptive Spanish validation messages (e.g., `"El campo 'X' es inválido: Y"`) and sets the `"INVALID_DATA"` error code for input format or range failures.
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns do not apply.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 22. `com.gamezone.exceptions.PersistenceException`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete unchecked exception extending `GameZoneException`. It wraps lower-level I/O exceptions (like `IOException`) by preserving the original root cause via `initCause()` and assigning the `"PERSISTENCE_ERROR"` error code.
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns do not apply.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 23. `com.gamezone.exceptions.ResourceNotFoundException`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete domain exception extending `GameZoneException`. It generates formatted Spanish error messages (e.g., `"El/La producto con identificador 'X' no fue encontrado."`) and assigns the `"NOT_FOUND"` error code when a queried entity does not exist in memory or storage.
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns do not apply.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
