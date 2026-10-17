@@ -12,24 +12,27 @@
 - `com.gamezone.model.Sale`
 - `com.gamezone.persistence.SaleRepository`
 - `com.gamezone.service.SaleService`
+- `com.gamezone.Main.main`
 
 ---
 
 ## GRASP Evaluation Matrix
 
-| Class / Method                        | Pattern Evaluated                  |    Status    | Violation / Compliance Evidence                                                                                                                                                                                                                     | Corrective Action Proposal                                                                                                         |
-| :------------------------------------ | :--------------------------------- | :----------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| `GameZoneUI.registerCategoryDiscount` | Controller / High Cohesion         | ⚠️ Violation | Reflection ya class name checks (`p.getClass().getSimpleName()`) ke zariye UI layer mein categories infer karta hai.                                                                                                                                | Category discovery logic ko `ProductService.getAvailableCategories()` mein move karein aur UI se call karein.                      |
-| `GameZoneUI.registerSale`             | Indirection / Low Coupling         | ⚠️ Violation | `ProductService` aur `AccessoryService` ke beech exceptions (`ResourceNotFoundException`) catch karke fallback lookup handle karta hai.                                                                                                             | Service layer mein unified facade method `findSaleableItemById(id)` provide karein.                                                |
-| `GameZoneUI`                          | High Cohesion                      | ⚠️ Violation | Input parsing, domain logic validation, multi-service delegation, aur exception handling ek hi UI class mein mixed hai.                                                                                                                             | `GameZoneUI` ko purely user interaction tak limited rakhein, business workflows ko controllers/services ko delegate karein.        |
-| `Sale.getSubtotal`                    | Information Expert                 | ✅ Compliant | Products list ka internal state use karke price calculation subtotal compute karta hai.                                                                                                                                                             | Koi action zaroori nahi hai.                                                                                                       |
-| `Sale.calculateTotal`                 | Information Expert / High Cohesion | ✅ Compliant | Subtotal, discounts, aur extended warranty costs ka internal state manage aur calculate karta hai.                                                                                                                                                  | Koi action zaroori nahi hai.                                                                                                       |
-| `Sale.generateReceipt`                | Information Expert                 | ✅ Compliant | Formatted receipt text generate karne ke liye saare required internal attributes direct use karta hai.                                                                                                                                              | Koi action zaroori nahi hai.                                                                                                       |
-| `Sale.canBeReturned`                  | Information Expert                 | ✅ Compliant | Internal date attribute use karke 30-day return policy rule validate karta hai.                                                                                                                                                                     | Koi action zaroori nahi hai.                                                                                                       |
-| `SaleRepository`                      | Pure Fabrication                   | ✅ Compliant | File-based persistence operations handle karta hai taaki `Sale` entity file storage logic se decoupled rahe.                                                                                                                                        | Koi action zaroori nahi hai.                                                                                                       |
-| `SaleRepository.findAll`              | Low Coupling / Indirection         | ⚠️ Violation | File read karte samay objects rebuild karne ke liye `PersonService` aur `ProductService` par direct dependent hai.                                                                                                                                  | Data conversion layer/mapper create karein ya ID references pass karein taaki persistence layer service layer par dependent na ho. |
-| `SaleService.registerSale`            | Controller / High Cohesion         | ⚠️ Violation | Transaction workflow (validation, stock checks, promotion evaluation, warranties, inventory update, persistence) orchestrate karta hai lekin item type (`instanceof Console`, `instanceof Accessory`) check karke branching logic handle karta hai. | Type checks (`instanceof`) hatayein aur polymorphic delegation ya specialized handlers update flow ke liye use karein.             |
-| `SaleService`                         | Low Coupling                       | ✅ Compliant | Domain logic validation `SaleValidator` aur `ProductValidator` ko delegate karke concern separation balance karta hai.                                                                                                                              | Internal type checking/branching refactor karein coupling further clean karne ke liye.                                             |
+| Class / Method                        | Pattern Evaluated                  |    Status    | Violation / Compliance Evidence                                                                                                                                                      | Corrective Action Proposal                                                                                              |
+| :------------------------------------ | :--------------------------------- | :----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| `GameZoneUI.registerCategoryDiscount` | Controller / High Cohesion         | ⚠️ Violation | Infers available categories inside the view by iterating through products and inspecting class names (`p.getClass().getSimpleName()`).                                               | Move category extraction logic to `ProductService.getAvailableCategories()` and consume it directly in the UI.          |
+| `GameZoneUI.registerSale`             | Indirection / Low Coupling         | ⚠️ Violation | Handles item lookup fallback logic by catching `ResourceNotFoundException` sequentially between `ProductService` and `AccessoryService` from the UI layer.                           | Provide a unified facade method `findSaleableItemById(id)` in the service layer.                                        |
+| `GameZoneUI`                          | High Cohesion                      | ⚠️ Violation | Accumulates input parsing, business rule execution, service orchestration, and exception handling within a single presentation class.                                                | Restrict `GameZoneUI` strictly to console input parsing and menu display, delegating workflows to services/controllers. |
+| `Sale.getSubtotal`                    | Information Expert                 | ✅ Compliant | Encapsulates the calculation of item subtotals using its internal list of products (`products`).                                                                                     | None required.                                                                                                          |
+| `Sale.calculateTotal`                 | Information Expert / High Cohesion | ✅ Compliant | Computes the final total using its own internal state (`getSubtotal()`, `discountAmount`, `extendedWarrantyCost`).                                                                   | None required.                                                                                                          |
+| `Sale.generateReceipt`                | Information Expert                 | ✅ Compliant | Formats and constructs the formatted transaction receipt using its own structural fields.                                                                                            | None required.                                                                                                          |
+| `Sale.canBeReturned`                  | Information Expert                 | ✅ Compliant | Evaluates return eligibility (30-day policy rule) internally using its transaction date.                                                                                             | None required.                                                                                                          |
+| `SaleRepository`                      | Pure Fabrication                   | ✅ Compliant | Handles flat-file persistence (`sales.txt`), preventing the `Sale` domain entity from bearing file I/O responsibilities.                                                             | None required.                                                                                                          |
+| `SaleRepository.findAll`              | Low Coupling / Indirection         | ⚠️ Violation | Direct dependency on services (`PersonService`, `ProductService`) to reconstruct domain objects during file reading, tightly coupling persistence to services.                       | Use a mapper or pass primitive IDs to resolve dependencies outside the repository layer.                                |
+| `SaleService.registerSale`            | Controller / High Cohesion         | ⚠️ Violation | Orchestrates the sale transaction workflow but relies on explicit type checking (`instanceof Console`, `instanceof Accessory`) to handle inventory updates and warranty assignments. | Remove `instanceof` blocks using polymorphic dispatching or dedicated inventory/warranty handlers.                      |
+| `SaleService`                         | Low Coupling                       | ✅ Compliant | Delegates domain validations to `SaleValidator` and `ProductValidator`, cleanly separating concerns.                                                                                 | None required.                                                                                                          |
+| `main.main`                           | Pure Fabrication / Creator         | ✅ Compliant | Functions as the application bootstrapper, instantiating and connecting the persistence, service, and UI layers.                                                                     | None required.                                                                                                          |
+| `main.main`                           | Low Coupling                       | ⚠️ Violation | Exhibits complex initialization ordering (code comments document circular dependencies previously resolved between `WarrantyRepository`, `SaleRepository`, and `SaleService`).       | Apply Dependency Injection (DI) using a Factory pattern or DI container to isolate the object graph assembly.           |
 
 ---
 
@@ -39,15 +42,15 @@
 
 - **Evaluated Patterns:** Controller, High Cohesion, Indirection, Low Coupling.
 - **Analysis:**
-  - _Current State:_ Console interface class jo user menu navigation, input reading, aur overall user workflow control karti hai.
+  - _Current State:_ Serves as the console user interface class, managing menu navigation, user input collection, and result display.
   - _Identified Issues:_
-    1. **Controller & High Cohesion Violation (`registerCategoryDiscount`):** Direct list iteration aur reflection (`getClass().getSimpleName()`) se domain categories identify karta hai, jo presentation layer ka concern nahi hai.
-    2. **Indirection & Low Coupling Violation (`registerSale`):** UI direct multi-service lookup and exception-catching chain manage karta hai (`ProductService` then `AccessoryService`).
-    3. **High Cohesion Violation:** Multi-concern hybrid class ban gayi hai (UI display + logic routing + fallback exception control).
+    1. **Controller & High Cohesion Violation (`registerCategoryDiscount`):** Dynamically extracts product categories via type reflection (`getClass().getSimpleName()`), embedding domain query logic in the view.
+    2. **Indirection & Low Coupling Violation (`registerSale`):** Executes chained `ResourceNotFoundException` catches between two distinct services directly within the UI flow.
+    3. **Low Cohesion:** Combines input validation, UI formatting, exception handling, and multi-service delegation into a single class.
   - _Proposed Refactoring:_
-    1. `ProductService.getAvailableCategories()` expose karein.
-    2. Shared lookup method `findSaleableItemById(id)` implement karein.
-    3. `GameZoneUI` ko purely user input/output operations tak constraint karein.
+    1. Implement `ProductService.getAvailableCategories()`.
+    2. Create a unified `findSaleableItemById(id)` facade method in the service layer.
+    3. Limit `GameZoneUI` purely to console input/output handling.
 
 ---
 
@@ -55,9 +58,9 @@
 
 - **Evaluated Patterns:** Information Expert, High Cohesion, Low Coupling, Creator.
 - **Analysis:**
-  - _Current State:_ Domain entity jo sale transaction data, discount attributes, warranty cost, subtotal/total calculations, receipt generation, aur return policy checks hold karti hai.
-  - _Identified Issues:_ None. Class pure **Information Expert** ke tor par react karti hai. Complete state encapsulation mainted hai.
-  - _Proposed Refactoring:_ None required.
+  - _Current State:_ Domain entity containing transaction state (client, seller, items, discounts, warranties) and calculating subtotals, totals, receipts, and return eligibility.
+  - _Identified Issues:_ None. Operates as an **Information Expert** by processing its own state without exposing internal calculation logic to external classes.
+  - _Proposed Refactoring:_ None required. Fully complies with GRASP guidelines.
 
 ---
 
@@ -65,12 +68,12 @@
 
 - **Evaluated Patterns:** Pure Fabrication, Low Coupling, Indirection, High Cohesion.
 - **Analysis:**
-  - _Current State:_ Class storage file (`sales.txt`) operations aur parsing clear karti hai.
+  - _Current State:_ Persistence component responsible for storing and parsing sales records in `sales.txt`.
   - _Identified Issues:_
-    1. **Pure Fabrication Compliance:** Correct implementation jo domain entities ko direct file I/O se insulate karti hai.
-    2. **Low Coupling & Indirection Violation (`findAll`):** Constructor ke through `PersonService` aur `ProductService` accept karti hai, jisse persistence layer application service layer par depend ho jaati hai.
+    1. **Pure Fabrication Compliance:** Decouples file storage and reading concerns from domain entities (`Sale`).
+    2. **Low Coupling Violation (`findAll`):** Injects `PersonService` and `ProductService` into its constructor to resolve entity relationships while reading, inverting clean architectural boundaries.
   - _Proposed Refactoring:_
-    1. Mapper/Builder introduce karein jo IDs parse karne ke baad higher service layer mein domain objects build kare.
+    1. Extract relationship resolution logic to a dedicated mapper or service layer so `SaleRepository` returns raw domain data or primitive IDs.
 
 ---
 
@@ -78,10 +81,21 @@
 
 - **Evaluated Patterns:** Controller, High Cohesion, Low Coupling, Polymorphism, Indirection.
 - **Analysis:**
-  - _Current State:_ Transaction processing centralize karta hai, including pricing adjustments, promotion rules, warranty generation, inventory deductions, aur sale persistence.
+  - _Current State:_ Core service centralizing sale transaction processing (calculations, promotion evaluation, warranty assignment, stock updates, and persistence).
   - _Identified Issues:_
-    1. **Controller Pattern Application:** Overall transaction control balance karta hai, lekin high cohesion partially break hoti hai jab implementation type-checking (`item instanceof Console`, `item instanceof Accessory`) ka use karti hai stock updates aur warranty assignment rules decide karne ke liye.
-    2. **Polymorphism Violation:** Specific behaviors (jaise stock deduction rules ya warranty logic) domain abstraction par delegate karne ki jagah service layer mein `if-else`/`instanceof` checking se split ki gayi hain.
+    1. **Polymorphism Violation:** Uses `instanceof` branching (`instanceof Console`, `instanceof Accessory`) to determine specific stock deduction and warranty execution behaviors.
   - _Proposed Refactoring:_
-    1. Polymorphic dispatching (`item.updateStock(...)` ya dedicated inventory updater strategies) use karke `instanceof` blocks remove karein.
-    2. Extended warranty resolution strategies extract karein taaki `SaleService.registerSale` method ka length aur internal responsibilities reduce ho sakein.
+    1. Replace `instanceof` conditions with polymorphic method calls on product abstractions or delegate to specialized inventory strategies.
+
+---
+
+### 5. `com.gamezone.Main.main`
+
+- **Evaluated Patterns:** Pure Fabrication, Creator, Low Coupling, Controller.
+- **Analysis:**
+  - _Current State:_ Application entry point (Bootstrapper) responsible for building the object graph (repositories, services, UI) and launching the execution loop.
+  - _Identified Issues:_
+    1. **Pure Fabrication & Creator Compliance:** Acts as a clean global creator to assemble application layers without cluttering business objects.
+    2. **Coupling & Maintenance Risk:** Constructing the entire dependency tree manually makes the startup sequence fragile to constructor changes across layers.
+  - _Proposed Refactoring:_
+    1. Implement a **Factory** pattern or introduce a lightweight **Dependency Injection (DI)** container to handle layer instantiation and configuration modularly.
