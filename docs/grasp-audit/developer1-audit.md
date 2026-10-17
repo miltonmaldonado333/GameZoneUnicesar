@@ -19,6 +19,13 @@
 - `com.gamezone.model.PercentageDiscount`
 - `com.gamezone.model.CategoryDiscount`
 - `com.gamezone.model.BulkPurchaseDiscount`
+- `com.gamezone.model.Product`
+- `com.gamezone.model.VideoGame`
+- `com.gamezone.model.Console`
+- `com.gamezone.persistence.ProductRepository`
+
+
+
 
 
 ---
@@ -62,13 +69,33 @@
 | `PercentageDiscount` | High Cohesion | ✅ Compliant | Focuses exclusively on flat percentage discount rules and calculations. | None required. |
 | `PercentageDiscount` | Creator | ✅ Compliant | Provides a parameterized constructor delegating parent initialization to `super(...)`. | None required. |
 | `CategoryDiscount` | Polymorphism | ⚠️ Violation | Uses `instanceof` checks (`product instanceof VideoGame`, etc.) inside `calculateDiscount()` instead of polymorphic category evaluation. | Refactor `calculateDiscount()` to rely on `product.getCategory()` polymorphically instead of type checking. |
-| `CategoryDiscount` | Information Expert | ✅ Compliant | Encapsulates `targetCategory` and `percentage` to compute savings on matching products. | None required. |
+| `CategoryDiscount` | Information Expert | ⚠️ Violation | Manually extracts and iterates over `sale.getProducts()` to sum prices instead of requesting category subtotals from `Sale`. | Delegate product iteration and category subtotal calculations to `Sale`. |
 | `CategoryDiscount` | High Cohesion | ✅ Compliant | Focused strictly on category-specific promotional discount rules. | None required. |
 | `CategoryDiscount` | Creator | ✅ Compliant | Provides a constructor delegating parent initialization and validating category input. | None required. |
 | `BulkPurchaseDiscount` | Information Expert | ✅ Compliant | Encapsulates `minQuantity` and `percentage` to evaluate volume-based discounts in `calculateDiscount()`. | None required. |
 | `BulkPurchaseDiscount` | Polymorphism | ✅ Compliant | Polymorphically overrides `calculateDiscount()` and `getDetails()` without using type checks. | None required. |
 | `BulkPurchaseDiscount` | High Cohesion | ✅ Compliant | Focused exclusively on bulk purchase discount rules and minimum item count conditions. | None required. |
 | `BulkPurchaseDiscount` | Creator | ✅ Compliant | Provides a parameterized constructor delegating parent initialization to `super(...)`. | None required. |
+| `Product` | Information Expert | ✅ Compliant | Encapsulates fundamental product state (`id`, `title`, `price`, `stock`). | None required. |
+| `Product` | Polymorphism | ✅ Compliant | Defines abstract contracts (`getFullDescription()`, `getCategory()`) to eliminate type-checking conditionals across product types. | None required. |
+| `Product` | High Cohesion | ✅ Compliant | Focuses strictly on core inventory product state and common domain operations. | None required. |
+| `Product` | Protected Variations | ✅ Compliant | Abstract superclass protects callers from variations in specialized product implementations. | None required. |
+| `VideoGame` | Information Expert | ✅ Compliant | Encapsulates game-specific attributes (`platform`, `genre`, `ageRating`) and formats its details in `getFullDescription()`. | None required. |
+| `VideoGame` | Polymorphism | ✅ Compliant | Polymorphically implements `getCategory()` returning `"VideoGame"` and `getFullDescription()` without conditional logic. | None required. |
+| `VideoGame` | High Cohesion | ✅ Compliant | Focused exclusively on video game product properties and description formatting. | None required. |
+| `VideoGame` | Creator | ✅ Compliant | Provides default and parameterized constructors delegating state initialization to `super(...)`. | None required. |
+| `Console` | Information Expert | ✅ Compliant | Encapsulates hardware-specific attributes (`brand`, `model`, `generation`) and formats its details in `getFullDescription()`. | None required. |
+| `Console` | Polymorphism | ✅ Compliant | Polymorphically implements `getCategory()` returning `"Console"` and `getFullDescription()` without type checking conditionals. | None required. |
+| `Console` | High Cohesion | ✅ Compliant | Focused exclusively on console product hardware state and description formatting. | None required. |
+| `Console` | Creator | ✅ Compliant | Provides default and parameterized constructors delegating state initialization to `super(...)`. | None required. |
+| `ProductRepository` | Indirection | ✅ Compliant | Acts as an interface decoupling service logic from concrete file persistence implementations. | None required. |
+| `ProductRepository` | Protected Variations | ✅ Compliant | Protects domain services from changes in storage mechanisms (e.g., swapping file storage for a database). | None required. |
+| `ProductRepository` | Low Coupling | ✅ Compliant | Defines a lean contract depending only on domain entities (`Product`) and standard Java collections. | None required. |
+| `ProductRepository` | High Cohesion | ✅ Compliant | Dedicated strictly to declaring product persistence contracts (`loadProducts`, `saveProducts`). | None required. |
+| `ProductService` | Information Expert | ⚠️ Violation | `updateStock()` manually extracts and calculates stock (`product.getStock() - quantitySold`) instead of delegating stock reduction to `Product`. | Delegate stock reduction logic to a method inside `Product` (e.g., `product.reduceStock()`). |
+| `ProductService` | High Cohesion / Pure Fabrication | ⚠️ Violation | `registerVideoGame()` and `registerConsole()` perform inline duplicate ID checks (`findProductById(id) != null`) instead of delegating to `ProductValidator`. | Delegate unique ID and existence validations to `ProductValidator`. |
+| `ProductService` | Low Coupling | ✅ Compliant | Depends on `ProductRepository` interface rather than concrete file persistence classes. | None required. |
+| `ProductService` | Indirection | ✅ Compliant | Acts as an intermediate service layer between UI components and persistence repositories. | None required. |
 
 ---
 
@@ -143,12 +170,14 @@
   - *Identified Issues:* None. Controller and Pure Fabrication patterns are not applicable. Low coupling is maintained by depending strictly on abstract interfaces and model objects.
   - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
 
-  ### 10. `com.gamezone.model.CategoryDiscount`
+### 10. `com.gamezone.model.CategoryDiscount`
 - **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
 - **Analysis:**
   - *Current State:* Concrete implementation of `Promotion` applying discounts to specific product categories (`VIDEOGAME`, `CONSOLE`, `ACCESSORY`).
-  - *Identified Issues:* **Polymorphism Violation.** The `calculateDiscount(Sale)` method uses `if-else` branching combined with `instanceof` checks (`product instanceof VideoGame`, `product instanceof Console`, `product instanceof Accessory`) to identify eligible items. This violates GRASP Polymorphism by inspecting concrete runtime types instead of relying on polymorphic dispatch (e.g., calling `product.getCategory()`).
-  - *Proposed Refactoring:* Replace the `instanceof` conditional cascade with a polymorphic call to `product.getCategory()` to evaluate eligibility cleanly without type inspection.
+  - *Identified Issues:* 
+    1. **Polymorphism Violation:** The `calculateDiscount(Sale)` method uses `instanceof` checks (`product instanceof VideoGame`, etc.) instead of calling `product.getCategory()` polymorphically.
+    2. **Information Expert Violation:** It directly extracts `sale.getProducts()` and calculates subtotals externally instead of querying `Sale` for category subtotals.
+  - *Proposed Refactoring:* Refactor `calculateDiscount()` to use `product.getCategory()` polymorphically and delegate sale subtotal calculations to `Sale`.
 
   ### 11. `com.gamezone.model.BulkPurchaseDiscount`
 - **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
@@ -156,3 +185,40 @@
   - *Current State:* Concrete implementation of `Promotion` applying a percentage discount when the total quantity of items in a sale meets or exceeds `minQuantity`. It acts as an Information Expert in `calculateDiscount(Sale)` by checking the product count against `minQuantity`.
   - *Identified Issues:* None. Controller and Pure Fabrication patterns are not applicable. Low coupling is maintained by interacting strictly with domain interfaces.
   - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 12. `com.gamezone.model.Product`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Abstract base class representing a generic product in the GameZone inventory. It manages core attributes (`id`, `title`, `price`, `stock`) as an Information Expert and enforces polymorphic behavior through abstract contracts (`getFullDescription()`, `getCategory()`).
+  - *Identified Issues:* None. Creator and Controller do not apply as this is an abstract domain class. Pure Fabrication is not applicable as it represents a core business entity.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 13. `com.gamezone.model.VideoGame`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete subclass extending `Product` to represent video game items in the inventory. It manages game-specific metadata (`platform`, `genre`, `ageRating`) as an Information Expert, overriding `getCategory()` and `getFullDescription()` polymorphically.
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns are not applicable. Low coupling is maintained by depending strictly on its abstract parent class `Product`.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 14. `com.gamezone.model.Console`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Concrete subclass extending `Product` to represent gaming consoles in the store inventory. It manages hardware properties (`brand`, `model`, `generation`) as an Information Expert, polymorphically overriding `getCategory()` and `getFullDescription()`.
+  - *Identified Issues:* None. Controller and Pure Fabrication patterns are not applicable. Low coupling is maintained by depending exclusively on its parent class `Product`.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+
+  ### 15. `com.gamezone.persistence.ProductRepository`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Domain persistence interface defining contracts to load and save product collections (`loadProducts()`, `saveProducts()`). It applies Indirection and Protected Variations by decoupling `ProductService` from underlying storage mechanisms.
+  - *Identified Issues:* None. Creator, Controller, and Pure Fabrication do not apply directly to interface definitions.
+  - *Proposed Refactoring:* None required. Fully complies with all applicable GRASP principles.
+  
+### 16. `com.gamezone.service.ProductService`
+- **Evaluated Patterns:** Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations.
+- **Analysis:**
+  - *Current State:* Service class orchestrating product business logic (registration, stock updates, lookups).
+  - *Identified Issues:*
+    1. **Information Expert Violation in `updateStock()`:** Manually calculates `product.getStock() - quantitySold` outside the entity instead of delegating stock reduction to `Product`.
+    2. **High Cohesion / Pure Fabrication Violation in Registration:** Performs inline duplicate checks (`findProductById(id) != null`) directly in registration methods instead of delegating all existence checks to `ProductValidator`.
+  - *Proposed Refactoring:* Delegate stock reduction to `Product` and move all product existence and uniqueness checks to `ProductValidator`.
