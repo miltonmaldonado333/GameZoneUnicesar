@@ -1,10 +1,39 @@
-### 📋 Registro de Auditoría GRASP — Módulos del Líder Técnico y UI
+# GRASP Audit Report - Technical Leader (UI Scope)
 
-|     ID      | Módulo / Clase                        | Patrón GRASP Evaluado                    |    Estado    | Diagnóstico / Violación Detectada                                                                    | Acción Correctiva Propuesta                                                                      | Rol Asignado  | Prioridad |
-| :---------: | :------------------------------------ | :--------------------------------------- | :----------: | :--------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------- | :------------ | :-------: |
-|  **V-01**   | `ConsoleMenu` / `GameZoneUI`          | **Controller**<br>`High Cohesion`        | ⚠️ Violación | La UI realiza cálculos de subtotales e integra directamente lógica de negocio.                       | Delegar la lógica de negocio a `SaleService` y mantener la UI enfocada únicamente en E/S.        | Líder Técnico | **Alta**  |
-|  **V-02**   | `SaleService`                         | **Low Coupling**<br>`Indirection`        | ⚠️ Violación | Instancia directamente clases concretas de repositorios con `new` en lugar de recibir abstracciones. | Aplicar inyección de dependencias por constructor pasando interfaces/repositorios.               | Líder Técnico | **Alta**  |
-|  **V-03**   | `Sale`                                | **Information Expert**                   | ⚠️ Violación | El servicio acumula externamente los valores de la venta en lugar de que lo haga la entidad.         | Encapsular el cálculo de subtotales dentro de un método `calculateSubtotal()` en `Sale`.         | Líder Técnico | **Media** |
-|  **V-04**   | `ProductService.restoreStock`         | **Information Expert**<br>`Low Coupling` | ⚠️ Violación | Manipula directamente el campo de stock de los productos desde el servicio.                          | Delegar el incremento/decremento de inventario a métodos de dominio en la clase `Product`.       | Líder Técnico | **Media** |
-| **V-UI-01** | `GameZoneUI.registerCategoryDiscount` | **Controller**<br>`High Cohesion`        | ⚠️ Violación | Extrae e infiere categorías disponibles iterando productos y nombres de clases dentro de la UI.      | Mover la extracción de categorías únicas a `ProductService.getAvailableCategories()`.            | Líder Técnico | **Media** |
-| **V-UI-02** | `GameZoneUI.registerSale`             | **Indirection**<br>`Low Coupling`        | ⚠️ Violación | Busca ítems capturando excepciones secuencialmente entre `productService` y `accessoryService`.      | Proporcionar un método de búsqueda unificado `findSaleableItemById(id)` en la capa de servicios. | Líder Técnico | **Media** |
+**Auditor:** Milton Andrés Maldonado Salcedo  
+**Role:** Technical Leader  
+**Date:** 2026-10-17
+
+---
+
+## Assigned Modules & Classes
+
+- `com.gamezone.ui.GameZoneUI`
+
+---
+
+## GRASP Evaluation Matrix
+
+| Class / Method                        | Pattern Evaluated          |    Status    | Violation / Compliance Evidence                                                                                                                                        | Corrective Action Proposal                                                                                                                          |
+| :------------------------------------ | :------------------------- | :----------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GameZoneUI.registerCategoryDiscount` | Controller / High Cohesion | ⚠️ Violation | Extracts and infers available product categories dynamically inside the UI layer by iterating over products and checking class names (`p.getClass().getSimpleName()`). | Move category discovery and extraction logic to `ProductService.getAvailableCategories()` and consume it directly in the UI.                        |
+| `GameZoneUI.registerSale`             | Indirection / Low Coupling | ⚠️ Violation | Manages item search fallback logic by catching `ResourceNotFoundException` sequentially between `ProductService` and `AccessoryService` directly within the UI flow.   | Provide a unified lookup facade method `findSaleableItemById(id)` in the service layer to eliminate cross-service exception catching in the UI.     |
+| `GameZoneUI`                          | High Cohesion              | ⚠️ Violation | Accumulates input validation, domain data formatting, multi-service orchestrations, and exception handlings within a single presentation class.                        | Keep `GameZoneUI` strictly focused on user input collection and output presentation, delegating all coordination and processing to service classes. |
+
+---
+
+## Detailed Findings & Justifications
+
+### 1. `com.gamezone.ui.GameZoneUI`
+
+- **Evaluated Patterns:** Controller, High Cohesion, Indirection, Low Coupling.
+- **Analysis:**
+  - _Current State:_ Serves as the primary console interaction class, responsible for reading user choices, displaying menus, requesting inputs, and presenting execution results.
+  - _Identified Issues:_
+    1. **Controller & High Cohesion Violation (`registerCategoryDiscount`):** The UI inspects product lists directly and determines available product categories using reflection/type inspection (`p.getClass().getSimpleName()`). This embeds domain query logic within the view.
+    2. **Indirection & Low Coupling Violation (`registerSale`):** When looking up saleable items by ID, the UI attempts to query `ProductService` first, catches `ResourceNotFoundException`, and then queries `AccessoryService`. This couples the UI directly to two separate domain services and their fallback flow.
+    3. **High Cohesion Violation:** The class acts as a large controller/view hybrid, mixing UI formatting, input parsing, error handling, and business flow orchestration.
+  - _Proposed Refactoring:_
+    1. Add a `getAvailableCategories()` method in `ProductService` that returns a clean list/set of category names for the UI to display.
+    2. Add a unified `findSaleableItemById(String id)` method in the service layer that handles internal lookup across products and accessories, returning a single result or throwing a single domain exception.
+    3. Restrict `GameZoneUI` to purely collecting strings/numbers from `Scanner` and passing them to service methods.
