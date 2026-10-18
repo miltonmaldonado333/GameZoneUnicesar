@@ -167,24 +167,24 @@ Before and after the changes:
 
 The supplied reports identify violations in the following patterns:
 
-- **Information Expert:** V-06, V-09, V-10, V-12
-- **Creator:** no confirmed violation in the supplied findings; `Main.main()` is considered an appropriate application composition point.
-- **Controller:** V-03 concerns excessive responsibilities in the UI; the final team verdict should distinguish event coordination from presentation-layer cohesion.
-- **Low Coupling:** V-02, V-04, V-05, V-12
-- **High Cohesion:** V-01, V-03, V-11, V-13
-- **Polymorphism:** V-05, V-08
-- **Pure Fabrication:** V-11
-- **Indirection:** V-02, V-04, V-07
-- **Protected Variations:** V-14
+- **Information Expert:** V-06, V-09, V-10, V-12, V-15, V-19, V-20
+- **Creator:** no confirmed violation. `Main.main()` is an appropriate composition point, and the services of Developer 2 create what they register.
+- **Controller:** V-03 concerns excessive responsibilities in the UI. `ReturnService.registerReturn` is correct as use-case coordination and its excess of work is V-18; the other services of Developer 2 do not receive system events.
+- **Low Coupling:** V-02, V-04, V-05, V-12, V-20, V-22
+- **High Cohesion:** V-01, V-03, V-11, V-13, V-17, V-18
+- **Polymorphism:** V-05, V-08, V-16
+- **Pure Fabrication:** V-11, V-17
+- **Indirection:** V-02, V-04, V-07, V-21
+- **Protected Variations:** V-14, V-21
 
-These are preliminary pattern groupings based only on the two reports provided. The final team verdict for all nine patterns must be updated after Developer 2's audit is incorporated.
+These groupings now include the three reports. The Technical Leader confirms the final team verdict for the nine patterns when he validates the coverage.
 
 ## 10. Items to complete before submitting the final consolidated audit
 
-- Add Developer 2's audited modules and findings.
+- Done: Developer 2's modules and findings were added (V-15 to V-22 and the extensions of V-04 and V-05).
 - Verify the full class-coverage table against `TEAM.md` and the repository's commit history.
-- Confirm the commit hash of `develop` that was audited.
+- The evidence of Developer 2 was verified against `origin/develop` at commit `336790c`. Confirm that the line references of the Technical Leader and Developer 1 use the same commit.
 - Validate evidence against the actual source code and add exact line references or code excerpts where available.
-- Unify any overlapping findings with Developer 2's report and assign one final ID per violation.
+- Overlaps with Developer 2 were unified in V-04 and V-05; the stock findings V-06, V-10 and V-15 stay separate but linked in section 6. Confirm the final IDs and the responsible owners before Phase 2.
 - Confirm the responsible owner for cross-boundary methods before beginning Phase 2.
 - Ensure the final document is saved as `docs/grasp-audit/consolidated-audit.md`.
