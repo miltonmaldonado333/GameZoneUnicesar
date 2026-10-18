@@ -178,13 +178,3 @@ The supplied reports identify violations in the following patterns:
 - **Protected Variations:** V-14, V-21
 
 These groupings now include the three reports. The Technical Leader confirms the final team verdict for the nine patterns when he validates the coverage.
-
-## 10. Items to complete before submitting the final consolidated audit
-
-- Done: Developer 2's modules and findings were added (V-15 to V-22 and the extensions of V-04 and V-05).
-- Verify the full class-coverage table against `TEAM.md` and the repository's commit history.
-- The evidence of Developer 2 was verified against `origin/develop` at commit `336790c`. Confirm that the line references of the Technical Leader and Developer 1 use the same commit.
-- Validate evidence against the actual source code and add exact line references or code excerpts where available.
-- Overlaps with Developer 2 were unified in V-04 and V-05; the stock findings V-06, V-10 and V-15 stay separate but linked in section 6. Confirm the final IDs and the responsible owners before Phase 2.
-- Confirm the responsible owner for cross-boundary methods before beginning Phase 2.
-- Ensure the final document is saved as `docs/grasp-audit/consolidated-audit.md`.
