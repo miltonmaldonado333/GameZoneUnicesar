@@ -81,3 +81,21 @@ Audited: `PromotionRepository` and `PromotionService`, including the selection o
 | Protected Variations | Violation (V-09) | Same finding as Indirection: changing where promotions are stored would force editing `PromotionService`. |
 
 **Violations in this module:** V-03, V-09.
+
+### 2.4 Returns (Requirement 3, adjustments A4 and A6)
+
+Audited: `ReturnRepository` and `ReturnService`, including `calculateMonthlySales`, `calculateMonthlyReturns` and `generateMonthlyBalance`.
+
+| Pattern | Verdict | Evidence |
+| :--- | :---: | :--- |
+| Information Expert | Violation (V-06, V-07) | V-06: `ReturnService.calculateMonthlySales` (lines 201-206) loops over `saleService.getAllSales()`, parses `LocalDate.parse(sale.getDate())` (line 204) and adds `sale.getTotal()` (line 206), so the returns service computes a sales total and interprets the date format of `Sale`. V-07: `findSaleById` is copied in `ReturnService` (line 143, called at line 66) and in `ReturnRepository` (line 170, called at line 139). Correct elsewhere: `Return` computes its own refund and `calculateMonthlyReturns` only adds `getRefundAmount()`. |
+| Creator | Correct | `registerReturn` creates the `Return` it records and persists it. `ReturnRepository.parseLine` rebuilds stored returns. |
+| Controller | Correct | `registerReturn` is the use-case operation of a return: it delegates to `WarrantyService`, to `AccessoryService` or `ProductService` and to `ReturnRepository`. The event itself enters through `GameZoneUI` (Technical Leader). The excess of work that remains inside it is registered under High Cohesion. |
+| Low Coupling | Violation (V-08) | `ReturnRepository` imports `AccessoryService`, `ProductService` and `SaleService` (lines 16-18) and uses them in `parseLine` and `resolveItem` to rebuild sales and returned items, so persistence depends on the service layer above it. |
+| High Cohesion | Violation (V-04) | `ReturnService.registerReturn` (lines 65-141, 77 lines) checks the sale and the 30-day window (66-73), runs three counting loops (84-105), builds the id (116), cancels warranties (117-123), restores stock (127-134) and persists (136-138). |
+| Polymorphism | Violation (V-05) | `registerReturn` decides with `product instanceof Console` (line 120) which items get their warranties cancelled and with `product instanceof Accessory` (line 129) which service restores the stock. |
+| Pure Fabrication | Correct | `ReturnRepository` exists only to carry file access. The validation written inline in `registerReturn` is handled inside V-04. |
+| Indirection | Violation (V-09) | `ReturnService` line 21 declares `private ReturnRepository returnRepository;`, a concrete class that reads and writes the file. |
+| Protected Variations | Violation (V-09) | Same finding as Indirection: changing where returns are stored would force editing `ReturnService`. |
+
+**Violations in this module:** V-04, V-05, V-06, V-07, V-08, V-09.
