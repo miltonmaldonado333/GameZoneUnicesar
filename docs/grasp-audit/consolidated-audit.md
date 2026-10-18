@@ -139,7 +139,16 @@ The following findings require coordination across assigned areas and should be 
 
 ## 7. Out-of-scope findings
 
-No independently verified functional defect has been established from the supplied reports. The reported issues concern design and responsibility assignment. If testing reveals a defect that would change outputs, messages, menu behavior, or persisted file contents, document it separately as an out-of-scope functional finding instead of silently changing behavior during this refactor.
+Behaviour defects found while auditing. They are not corrected in this requirement because fixing them would change what the user observes. Evidence and line numbers are in section 6 of `developer2-audit.md`.
+
+- **F-01 - Warranty identifiers can repeat.** `WarrantyService` builds ids with `"WAR" + String.format("%04d", warranties.size() + 1)` in `assignBasicWarranty` (line 51), `assignExtendedWarranty` (line 76) and `syncPastConsoleWarranties` (line 181), while `cancelWarranties` removes records, so the next id can already exist. `ReturnService.registerReturn` (line 116) builds return ids the same way.
+- **F-02 - Cancelling warranties removes more than the returned unit.** `cancelWarranties` removes every warranty of the product in the sale, and `ReturnService` calls it once per returned unit, so one returned unit can cancel and refund the warranties of units that stay with the customer.
+- **F-03 - Repositories that print the error and continue.** `AccessoryRepository`, `PromotionRepository`, `ReturnRepository` and `WarrantyRepository` print the `IOException` with `System.out.println`, while the three Requirement 6 repositories throw `PersistenceException`. Unifying them would change what the user sees.
+- **F-04 - Generic exceptions in services.** `ReturnService.registerReturn`, `PromotionService.registerCategoryDiscount` and `AccessoryService.restoreStock` throw `IllegalArgumentException`. Converting them would change the exception the menu receives and the message shown.
+- **F-05 - Records that cannot be resolved are lost.** `ReturnRepository.parseLine` and `WarrantyRepository.parseLine` return null when the sale or product is not found, `loadAll` skips those lines and the next `saveAll` rewrites the file without them.
+- **F-06 - Accessories may not be resolved when sales are reloaded (reported to the Technical Leader).** `SaleRepository.findAll` resolves product ids with `productService.findProductById`, which does not hold accessories, so an accessory of a saved sale may be skipped on reload. The Technical Leader, who owns `Sale`, must confirm it.
+
+The functional observations reported in `leader-audit.md` and `developer1-audit.md`, if any, are added here by the Technical Leader.
 
 ## 8. Preservation of behavior and verification plan
 
