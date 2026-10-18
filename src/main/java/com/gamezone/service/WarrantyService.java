@@ -22,7 +22,6 @@ public class WarrantyService {
 
     private WarrantyRepository warrantyRepository;
     private SaleRepository saleRepository;
-    private ProductService productService;
 
     /**
      * Constructs a WarrantyService with only WarrantyRepository.
@@ -39,12 +38,10 @@ public class WarrantyService {
      *
      * @param warrantyRepository the persistence repository for warranties
      * @param saleRepository     the persistence repository for sales, used for historical sync
-     * @param productService     the service managing products
      */
-    public WarrantyService(WarrantyRepository warrantyRepository, SaleRepository saleRepository, ProductService productService) {
+    public WarrantyService(WarrantyRepository warrantyRepository, SaleRepository saleRepository) {
         this.warrantyRepository = warrantyRepository;
         this.saleRepository = saleRepository;
-        this.productService = productService;
     }
 
     /**
