@@ -77,4 +77,10 @@ public abstract class Product {
      * @return the category name used for filtering and promotion rules
      */
     public abstract String getCategory();
+    
+    public void addStock(int quantity) {
+    if (quantity > 0) {
+        this.stock += quantity;
+    }
+}
 }

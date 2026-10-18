@@ -7,22 +7,26 @@ import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
 import com.gamezone.persistence.ProductRepository;
 import com.gamezone.validation.ProductValidator;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service class handling product business logic.
- * Input and existence checks are delegated to ProductValidator.
+ * Service class handling product domain logic, stock management, and unified catalog queries.
+ * 
+ *Applies GRASP principles by acting as a Controller for product creation and 
+ * delegating state mutation directly to domain entities (Information Expert).
  */
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final List<Product> products;
+    private AccessoryService accessoryService;
 
     /**
-     * Receives the repository and loads the saved products into memory.
+     * Constructs a {@code ProductService} using the specified repository to load initial data.
      *
-     * @param productRepository the repository used to persist product data
+     * @param productRepository the repository responsible for product persistence
      */
     public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
@@ -30,10 +34,20 @@ public class ProductService {
     }
 
     /**
-     * Finds a product by its unique ID.
+     * Optional dependency setter for {@link AccessoryService} to enable unified 
+     * item searches across both products and accessories.
+     *
+     * @param accessoryService the accessory service instance
+     */
+    public void setAccessoryService(AccessoryService accessoryService) {
+        this.accessoryService = accessoryService;
+    }
+
+    /**
+     * Finds a product by its unique identifier.
      *
      * @param id the identifier to search for
-     * @return the matching product, or null if not found
+     * @return the matching {@link Product}, or {@code null} if not found
      */
     public Product findProductById(String id) {
         for (Product product : products) {
@@ -45,22 +59,72 @@ public class ProductService {
     }
 
     /**
-     * Registers a new video game if the ID is unique and saves to file.
+     * Unifies item lookup across products and accessories for sales operations.
+     * 
+     * GRASP Indirection & Controller: Centralizes fallback searching so UI 
+     * components do not catch sequential exceptions between separate services.
      *
-     * @param platform the platform the game runs on
-     * @param genre    the game genre
-     * @param ageRating the recommended age rating
-     * @param id       the product identifier
-     * @param title    the product title
-     * @param price    the product price
-     * @param stock    the initial stock
-     * @return true if registered, false if the ID already exists
-     * @throws InvalidDataException if the id, title, price or stock are not valid
+     * @param id the identifier of the product or accessory
+     * @return the saleable {@link Product} item found, or {@code null} if it does not exist
+     */
+    public Product findSaleableItemById(String id) {
+        Product item = findProductById(id);
+        if (item == null && accessoryService != null) {
+            try {
+                item = accessoryService.findById(id);
+            } catch (ResourceNotFoundException ignored) {
+                // Fallback returns null if not found in accessory repository
+            }
+        }
+        return item;
+    }
+
+    /**
+     * Dynamically extracts all distinct product categories currently available in the system.
+     * 
+     * GRASP High Cohesion:Encapsulates category discovery in the service layer 
+     * to eliminate reflection logic in UI controllers.
+     *
+     * @return a list of unique category names
+     */
+    public List<String> getAvailableCategories() {
+        List<String> categories = new ArrayList<>();
+        for (Product p : products) {
+            String category = (p.getCategory() != null && !p.getCategory().isBlank()) 
+                    ? p.getCategory() 
+                    : p.getClass().getSimpleName().toUpperCase();
+            
+            if (!categories.contains(category)) {
+                categories.add(category);
+            }
+        }
+
+        if (accessoryService != null && accessoryService.listAllAccessories() != null 
+                && !accessoryService.listAllAccessories().isEmpty()) {
+            if (!categories.contains("ACCESSORY")) {
+                categories.add("ACCESSORY");
+            }
+        }
+        return categories;
+    }
+
+    /**
+     * Registers a new video game if the ID is unique and persists changes.
+     *
+     * @param platform  the target platform
+     * @param genre     the game genre
+     * @param ageRating the target age classification
+     * @param id        the unique product identifier
+     * @param title     the product title
+     * @param price     the retail price
+     * @param stock     the initial stock level
+     * @return {@code true} if registered successfully, {@code false} if the ID already exists
+     * @throws InvalidDataException if validation fails for basic product fields
      */
     public boolean registerVideoGame(String platform, String genre, String ageRating, String id, String title, double price, int stock) {
         ProductValidator.validateProductData(id, title, price, stock);
         if (findProductById(id) != null) {
-            return false; // ID ALREADY EXIST
+            return false;
         }
         VideoGame game = new VideoGame(platform, genre, ageRating, id, title, price, stock);
         products.add(game);
@@ -69,22 +133,22 @@ public class ProductService {
     }
 
     /**
-     * Registers a new console if the ID is unique and saves to file.
+     * Registers a new gaming console if the ID is unique and persists changes.
      *
-     * @param brand      the console brand
+     * @param brand      the console manufacturer
      * @param model      the console model
      * @param generation the console generation
-     * @param id         the product identifier
+     * @param id         the unique product identifier
      * @param title      the product title
-     * @param price      the product price
-     * @param stock      the initial stock
-     * @return true if registered, false if the ID already exists
-     * @throws InvalidDataException if the id, title, price or stock are not valid
+     * @param price      the retail price
+     * @param stock      the initial stock level
+     * @return {@code true} if registered successfully, {@code false} if the ID already exists
+     * @throws InvalidDataException if validation fails for basic product fields
      */
     public boolean registerConsole(String brand, String model, String generation, String id, String title, double price, int stock) {
         ProductValidator.validateProductData(id, title, price, stock);
         if (findProductById(id) != null) {
-            return false; // ID ALREADY EXIST
+            return false;
         }
         Console console = new Console(brand, model, generation, id, title, price, stock);
         products.add(console);
@@ -93,42 +157,46 @@ public class ProductService {
     }
 
     /**
-     * Returns a copy of the complete product list.
+     * Returns a defensive copy of all registered products in the inventory.
      *
-     * @return a new list with every registered product
+     * @return a new list containing all current products
      */
     public List<Product> getAllProducts() {
         return new ArrayList<>(products);
     }
 
     /**
-     * Deducts the sold quantity from the product stock and saves to file.
+     * Subtracts the sold quantity from product inventory and saves the state.
      *
-     * @param productId    the identifier of the product sold
-     * @param quantitySold the quantity to subtract from the stock
+     * @param productId    the unique identifier of the sold product
+     * @param quantitySold the quantity sold to subtract
      */
     public void updateStock(String productId, int quantitySold) {
         Product product = findProductById(productId);
         if (product != null) {
-            int newStock = product.getStock() - quantitySold;
-            if (newStock >= 0) {
-                product.setStock(newStock);
+            if (product.getStock() >= quantitySold) {
+                product.setStock(product.getStock() - quantitySold);
                 productRepository.saveProducts(products);
             }
         }
     }
 
     /**
-     * Adds the given quantity back to the stock of an existing product.
+     * Restores stock for a product when a sale is returned or cancelled.
+     * 
+     * GRASP Information Expert: Delegates state mutation to the domain entity method 
+     * (e.g., {@code product.addStock(quantity)}) instead of directly calculating stock in the service.
      *
      * @param productId the identifier of the product to restore
-     * @param quantity  the quantity to add to the stock
+     * @param quantity  the quantity to add back to inventory
      * @throws ResourceNotFoundException if the product does not exist
      */
     public void restoreStock(String productId, int quantity) {
         Product product = findProductById(productId);
         ProductValidator.validateProductExists(product, productId);
-        product.setStock(product.getStock() + quantity);
+        
+        // Delegate state update to Product (Information Expert)
+        product.addStock(quantity);
         productRepository.saveProducts(products);
     }
 }
