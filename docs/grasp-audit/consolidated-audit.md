@@ -93,6 +93,12 @@ The following findings were assessed as compliant in the two reports and do not 
 - **`ProductService` low coupling:** the Developer 1 report identifies its use of the `ProductRepository` interface and its role as a service intermediary as compliant. This does not negate the separate violations in V-10 and V-11.
 - **`SaleService` validation separation:** the Technical Leader report identifies delegation to `SaleValidator` and `ProductValidator` as compliant, independently of the `instanceof` issue in V-05.
 - **`Main.main()` as Creator/Pure Fabrication:** the entry point appropriately assembles the application layers; V-07 concerns the fragility of manual dependency construction, not the need for a composition root itself.
+- **Developer 2 modules, creation:** `PersonService`, `AccessoryService`, `PromotionService`, `ReturnService` and `WarrantyService` create the objects they register, and the repositories only rebuild stored records in `parseLine`.
+- **`PromotionService.findBestPromotionFor` and `WarrantyService.cancelWarranties`:** they ask each promotion or warranty for its own discount or cost through polymorphic calls, without checking the type.
+- **Persons module:** `PersonService` depends on the `PersonRepository` interface and on the static `PersonValidator`.
+- **Requirement 6 wrapping:** `FilePersonRepository`, `FileProductRepository` and `SaleRepository` wrap `IOException` in `PersistenceException`.
+- **`ReturnService.registerReturn` as Controller:** it coordinates the return use case through other services, so the pattern is correct; the excess of work inside it is V-18.
+- **`instanceof` in `toLine` of the file repositories:** accepted as serialization that must stay in persistence, so it is not reported.
 
 ## 5. Main corrective actions and coordination
 
@@ -109,6 +115,11 @@ The following findings were assessed as compliant in the two reports and do not 
 6. **Deterministic return-policy testing:** separate date parsing from the return rule and make the evaluation date injectable while preserving existing menu behavior.
 
 7. **Application initialization:** centralize object creation in a factory/composition root and remove fragile circular initialization dependencies without changing the startup flow seen by the user.
+8. **Persistence interfaces:** V-04 is done before V-21, because the interfaces take the signatures that V-04 leaves. Developer 2 extracts the four interfaces and the Technical Leader creates the file implementations in `Main` (V-07).
+
+9. **Sale lookup and monthly totals:** the Technical Leader adds the lookup by id (`SaleService` and `SaleRepository`) and the monthly total (`SaleService`); Developer 2 then removes the copies (V-20) and delegates (V-19). Suggested order: V-04, V-21, V-20, V-19.
+
+10. **Stock and item-type contracts:** V-15 is done after `Product.addStock` and `Product.reduceStock` exist (V-06 and V-10). V-05 uses one shared hook agreed by the Technical Leader, Developer 1 and Developer 2.
 
 ## 6. Boundary findings
 
@@ -119,6 +130,12 @@ The following findings require coordination across assigned areas and should be 
 - **V-09 / V-12:** both need `Sale` to expose subtotal/discount information. Developer 1 owns `CategoryDiscount` and `Return`; the Technical Leader owns `Sale`. Coordinate the method contract and sequence the commits.
 - **V-13 / V-14:** the date-related refactor touches `Sale`, which is in the Technical Leader's overall module scope but the supplied Developer 1 report assigns `Sale.canBeReturned()` to Developer 1. Confirm the actual method ownership in `TEAM.md` and Git history before implementation, as required by the assignment.
 - **V-05:** if specialized inventory or warranty handlers are introduced, assign their creation to the owner of the violation and coordinate any required service-interface changes.
+- **V-04 (extended):** `SaleRepository` belongs to the Technical Leader, and `ReturnRepository` and `WarrantyRepository` to Developer 2. All three must use the same decoupling mechanism; the Technical Leader coordinates the order of the commits.
+- **V-05 (extended):** the item-type tests are in `SaleService` (Technical Leader), `ReturnService` and `WarrantyService` (Developer 2). The warranty hook goes in `Product` and `Console` (Developer 1) and the stock contract in `ProductService` (Technical Leader and Developer 1) and `AccessoryService` (Developer 2).
+- **V-15 / V-06 / V-10:** the same stock arithmetic is written in `AccessoryService`, `ProductService.restoreStock` and `ProductService.updateStock`. All three use the `Product` operations and must keep the same invariants.
+- **V-19 / V-13:** if `Sale` changes the type of its date (V-13), `calculateMonthlySales` stops compiling. V-19 delegates the total to `SaleService` first, so it must be corrected before or together with V-13.
+- **V-20:** the lookups are added by the Technical Leader and the copies removed by Developer 2.
+- **V-21 / V-22:** they need `Main` (V-07) updated by the Technical Leader to create the file implementations and to call the new `WarrantyService` constructor.
 
 ## 7. Out-of-scope findings
 
