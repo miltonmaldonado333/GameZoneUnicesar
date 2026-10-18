@@ -117,3 +117,16 @@ Audited: `WarrantyRepository` and `WarrantyService`, including `cancelWarranties
 | Protected Variations | Violation (V-09) | Same finding as Indirection: changing where warranties are stored would force editing `WarrantyService`. |
 
 **Violations in this module:** V-05, V-07, V-08, V-09, V-10.
+
+### 2.6 Exceptions and validators (Requirement 6)
+
+Audited: only the lines changed in Requirement 6. They are the wrapping of `IOException` in `PersistenceException` in `FilePersonRepository`, `FileProductRepository` and `SaleRepository`, and the calls to `PersonValidator`, `ProductValidator` and `SaleValidator` from `PersonService`, `ProductService` and `SaleService`. The validator and exception classes are audited by Developer 1, and the rest of `ProductService`, `SaleService` and `SaleRepository` by their owners.
+
+| Pattern | Verdict | Evidence |
+| :--- | :---: | :--- |
+| Pure Fabrication | Correct | The checks live in stateless classes of the `validation` package. `PersonService` calls `PersonValidator.validatePersonData` (line 47) and `validateUniquePerson` (lines 48, 67), `ProductService` calls `ProductValidator.validateProductData` (lines 61, 85) and `validateProductExists` (line 130), and `SaleService` calls `SaleValidator.validateSaleData` (line 117) and `ProductValidator.validateStockAvailability` (line 121). The inline check in `PromotionService` is V-03, and the inline duplicate-id check in `ProductService.registerVideoGame` and `registerConsole` is reported in developer1-audit. |
+| Protected Variations | Correct | `throw new PersistenceException(...)` wraps the `IOException` in `FilePersonRepository` (lines 67, 89), `FileProductRepository` (lines 76, 107) and `SaleRepository` (lines 66, 119), so the callers depend on the project exception and not on the I/O type of the storage. The repositories of the other modules do not do this, and changing it would change what the user sees (F-03). |
+| Low Coupling | Correct | The services reach the validators only through static calls and do not know how each check is done. |
+| Other patterns | Not applicable | These lines contain no object creation, event handling or type-based branching beyond what sections 2.1 to 2.5 already cover. |
+
+**Violations in these lines:** none.
