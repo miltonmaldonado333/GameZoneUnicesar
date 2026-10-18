@@ -99,3 +99,21 @@ Audited: `ReturnRepository` and `ReturnService`, including `calculateMonthlySale
 | Protected Variations | Violation (V-09) | Same finding as Indirection: changing where returns are stored would force editing `ReturnService`. |
 
 **Violations in this module:** V-04, V-05, V-06, V-07, V-08, V-09.
+
+### 2.5 Warranties (Requirement 4, adjustments A2 and A7)
+
+Audited: `WarrantyRepository` and `WarrantyService`, including `cancelWarranties` and `syncPastConsoleWarranties`.
+
+| Pattern | Verdict | Evidence |
+| :--- | :---: | :--- |
+| Information Expert | Violation (V-07) | `WarrantyRepository.findSaleById` (line 153, called at line 138) repeats the sale lookup that `ReturnService` and `ReturnRepository` also copy. Correct elsewhere: `cancelWarranties` asks each warranty for `getAdditionalCost()` and `listActiveWarranties` asks `warranty.isActive(today)`. |
+| Creator | Correct | `assignBasicWarranty`, `assignExtendedWarranty` and `syncPastConsoleWarranties` create the `BasicWarranty` and `ExtendedWarranty` objects they store. `WarrantyRepository.parseLine` rebuilds them from stored records. |
+| Controller | Not applicable | `WarrantyService` does not receive system events: the console menu (`GameZoneUI`, Technical Leader) does, and other services call it, such as `ReturnService.registerReturn`. |
+| Low Coupling | Violation (V-08, V-10) | V-08: `WarrantyRepository` imports `ProductService` (line 18) and uses it in `parseLine` through `productService.findProductById(productId)`. V-10: `WarrantyService` declares `productService` (line 25), receives it in the constructor (line 34) and assigns it (line 37), and no method uses it. After adjustment A2 sales are resolved through `SaleRepository` and not through `SaleService`, which is correct. |
+| High Cohesion | Correct | The service only creates, cancels and queries warranties, and the repository only reads and writes `warranties.csv`. |
+| Polymorphism | Violation (V-05) | `WarrantyService.syncPastConsoleWarranties` (line 174) uses `item instanceof com.gamezone.model.Console` to decide which sold items receive a basic warranty. Correct elsewhere: `cancelWarranties` never asks whether a warranty is basic or extended. `WarrantyRepository.toLine` uses `instanceof ExtendedWarranty` to choose the stored discriminator, which stays in persistence (see 2.1) and is not reported. |
+| Pure Fabrication | Correct | `WarrantyRepository` exists only to carry file access. |
+| Indirection | Violation (V-09) | `WarrantyService` line 23 declares `private WarrantyRepository warrantyRepository;`, a concrete class that reads and writes the file. |
+| Protected Variations | Violation (V-09) | Same finding as Indirection: changing where warranties are stored would force editing `WarrantyService`. |
+
+**Violations in this module:** V-05, V-07, V-08, V-09, V-10.
