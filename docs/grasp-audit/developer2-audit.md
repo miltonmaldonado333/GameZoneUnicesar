@@ -146,3 +146,57 @@ Verdict of this report for each GRASP pattern over the code audited here. A find
 | Pure Fabrication | Violation | V-03. Correct in the repositories and in the use of validators. |
 | Indirection | Violation | V-09. Correct in the persons module. |
 | Protected Variations | Violation | V-09, the same finding as Indirection. Correct in the persons module and in the wrapping of `IOException`. |
+
+## 4. Violations
+
+Identifiers belong to this report. The Technical Leader assigns the definitive ones in the consolidated audit.
+
+#### V-01 - Stock arithmetic done outside the entity
+
+- **Pattern:** Information Expert
+- **Module:** Accessories (Requirement 1); `restoreStock` was added in Requirement 5 (A4)
+- **Evidence:** `AccessoryService.java` line 190, in `updateStock`: `accessory.setStock(accessory.getStock() - quantity);` and line 207, in `restoreStock`: `accessory.setStock(accessory.getStock() + quantity);`.
+- **Explanation:** The service reads the stock, computes the new value and writes it back, although the stock belongs to `Product`. The same pattern is reported for `ProductService.updateStock` (developer1-audit) and for `ProductService.restoreStock` (leader-audit).
+- **Consequence:** Any stock rule, such as never going below zero, must be repeated in each service that changes stock, and two services already duplicate the arithmetic.
+- **Proposed solution:** Call the `addStock` and `reduceStock` operations that `Product` receives for the `ProductService` findings. `updateStock` keeps its boolean result and `restoreStock` keeps its exception. Pattern applied: Information Expert.
+- **Other integrante's code:** Yes. The new `Product` operations belong to the owners of the `ProductService` findings (Developer 1 and Technical Leader).
+
+#### V-02 - Accessory type chosen with instanceof
+
+- **Pattern:** Polymorphism
+- **Module:** Accessories (Requirement 1)
+- **Evidence:** `AccessoryService.listAccessoriesByType`, lines 116, 118 and 120: `type.equalsIgnoreCase("CONTROLLER") && accessory instanceof Controller`, and the same test with `"CABLE"` and `Cable`, and with `"MEMORY"` and `Memory`.
+- **Explanation:** The method decides by concrete class although each subclass already returns its own name through `getCategory()`: `"controller"`, `"Cable"` and `"Memory"`.
+- **Consequence:** A new accessory type would also need an edit here, besides its class and its line in the repository.
+- **Proposed solution:** Compare the requested type with `accessory.getCategory()` ignoring case. The accepted values and the lists returned stay the same, so the menu behaves as before. Pattern applied: Polymorphism.
+- **Other integrante's code:** No. `getCategory()` already exists in the accessory classes (Developer 1) and is not modified.
+
+#### V-03 - Validation rule written inline in a service
+
+- **Pattern:** Pure Fabrication (related: High Cohesion)
+- **Module:** Promotions (Requirement 2); `ACCESSORY` was added in A1
+- **Evidence:** `PromotionService.registerCategoryDiscount`, lines 35-36: the condition `!"VIDEOGAME".equalsIgnoreCase(targetCategory) && !"CONSOLE".equalsIgnoreCase(targetCategory) && !"ACCESSORY".equalsIgnoreCase(targetCategory)` followed by `throw new IllegalArgumentException(...)` with the Spanish message about the target category.
+- **Explanation:** The rule is written inside the service although the project has a `validation` package, and `PersonService`, `ProductService` and `SaleService` already delegate their checks to it.
+- **Consequence:** The rule cannot be reused or checked apart from the service, and the registration method mixes validation with creating and saving.
+- **Proposed solution:** Create a `PromotionValidator` in the `validation` package with the same check, the same exception type (`IllegalArgumentException`) and the same message, and call it from the service. Pattern applied: Pure Fabrication.
+- **Other integrante's code:** No. The new class is created by the owner of the finding.
+
+#### V-04 - One method validates, counts, coordinates and persists
+
+- **Pattern:** High Cohesion (related: Controller and Pure Fabrication)
+- **Module:** Returns (Requirement 3), extended in A4 and A7
+- **Evidence:** `ReturnService.registerReturn`, lines 65-141 (77 lines). It checks the sale and the 30-day window (lines 66-73), runs three counting loops for `originalQuantity`, `alreadyReturnedQuantity` and `requestedInCurrentBatch` (lines 84-105), builds the id with `"RET" + String.format("%04d", returnRepository.loadAll().size() + 1)` (line 116), cancels warranties (lines 117-123), restores stock (lines 127-134) and persists (lines 136-138).
+- **Explanation:** One method mixes validation, quantity counting, coordination of two other modules and persistence. The validation rules sit inline although the project has a validation layer for that purpose.
+- **Consequence:** Any new return rule means editing this method, and the rules cannot be checked without the file repository and the other services.
+- **Proposed solution:** Extract the checks of the sale, the 30-day window, the ownership of each product and the available quantity into a `ReturnValidator` in the `validation` package. It receives the sale and the previous returns as parameters, so it has no file access, and it throws the same exception type with the same messages. `registerReturn` is left coordinating the steps. Pattern applied: High Cohesion, guided by Pure Fabrication.
+- **Other integrante's code:** No. The new class is created by the owner of the finding.
+
+#### V-05 - Item type chosen with instanceof
+
+- **Pattern:** Polymorphism
+- **Module:** Returns (Requirement 3, A4 and A7) and Warranties (Requirement 4)
+- **Evidence:** `ReturnService.java` line 120, `if (product instanceof Console)`, decides which returned items get their warranties cancelled, and line 129, `if (product instanceof Accessory)`, decides whether `AccessoryService` or `ProductService` restores the stock. `WarrantyService.syncPastConsoleWarranties`, line 174: `item instanceof com.gamezone.model.Console`. The same tests exist in `SaleService.registerSale`, lines 153 and 179 (leader-audit).
+- **Explanation:** Behaviour that varies by item type is selected with type tests inside the methods instead of by the items or by an abstraction.
+- **Consequence:** A new kind of item with its own stock service or warranty rule means editing `ReturnService`, `WarrantyService` and `SaleService`.
+- **Proposed solution:** `Product` gets a hook that tells whether the item carries a warranty (false by default, true in `Console`), and `ProductService` and `AccessoryService` fulfil one common stock-restoring interface that `ReturnService` calls without testing the class of the item. The exception of `ProductService.restoreStock` for an unknown product is kept. The same hook serves `SaleService`. Pattern applied: Polymorphism.
+- **Other integrante's code:** Yes. `Product` and `Console` (Developer 1), and `SaleService` and `ProductService` (Technical Leader).
