@@ -19,53 +19,52 @@ import com.gamezone.service.WarrantyService;
 import com.gamezone.ui.GameZoneUI;
 
 /**
- * Main application entry point.
- * Acts as the composition root (Bootstrap), instantiating repositories,
- * wiring service dependencies, and launching the interactive UI.
+ * Main entry point for the GameZone Unicesar system.
+ * Initializes the layered architecture components and starts the interactive console interface.
  */
 public class main {
 
+    /**
+     * Application entry point. Initializes persistence repositories,
+     * business services, and user interface before launching the application loop.
+     *
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
-        // 1. Base Repositories
-        ProductRepository productRepository = new FileProductRepository();
-        PersonRepository personRepository = new FilePersonRepository("persons.txt");
-        AccessoryRepository accessoryRepository = new AccessoryRepository();
-        PromotionRepository promotionRepository = new PromotionRepository();
 
-        // 2. Base Services
-        ProductService productService = new ProductService(productRepository);
-        PersonService personService = new PersonService(personRepository);
-        AccessoryService accessoryService = new AccessoryService(accessoryRepository, productRepository);
-        PromotionService promotionService = new PromotionService(promotionRepository);
+        // 1. Initialize Persistence Layer (Repositories)
+        ProductRepository productRepo = new FileProductRepository();
+        PersonRepository personRepo = new FilePersonRepository("persons.txt");
+        AccessoryRepository accessoryRepo = new AccessoryRepository();
+        PromotionRepository promotionRepo = new PromotionRepository();
 
-        // 3. Repositories depending on base Services
-        SaleRepository saleRepository = new SaleRepository(personService, productService);
-        WarrantyRepository warrantyRepository = new WarrantyRepository(saleRepository, productService);
+        // 2. Initialize Core Services
+        ProductService productService = new ProductService(productRepo);
+        PersonService personService = new PersonService(personRepo);
+        AccessoryService accessoryService = new AccessoryService(accessoryRepo);
+        PromotionService promotionService = new PromotionService(promotionRepo);
 
-        // 4. Warranty Service (Full Dependency Injection)
-        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository, productService);
+        // 3. Initialize Sales Base Layer
+        SaleRepository saleRepo = new SaleRepository(personService, productService);
 
-        // 5. Sale Service
-        SaleService saleService = new SaleService(saleRepository, productService, accessoryService, promotionService, warrantyService);
+        // 4. Initialize Warranty Module first: WarrantyRepository/WarrantyService now
+        // depend on SaleRepository instead of SaleService, breaking the circular
+        // dependency that previously required constructing SaleService twice.
+        WarrantyRepository warrantyRepository = new WarrantyRepository(saleRepo, productService);
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepo, productService);
+        warrantyService.syncPastConsoleWarranties();
 
-        // 6. Return Repository and Service
+        // 5. Initialize SaleService once, with all dependencies already available
+        SaleService saleService = new SaleService(saleRepo, productService, accessoryService, promotionService, warrantyService);
+
+        // 6. Initialize Returns Module
         ReturnRepository returnRepository = new ReturnRepository(saleService, productService, accessoryService);
         ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService, warrantyService);
 
-        // 7. Dependency Injection for unified search
-        productService.setAccessoryService(accessoryService);
-
-        // 8. Launch User Interface
-        GameZoneUI ui = new GameZoneUI(
-                saleService,
-                productService,
-                personService,
-                accessoryService,
-                promotionService,
-                returnService,
-                warrantyService
-        );
-
+        // 7. Launch UI with all fully configured services
+        GameZoneUI ui = new GameZoneUI(saleService, productService, personService, accessoryService, promotionService, returnService, warrantyService);
         ui.start();
     }
 }
+
+
