@@ -45,3 +45,21 @@ Problems whose origin is in code owned by another team member are not audited he
 **Violations in this module:** none.
 
 **Observation (not a violation):** `PersonService.registerSeller` only checks uniqueness, because `PersonValidator.validatePersonData` requires an email and sellers have none.
+
+### 2.2 Accessories (Requirement 1, adjustment A4)
+
+Audited: `AccessoryRepository` and `AccessoryService`, including `restoreStock`, which adjustment A4 added.
+
+| Pattern | Verdict | Evidence |
+| :--- | :---: | :--- |
+| Information Expert | Violation (V-01) | `AccessoryService.updateStock` (line 190) runs `accessory.setStock(accessory.getStock() - quantity)` and `restoreStock` (line 207) runs `accessory.setStock(accessory.getStock() + quantity)`: the service reads the stock, computes the new value and writes it back, although the stock belongs to `Product`. Correct elsewhere: `findAccessoriesCompatibleWith` asks each accessory for `getCompatibleConsoleIds()`, and `findById` searches the list that the service itself holds. |
+| Creator | Correct | `registerController`, `registerCable` and `registerMemory` call `new Controller(...)`, `new Cable(...)` and `new Memory(...)`: the service holds the `accessories` list and has the data to initialise them. `AccessoryRepository.parseLine` also creates them, only to rebuild stored records. |
+| Controller | Not applicable | `AccessoryService` does not receive system events: the console menu (`GameZoneUI`, Technical Leader) does, and other services call this one. |
+| Low Coupling | Correct | `AccessoryRepository` depends only on the model classes. `AccessoryService` depends on its repository and on the model, and on no other service. |
+| High Cohesion | Correct | The service only registers, lists, finds and changes the stock of accessories, and the repository only reads and writes `accessories.csv`. |
+| Polymorphism | Violation (V-02) | `AccessoryService.listAccessoriesByType` (lines 116, 118 and 120) selects by concrete class, for example `type.equalsIgnoreCase("CONTROLLER") && accessory instanceof Controller`, and the same for `Cable` and `Memory`, although every subclass already answers `getCategory()`. The `instanceof` in `AccessoryRepository.toLine` and the discriminator in `parseLine` choose the stored format of each subtype, which has to stay in persistence (see 2.1), so they are not reported. |
+| Pure Fabrication | Correct | `AccessoryRepository` exists only to carry file access, so `Accessory` and its subclasses hold none. |
+| Indirection | Violation (V-09) | `AccessoryService` line 30 declares `private AccessoryRepository accessoryRepository;`, a concrete class that reads and writes the file. `PersonService` depends on the interface `PersonRepository` instead. |
+| Protected Variations | Violation (V-09) | Changing where accessories are stored would force editing `AccessoryService`, because no interface sits between them. It is the same finding as Indirection. |
+
+**Violations in this module:** V-01, V-02, V-09.
