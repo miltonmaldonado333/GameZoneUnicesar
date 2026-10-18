@@ -250,3 +250,31 @@ Identifiers belong to this report. The Technical Leader assigns the definitive o
 - **Consequence:** `Main` has to build `ProductService` before `WarrantyService` for no reason, and a change in `ProductService` reaches a class that does not need it.
 - **Proposed solution:** Remove the field and the constructor parameter. Pattern applied: Low Coupling.
 - **Other integrante's code:** Yes. `Main` (Technical Leader) passes that argument when it creates the service and must be updated in the same step.
+
+## 5. Findings involving other integrantes' code
+
+Registered here so the Technical Leader can unify them in the consolidated audit and agree the order of the corrections.
+
+| ID | Other integrante | What the correction needs |
+| :--- | :--- | :--- |
+| V-01 | Developer 1 and Technical Leader | The `addStock` and `reduceStock` operations on `Product` |
+| V-05 | Developer 1 and Technical Leader | The warranty hook on `Product` and `Console`, the common stock-restoring interface, and the same change in `SaleService` |
+| V-06 | Technical Leader | A monthly sales total method in `SaleService` |
+| V-07 | Technical Leader | A sale lookup by id in `SaleService` and `SaleRepository` |
+| V-08 | Technical Leader | The mechanism chosen for `SaleRepository`, and the construction in `Main` |
+| V-09 | Technical Leader | `Main` creating the file implementations |
+| V-10 | Technical Leader | `Main` calling the new `WarrantyService` constructor |
+| F-06 | Technical Leader | `SaleRepository.findAll` (reported here, not corrected) |
+
+Suggested order for the shared corrections, to be agreed in the consolidation: V-08 before V-09, because the interfaces take the signatures that V-08 leaves, and V-07 after V-08.
+
+## 6. Out-of-scope functional observations
+
+Behaviour defects found while auditing. They are not corrected in this requirement because fixing them would change what the user observes.
+
+- **F-01 - Warranty identifiers can repeat.** `WarrantyService.assignBasicWarranty` (line 51), `assignExtendedWarranty` (line 76) and `syncPastConsoleWarranties` (line 181) build the id with `"WAR" + String.format("%04d", warranties.size() + 1)`, while `cancelWarranties` (line 205) removes records. With `WAR0001`, `WAR0002` and `WAR0003` stored, cancelling `WAR0001` leaves two records, so the next warranty is also called `WAR0003`. Nothing looks a warranty up by id, so today the effect is repeated ids in `warranties.csv` and in the certificate.
+- **F-02 - Cancelling warranties removes more than the returned unit.** `WarrantyService.cancelWarranties` removes every warranty of the product in the sale and adds up their additional cost. `ReturnService.java` line 121 calls it once per returned unit, so returning one unit of a console that was bought twice cancels the warranties of both units and refunds the extended cost of both.
+- **F-03 - Repositories that print the error and continue.** `AccessoryRepository` (lines 68, 95), `PromotionRepository` (lines 74, 92, 168), `ReturnRepository` (lines 88, 106) and `WarrantyRepository` (lines 85, 110) catch the error and print it with `System.out.println`, while the three Requirement 6 repositories throw `PersistenceException`. Unifying them would change what the user sees when a file fails.
+- **F-04 - Generic exceptions in services.** `ReturnService.registerReturn` (lines 68, 72, 81, 108), `PromotionService.registerCategoryDiscount` (line 36) and `AccessoryService.restoreStock` (line 205) throw `IllegalArgumentException`. Converting them to typed exceptions would change the exception that the menu receives and the message the user sees.
+- **F-05 - Records that cannot be resolved are lost.** `ReturnRepository.parseLine` returns null when the sale is not found (line 140), and `WarrantyRepository.parseLine` returns null when the product or the sale is not found (line 140). `loadAll` skips those lines and the next `saveAll` rewrites the file without them, for example when `ReturnService.registerReturn` saves the list at line 138.
+- **F-06 - Accessories are not resolved when sales are reloaded.** `SaleRepository.findAll` looks up each stored product id with `productService.findProductById(parts[i])` (line 105). `ProductService` only holds the video games and consoles read by `FileProductRepository`, and accessories are stored by `AccessoryService`. Read from the code, an accessory of a saved sale is skipped when the sale is reloaded, and a sale made only of accessories is not added. `SaleRepository.save` writes the id, the date, the client, the seller and the product ids, and no discount or warranty amount, so how the final total of a reloaded sale is obtained should be checked by the Technical Leader, who owns `Sale`. Reported to the Technical Leader.
