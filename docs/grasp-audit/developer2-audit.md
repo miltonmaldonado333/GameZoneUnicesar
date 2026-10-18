@@ -130,3 +130,19 @@ Audited: only the lines changed in Requirement 6. They are the wrapping of `IOEx
 | Other patterns | Not applicable | These lines contain no object creation, event handling or type-based branching beyond what sections 2.1 to 2.5 already cover. |
 
 **Violations in these lines:** none.
+
+## 3. Verdict per pattern
+
+Verdict of this report for each GRASP pattern over the code audited here. A finding that breaks more than one pattern is registered once, under the pattern that guides its correction, and the related patterns are named in the finding.
+
+| Pattern | Verdict | Findings and where it is correct |
+| :--- | :---: | :--- |
+| Information Expert | Violation | V-01, V-06, V-07. Correct in `PromotionService.findBestPromotionFor`, in `WarrantyService.cancelWarranties` and in the persons module. |
+| Creator | Correct | In the five modules the services create what they register and the repositories only rebuild stored records. |
+| Controller | Correct | `ReturnService.registerReturn` coordinates the return use case through other services and its repository. In the other classes it does not apply, because the events enter through `GameZoneUI` (Technical Leader). The excess of work inside `registerReturn` is V-04. |
+| Low Coupling | Violation | V-08, V-10. Correct in the persons module and in the use of validators. |
+| High Cohesion | Violation | V-04. Correct in the other services and repositories audited. |
+| Polymorphism | Violation | V-02, V-05. Correct in `PromotionService.findBestPromotionFor` and in `WarrantyService.cancelWarranties`. The `instanceof` that choose the stored format in the repositories are accepted (see 2.1). |
+| Pure Fabrication | Violation | V-03. Correct in the repositories and in the use of validators. |
+| Indirection | Violation | V-09. Correct in the persons module. |
+| Protected Variations | Violation | V-09, the same finding as Indirection. Correct in the persons module and in the wrapping of `IOException`. |
