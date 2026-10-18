@@ -1,6 +1,7 @@
 package com.gamezone.ui;
 
 import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.GameZoneException;
 import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.exceptions.ResourceNotFoundException;
@@ -34,12 +35,9 @@ import java.util.List;
 
 /**
  * Handles the interactive console user interface for the GameZone system.
- * Serves strictly as a presentation controller in accordance with GRASP principles.
- * Manages user interaction, menu rendering, and input/output parsing, delegating 
- * all domain operations and orchestration tasks to specialized service classes.
- * 
- * <p>Applies the Single Responsibility Principle (SRP) by isolating console I/O, 
- * ensuring high cohesion and low coupling with business entities.</p>
+ * Serves as the main presentation controller (GRASP), delegating business 
+ * logic to the respective services and handling centralized console I/O 
+ * (Applying Single Responsibility Principle).
  */
 public class GameZoneUI {
 
@@ -53,31 +51,32 @@ public class GameZoneUI {
     private final WarrantyService warrantyService;
 
     /**
-     * Constructs a {@code GameZoneUI} instance initializing console reader streams and injecting 
-     * required service dependencies.
-     * 
-     * <p>Applies Dependency Inversion (SOLID) by receiving service instances externally rather 
-     * than constructing them internally. Configures standard output and input streams to use UTF-8.</p>
+     * Constructs a GameZoneUI with all required service dependencies.
+     * Applies Dependency Inversion (SOLID), relying on abstractions or 
+     * externalized service instances rather than creating them internally.
+     * Configures the console streams to use UTF-8 for proper special character display.
      *
-     * @param saleService the service handling sale transactions
-     * @param productService the service managing product catalog operations
-     * @param personService the service handling client and seller records
-     * @param accessoryService the service managing game accessories
-     * @param promotionService the service orchestrating promotional discounts
-     * @param returnService the service processing product returns and financial balances
-     * @param warrantyService the service managing warranty certificates
+     * @param saleService the service managing sales
+     * @param productService the service managing products
+     * @param personService the service managing persons (clients and sellers)
+     * @param accessoryService the service managing accessories
+     * @param promotionService the service managing promotions
+     * @param returnService the service managing returns
+     * @param warrantyService the service managing warranties
      */
     public GameZoneUI(SaleService saleService, ProductService productService,
             PersonService personService, AccessoryService accessoryService,
             PromotionService promotionService, ReturnService returnService,
             WarrantyService warrantyService) {
         
+        // Configure output stream (System.out) to support UTF-8
         try {
             System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8.name()));
         } catch (java.io.UnsupportedEncodingException e) {
             System.out.println("No se pudo configurar UTF-8 en la consola: " + e.getMessage());
         }
 
+        // Configure input stream (System.in) to support UTF-8
         this.reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         
         this.saleService = saleService;
@@ -90,8 +89,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Starts the main application menu loop, maintaining session lifecycle 
-     * until the user selects the exit option.
+     * Starts the main interactive application loop.
+     * Maintains the lifecycle of the user session until the exit option is chosen.
      */
     public void start() {
         int option = -1;
@@ -118,10 +117,11 @@ public class GameZoneUI {
     // ================= I/O HELPER METHODS (SRP / GRASP) =================
 
     /**
-     * Prompts the user and reads a raw string from standard input.
+     * Prompts the user and reads a string input from the console.
+     * Centralizes I/O operations to maintain High Cohesion.
      *
-     * @param message prompt message to display
-     * @return user input string
+     * @param message the message to display to the user
+     * @return the string entered by the user
      * @throws IOException if an I/O error occurs
      */
     private String promptString(String message) throws IOException {
@@ -130,12 +130,12 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts the user and parses an integer value from standard input.
+     * Prompts the user and parses an integer input from the console.
      *
-     * @param message prompt message to display
-     * @return parsed integer value
+     * @param message the message to display to the user
+     * @return the integer entered by the user
      * @throws IOException if an I/O error occurs
-     * @throws NumberFormatException if the input cannot be parsed into an integer
+     * @throws NumberFormatException if the input is not a valid integer
      */
     private int promptInt(String message) throws IOException, NumberFormatException {
         System.out.print(message);
@@ -143,12 +143,12 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts the user and parses a double precision floating-point number.
+     * Prompts the user and parses a double input from the console.
      *
-     * @param message prompt message to display
-     * @return parsed double value
+     * @param message the message to display to the user
+     * @return the double entered by the user
      * @throws IOException if an I/O error occurs
-     * @throws NumberFormatException if the input cannot be parsed into a double
+     * @throws NumberFormatException if the input is not a valid double
      */
     private double promptDouble(String message) throws IOException, NumberFormatException {
         System.out.print(message);
@@ -156,12 +156,12 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts the user and parses an ISO local date (YYYY-MM-DD).
+     * Prompts the user and parses a LocalDate input from the console.
      *
-     * @param message prompt message to display
-     * @return parsed {@link LocalDate} instance
+     * @param message the message to display to the user
+     * @return the LocalDate entered by the user
      * @throws IOException if an I/O error occurs
-     * @throws DateTimeParseException if the input format is invalid
+     * @throws DateTimeParseException if the input does not match the YYYY-MM-DD format
      */
     private LocalDate promptDate(String message) throws IOException, DateTimeParseException {
         System.out.print(message);
@@ -171,7 +171,7 @@ public class GameZoneUI {
     // ================= MAIN MENU =================
 
     /**
-     * Displays main navigation options to the console.
+     * Displays the main menu options to the console.
      */
     private void displayMainMenu() {
         System.out.println("\n---------------- MENÚ PRINCIPAL ----------------");
@@ -188,9 +188,9 @@ public class GameZoneUI {
     }
 
     /**
-     * Reads menu selection input safely without crashing on formatting errors.
+     * Reads and safely parses the user's numeric selection for menus.
      *
-     * @return chosen option number, or {@code -1} if invalid
+     * @return the selected option, or -1 if invalid
      */
     private int readOption() {
         try {
@@ -205,9 +205,9 @@ public class GameZoneUI {
     }
 
     /**
-     * Routes the selected main menu option to its corresponding subsystem handler.
+     * Routes the user's main menu choice to the appropriate subsystem handler.
      *
-     * @param option selected menu option number
+     * @param option the user's selected menu option
      */
     private void processMainMenuOption(int option) {
         switch (option) {
@@ -228,7 +228,7 @@ public class GameZoneUI {
     // ================= PRODUCT SUBMENU =================
 
     /**
-     * Manages the interactive product subsystem menu loop.
+     * Handles the product management submenu loop.
      */
     private void handleProductMenu() {
         int option = -1;
@@ -253,7 +253,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for video game attributes and delegates registration to {@link ProductService}.
+     * Orchestrates the interactive registration of a new video game.
      */
     private void registerVideoGame() {
         try {
@@ -288,7 +288,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for gaming console details and delegates creation to {@link ProductService}.
+     * Orchestrates the interactive registration of a new console.
      */
     private void registerConsole() {
         try {
@@ -323,7 +323,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays all registered products in the inventory.
+     * Retrieves and displays the full list of products from the inventory.
      */
     private void listProducts() {
         try {
@@ -346,7 +346,7 @@ public class GameZoneUI {
     // ================= PERSON SUBMENU =================
 
     /**
-     * Manages the person records subsystem menu loop.
+     * Handles the person management submenu loop.
      */
     private void handlePersonMenu() {
         int option = -1;
@@ -373,7 +373,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for client details and delegates insertion to {@link PersonService}.
+     * Orchestrates the interactive registration of a new client.
      */
     private void registerClient() {
         try {
@@ -399,7 +399,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for seller details and delegates creation to {@link PersonService}.
+     * Orchestrates the interactive registration of a new seller.
      */
     private void registerSeller() {
         try {
@@ -426,7 +426,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays all registered client records.
+     * Retrieves and displays the list of all registered clients.
      */
     private void listClients() {
         try {
@@ -447,7 +447,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays all registered seller records.
+     * Retrieves and displays the list of all registered sellers.
      */
     private void listSellers() {
         try {
@@ -470,7 +470,7 @@ public class GameZoneUI {
     // ================= SALES SUBMENU =================
 
     /**
-     * Manages the sales transaction subsystem menu loop.
+     * Handles the sales management submenu loop.
      */
     private void handleSalesMenu() {
         int option = -1;
@@ -497,11 +497,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Orchestrates interactive sale registration for multiple items.
-     * 
-     * <p><b>GRASP Refactoring Note:</b> Uses a unified facade method 
-     * ({@link ProductService#findSaleableItemById(String)}) to resolve products or accessories, 
-     * replacing sequential fallback exception catching from presentation code.</p>
+     * Orchestrates the interactive registration of a unified sale, allowing 
+     * multiple products and extended warranties to be added to a cart.
      */
     private void registerSale() {
         try {
@@ -519,7 +516,18 @@ public class GameZoneUI {
             do {
                 String itemId = promptString("Ingrese el ID del Producto o Accesorio a añadir: ");
 
-                Product item = productService.findProductById(itemId);
+                Product item = null;
+                try {
+                    item = productService.findProductById(itemId);
+                } catch (ResourceNotFoundException ignored) {
+                }
+                
+                if (item == null && accessoryService != null) {
+                    try {
+                        item = accessoryService.findById(itemId);
+                    } catch (ResourceNotFoundException ignored) {
+                    }
+                }
 
                 if (item != null) {
                     products.add(item);
@@ -557,7 +565,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays the complete store sales history.
+     * Retrieves and displays the complete sales history of the store.
      */
     private void listAllSales() {
         try {
@@ -572,7 +580,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for a client ID and displays their purchase history.
+     * Prompts for a client ID and displays their specific purchase history.
      */
     private void listSalesByClient() {
         try {
@@ -590,7 +598,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for a seller code and displays their processed sales history.
+     * Prompts for a seller ID and displays the history of sales they attended.
      */
     private void listSalesBySeller() {
         try {
@@ -608,9 +616,9 @@ public class GameZoneUI {
     }
 
     /**
-     * Formats and prints a collection of sale receipts to standard output.
+     * Formats and prints a given list of sales to the console.
      *
-     * @param sales list of sales to display
+     * @param sales the list of sales to display
      */
     private void printSalesList(List<Sale> sales) {
         if (sales == null || sales.isEmpty()) {
@@ -625,7 +633,7 @@ public class GameZoneUI {
     // ================= ACCESSORY SUBMENU =================
 
     /**
-     * Manages the accessory subsystem menu loop.
+     * Handles the accessory management submenu loop.
      */
     private void handleAccessoryMenu() {
         int option = -1;
@@ -656,7 +664,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for controller details and delegates creation to {@link AccessoryService}.
+     * Orchestrates the interactive registration of a game controller.
      */
     private void registerController() {
         try {
@@ -691,7 +699,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for cable accessory attributes and delegates registration to {@link AccessoryService}.
+     * Orchestrates the interactive registration of a cable accessory.
      */
     private void registerCable() {
         try {
@@ -727,7 +735,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for memory card specs and delegates creation to {@link AccessoryService}.
+     * Orchestrates the interactive registration of a memory storage accessory.
      */
     private void registerMemory() {
         try {
@@ -763,7 +771,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Displays all accessories stored in the inventory.
+     * Retrieves and displays all accessories registered in the inventory.
      */
     private void listAllAccessories() {
         try {
@@ -782,7 +790,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for an accessory category type and lists matches.
+     * Prompts for an accessory type and lists all matches in the inventory.
      */
     private void listAccessoriesByType() {
         try {
@@ -801,7 +809,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Queries and prints accessories compatible with a specified console ID.
+     * Prompts for a console ID and displays all accessories declared compatible with it.
      */
     private void consultCompatibleAccessories() {
         try {
@@ -824,7 +832,7 @@ public class GameZoneUI {
     // ================= PROMOTION SUBMENU =================
 
     /**
-     * Manages the promotion management subsystem menu loop.
+     * Handles the promotion management submenu loop.
      */
     private void handlePromotionMenu() {
         int option = -1;
@@ -853,7 +861,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for percentage discount parameters and registers it in {@link PromotionService}.
+     * Orchestrates the interactive registration of a global percentage discount.
      */
     private void registerPercentageDiscount() {
         try {
@@ -880,10 +888,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for category discount attributes and registers the promotion.
-     * 
-     * <p><b>GRASP Refactoring Note:</b> Invokes {@link ProductService#getAvailableCategories()} 
-     * to obtain categories dynamically, removing reflection operations from presentation logic.</p>
+     * Orchestrates the interactive registration of a category-specific discount.
      */
     private void registerCategoryDiscount() {
         try {
@@ -894,7 +899,23 @@ public class GameZoneUI {
             LocalDate endDate = promptDate("Fecha de Fin (YYYY-MM-DD): ");
             double percentage = promptDouble("Porcentaje de Descuento (ej., 10 o 15.5): ");
 
-            List<String> availableCategories = productService.getAvailableCategories();
+            List<String> availableCategories = new ArrayList<>();
+            List<Product> products = productService.getAllProducts();
+
+            if (products != null) {
+                for (Product p : products) {
+                    String cat = (p.getCategory() != null) ? p.getCategory() : p.getClass().getSimpleName();
+                    if (!availableCategories.contains(cat)) {
+                        availableCategories.add(cat);
+                    }
+                }
+            }
+
+            if (accessoryService != null && accessoryService.listAllAccessories() != null && !accessoryService.listAllAccessories().isEmpty()) {
+                if (!availableCategories.contains("ACCESSORY")) {
+                    availableCategories.add("ACCESSORY");
+                }
+            }
 
             System.out.println("\nCategorías disponibles en inventario: " + availableCategories);
             String category = promptString("Ingrese la Categoría Objetivo de la lista anterior (VIDEOGAME, CONSOLE, ACCESSORY): ");
@@ -915,7 +936,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for bulk purchase parameters and registers a bulk discount promotion.
+     * Orchestrates the interactive registration of a bulk purchase discount.
      */
     private void registerBulkPurchaseDiscount() {
         try {
@@ -943,7 +964,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays currently active promotional discounts.
+     * Retrieves and displays all promotions currently active based on the system date.
      */
     private void listActivePromotions() {
         try {
@@ -971,7 +992,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays all promotions (active and expired).
+     * Retrieves and displays all promotions (both active and inactive).
      */
     private void listAllPromotions() {
         try {
@@ -995,7 +1016,7 @@ public class GameZoneUI {
     // ================= RETURN SUBMENU =================
 
     /**
-     * Manages the product return subsystem menu loop.
+     * Handles the return management submenu loop.
      */
     private void handleReturnMenu() {
         int option = -1;
@@ -1022,7 +1043,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for sale and item information to register a product return via {@link ReturnService}.
+     * Orchestrates the interactive registration of a product return linked to a sale.
      */
     private void registerReturn() {
         try {
@@ -1050,9 +1071,9 @@ public class GameZoneUI {
     }
 
     /**
-     * Formats and prints a collection of return receipts to the console.
+     * Formats and prints a given list of returns to the console.
      *
-     * @param returns list of return transactions to display
+     * @param returns the list of returns to display
      */
     private void printReturnList(List<Return> returns) {
         if (returns == null || returns.isEmpty()) {
@@ -1066,7 +1087,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and lists all processed returns.
+     * Retrieves and displays all returns processed by the system.
      */
     private void listAllReturns() {
         try {
@@ -1081,7 +1102,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for a customer ID and displays their registered returns.
+     * Prompts for a client ID and displays their history of returned products.
      */
     private void listReturnsByClient() {
         try {
@@ -1099,7 +1120,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for a sale transaction ID and lists associated returns.
+     * Prompts for a sale ID and displays any returns associated with that specific transaction.
      */
     private void listReturnsBySale() {
         try {
@@ -1117,7 +1138,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for month and year parameters to compute and print monthly net income.
+     * Calculates and displays the net financial balance for a given month and year.
      */
     private void generateMonthlyBalance() {
         try {
@@ -1145,7 +1166,7 @@ public class GameZoneUI {
     // ================= WARRANTY SUBMENU =================
 
     /**
-     * Manages the warranty certificates subsystem menu loop.
+     * Handles the warranty management submenu loop.
      */
     private void handleWarrantyMenu() {
         int option = -1;
@@ -1172,7 +1193,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for sale ID and product ID to display warranty certificate details via {@link WarrantyService}.
+     * Prompts for a sale ID and a product ID to retrieve and print a specific warranty certificate.
      */
     private void consultWarrantyByProductAndSale() {
         try {
@@ -1202,7 +1223,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays all registered warranty certificates.
+     * Retrieves and displays all warranty records issued by the store.
      */
     private void listAllWarranties() {
         try {
@@ -1222,7 +1243,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays warranties currently active as of today.
+     * Retrieves and displays all warranties that have not yet expired as of the current system date.
      */
     private void listActiveWarranties() {
         try {
@@ -1242,7 +1263,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for a day threshold and lists warranties expiring within that period.
+     * Prompts for a threshold of days and displays warranties expiring within that time frame.
      */
     private void listWarrantiesExpiringSoon() {
         try {
@@ -1268,9 +1289,9 @@ public class GameZoneUI {
     }
 
     /**
-     * Formats and prints a collection of warranty certificate objects.
+     * Formats and prints a given list of warranties to the console.
      *
-     * @param warranties list of warranties to print
+     * @param warranties the list of warranties to display
      */
     private void printWarrantyList(List<Warranty> warranties) {
         if (warranties == null || warranties.isEmpty()) {
