@@ -8,6 +8,7 @@ import com.gamezone.model.Cable;
 import com.gamezone.model.Controller;
 import com.gamezone.model.Memory;
 import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.ProductRepository;
 
 /**
  * Provides the business rules for managing accessories (controllers, cables and
@@ -16,18 +17,8 @@ import com.gamezone.persistence.AccessoryRepository;
  */
 public class AccessoryService {
 
-    public void registerController(String id, String title, double price, int stock, String connectionType) {
-        registerController(id, title, price, stock, connectionType, new ArrayList<>());
-    }
-
-    public void registerCable(String id, String title, double price, int stock, double length, String connectorType) {
-        registerCable(id, title, price, stock, length, connectorType, new ArrayList<>());
-    }
-
-    public void registerMemory(String id, String title, double price, int stock, int capacity, String storageType) {
-        registerMemory(id, title, price, stock, capacity, storageType, new ArrayList<>());
-    }
     private AccessoryRepository accessoryRepository;
+    private ProductRepository productRepository;
     private List<Accessory> accessories;
 
     /**
@@ -39,6 +30,31 @@ public class AccessoryService {
     public AccessoryService(AccessoryRepository accessoryRepository) {
         this.accessoryRepository = accessoryRepository;
         this.accessories = accessoryRepository.loadAll();
+    }
+
+    /**
+     * Creates an AccessoryService backed by the given accessory repository and
+     * product repository.
+     *
+     * @param accessoryRepository the repository used to persist accessory data
+     * @param productRepository   the repository used to validate product/console data
+     */
+    public AccessoryService(AccessoryRepository accessoryRepository, ProductRepository productRepository) {
+        this.accessoryRepository = accessoryRepository;
+        this.productRepository = productRepository;
+        this.accessories = accessoryRepository.loadAll();
+    }
+
+    public void registerController(String id, String title, double price, int stock, String connectionType) {
+        registerController(id, title, price, stock, connectionType, new ArrayList<>());
+    }
+
+    public void registerCable(String id, String title, double price, int stock, double length, String connectorType) {
+        registerCable(id, title, price, stock, length, connectorType, new ArrayList<>());
+    }
+
+    public void registerMemory(String id, String title, double price, int stock, int capacity, String storageType) {
+        registerMemory(id, title, price, stock, capacity, storageType, new ArrayList<>());
     }
 
     /**
@@ -127,8 +143,7 @@ public class AccessoryService {
     /**
      * Returns all accessories compatible with the given console.
      *
-     * @param consoleId the identifier of the console to check compatibility
-     * against
+     * @param consoleId the identifier of the console to check compatibility against
      * @return the list of accessories compatible with the given console
      */
     public List<Accessory> findAccessoriesCompatibleWith(String consoleId) {
@@ -141,13 +156,11 @@ public class AccessoryService {
         for (Accessory accessory : accessories) {
             List<String> compatibleConsoles = accessory.getCompatibleConsoleIds();
 
-            // Validamos que la lista de consolas no sea nula antes de buscar
             if (compatibleConsoles != null) {
                 for (String id : compatibleConsoles) {
-                    // Hacemos la comparaciÃ³n ignorando mayÃºsculas/minÃºsculas por seguridad
                     if (id.equalsIgnoreCase(consoleId)) {
                         result.add(accessory);
-                        break; // Salimos del bucle interno si ya hizo match
+                        break;
                     }
                 }
             }
@@ -171,13 +184,11 @@ public class AccessoryService {
     }
 
     /**
-     * Reduces the stock of an accessory by the given quantity (e.g. after a
-     * sale) and persists the change.
+     * Reduces the stock of an accessory by the given quantity and persists the change.
      *
      * @param accessoryId the identifier of the accessory to update
      * @param quantity the quantity to subtract from the current stock
-     * @return true if the update succeeded, false if the accessory was not
-     * found or if there is not enough stock
+     * @return true if the update succeeded, false if the accessory was not found or if there is not enough stock
      */
     public boolean updateStock(String accessoryId, int quantity) {
         Accessory accessory = findById(accessoryId);
@@ -191,12 +202,12 @@ public class AccessoryService {
         accessoryRepository.saveAll(accessories);
         return true;
     }
+
     /**
-     * Increases the stock of an accessory by the given quantity (e.g. after a
-     * return) and persists the change.
+     * Increases the stock of an accessory by the given quantity and persists the change.
      *
      * @param accessoryId the identifier of the accessory to update
-     * @param quantity    the quantity to add to the current stock
+     * @param quantity the quantity to add to the current stock
      * @throws IllegalArgumentException if no accessory is found with the given ID
      */
     public void restoreStock(String accessoryId, int quantity) {
