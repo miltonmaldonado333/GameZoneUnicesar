@@ -4,9 +4,11 @@
 **Audit date:** 2026-10-17  
 **Technical Leader:** Milton Andrés Maldonado Salcedo  
 **Developer 1:** Jesús Manuel Martínez Baute  
-**Scope:** Consolidation of the Technical Leader and Developer 1 reports supplied for this task.
+**Developer 2:** Luis Manuel Corzo Castro  
+**Audited baseline:** `origin/develop` at commit `336790c` (Developer 2 evidence)  
+**Scope:** Consolidation of the Technical Leader, Developer 1 and Developer 2 reports.
 
-> **Consolidation status:** This document consolidates the two reports provided. The assignment specifies that the Technical Leader must consolidate all three individual reports; therefore, the findings and coverage must be reviewed and completed with Developer 2's report before this document is treated as the final team-wide audit.
+> **Consolidation status:** This document consolidates the three individual reports. Developer 2's findings are incorporated as V-15 to V-22 and as extensions of V-04 and V-05, which Developer 2 reported from the persistence and service side of the same problems. The IDs V-01 to V-14 are kept as already referenced by the Technical Leader and Developer 1.
 
 ---
 
@@ -14,7 +16,7 @@
 
 The purpose of this audit is to identify GRASP design violations in GameZone Unicesar and propose refactoring actions while preserving the system's externally observable behavior. The audit evaluates responsibility assignment, coupling, cohesion, polymorphism, persistence boundaries, and protection against foreseeable changes.
 
-A finding is recorded once even when it affects more than one GRASP pattern. The pattern most directly guiding the correction is identified, and related patterns are listed where appropriate. The final violation IDs below are provisional consolidation IDs and should be checked against Developer 2's report before being finalized.
+A finding is recorded once even when it affects more than one GRASP pattern. The pattern most directly guiding the correction is identified, and related patterns are listed where appropriate. When two integrantes report the same problem from both sides of a boundary, it is unified in one row (V-04 and V-05).
 
 ## 2. Scope and responsibility
 
@@ -37,7 +39,16 @@ A finding is recorded once even when it affects more than one GRASP pattern. The
 - Exceptions: `GameZoneException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`, `ResourceNotFoundException`
 - Validation: `PersonValidator`, `ProductValidator`, `SaleValidator`
 
-The supplied materials do not include Developer 2's individual audit report. The following coverage and findings therefore represent only the two reports listed above.
+### Developer 2
+
+- Persons: `Person`, `Client`, `Seller`, `PersonRepository`, `FilePersonRepository`, `PersonService`
+- Accessories: `AccessoryRepository`, `AccessoryService`
+- Promotions: `PromotionRepository`, `PromotionService`
+- Returns: `ReturnRepository`, `ReturnService`, including the monthly balance
+- Warranties: `WarrantyRepository`, `WarrantyService`
+- Exceptions and validators: only their use in `PersonService`, `ProductService`, `SaleService` and in the repositories changed in Requirement 6
+
+The three scope lists above cover the classes of the responsibility table. Classes shared by two integrantes (`Sale`, `ProductService`, `SaleService`) were audited method by method by the person who developed each method. The coverage must still be checked against `TEAM.md` and the commit history before this document is final.
 
 ## 3. Consolidated GRASP evaluation matrix
 
