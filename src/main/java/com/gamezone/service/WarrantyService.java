@@ -25,7 +25,17 @@ public class WarrantyService {
     private ProductService productService;
 
     /**
-     * Constructs a new WarrantyService with its required dependencies.
+     * Constructs a WarrantyService with only WarrantyRepository.
+     * Useful for standard initializations where full synchronization is not required.
+     *
+     * @param warrantyRepository the persistence repository for warranties
+     */
+    public WarrantyService(WarrantyRepository warrantyRepository) {
+        this.warrantyRepository = warrantyRepository;
+    }
+
+    /**
+     * Constructs a new WarrantyService with all required dependencies.
      *
      * @param warrantyRepository the persistence repository for warranties
      * @param saleRepository     the persistence repository for sales, used for historical sync

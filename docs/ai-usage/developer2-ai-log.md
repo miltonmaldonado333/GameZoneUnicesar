@@ -80,3 +80,17 @@ Each entry: problem, how the AI helped, and my decision.
 - Respuesta: wrap each load and save in PersistenceException with the file name and operation; call the validators from the services; keep the find methods returning null and the boolean result of registerVideoGame and registerConsole.
 - Decision: accepted that criterion, replacing whole files and running mvn clean compile before each commit. Understood the behaviour changes: read errors now propagate instead of printing a message, and invalid client, product or sale data now fails with typed exceptions.
 - Commit relacionado: f62518a, 0b9f699, 5906ba3, 814bfcd, 702d863, 091ae94
+
+---
+
+## Requirement 7 - GRASP Audit and Correction
+
+### Phase 1 - Audit (feature/grasp-audit)
+- Fecha: 2026-10-18
+- Herramienta: Claude (Anthropic)
+- Fase y rama: Requirement 7, Phase 1 - feature/grasp-audit
+- Objetivo: audit my modules (persons, accessories, promotions, returns, warranties and the Requirement 6 usage of exceptions and validators) against the nine GRASP patterns, and add my findings to the consolidated audit.
+- Consulta: shared the assignment, the other two reports and my classes read from origin/develop.
+- Respuesta: a verdict per pattern, ten violations (V-01 to V-10) and six out-of-scope observations (F-01 to F-06). In the consolidated audit they became V-15 to V-22 plus extensions of V-04 and V-05, keeping the IDs already used by the other two reports.
+- Decision: audited origin/develop at 336790c, not the branch, and checked every cited line with git grep before each commit. Did not report the instanceof in toLine/parseLine, because serialization must stay in persistence. The branch also carried code commits of the Technical Leader and had emptied the AI logs, so I restored the logs from develop and he reverted his two commits without force push.
+- Commit relacionado: 8facee7, 7c6dc0a, 4cfd9b4, 8214835, 0a68d7c, bfe14dd, eeff611, 28cfe7a, 6438fe6, 27849ef, c6c147a, dcb8c43, 2034b67, f80c1b8, add328a, 9e8753a, 0f254e4
