@@ -63,3 +63,21 @@ Audited: `AccessoryRepository` and `AccessoryService`, including `restoreStock`,
 | Protected Variations | Violation (V-09) | Changing where accessories are stored would force editing `AccessoryService`, because no interface sits between them. It is the same finding as Indirection. |
 
 **Violations in this module:** V-01, V-02, V-09.
+
+### 2.3 Promotions (Requirement 2)
+
+Audited: `PromotionRepository` and `PromotionService`, including the selection of the best promotion.
+
+| Pattern | Verdict | Evidence |
+| :--- | :---: | :--- |
+| Information Expert | Correct | `PromotionService.findBestPromotionFor` asks every active promotion for its own discount through `promotion.calculateDiscount(sale)` and keeps the largest, and `listActivePromotions` asks each one `promotion.isActive(today)`. The service never computes a discount itself. |
+| Creator | Correct | `registerPercentageDiscount`, `registerCategoryDiscount` and `registerBulkPurchaseDiscount` create the promotion they register and persist it. `PromotionRepository.parseLine` rebuilds promotions from stored records. |
+| Controller | Not applicable | `PromotionService` does not receive system events: the console menu (`GameZoneUI`, Technical Leader) does. |
+| Low Coupling | Correct | `PromotionService` depends on its repository and on the model (`Promotion`, `Sale` and the three promotion types), and `PromotionRepository` only on the model. |
+| High Cohesion | Correct | The service only registers, lists and selects promotions, and the repository only reads and writes `promotions.csv`. |
+| Polymorphism | Correct | The best-promotion selection never asks for the type of a promotion. `PromotionRepository.toLine` uses `instanceof` to pick the columns of each subtype, which stays in persistence (see 2.1) and is not reported. |
+| Pure Fabrication | Violation (V-03) | `PromotionService.registerCategoryDiscount` (lines 35-36) checks inline that `targetCategory` is VIDEOGAME, CONSOLE or ACCESSORY and throws `IllegalArgumentException`, although the project has a `validation` package and `PersonService` delegates its checks to `PersonValidator`. |
+| Indirection | Violation (V-09) | `PromotionService` line 20 declares `private final PromotionRepository promotionRepository;`, a concrete class that reads and writes the file. |
+| Protected Variations | Violation (V-09) | Same finding as Indirection: changing where promotions are stored would force editing `PromotionService`. |
+
+**Violations in this module:** V-03, V-09.
