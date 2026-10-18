@@ -200,3 +200,53 @@ Identifiers belong to this report. The Technical Leader assigns the definitive o
 - **Consequence:** A new kind of item with its own stock service or warranty rule means editing `ReturnService`, `WarrantyService` and `SaleService`.
 - **Proposed solution:** `Product` gets a hook that tells whether the item carries a warranty (false by default, true in `Console`), and `ProductService` and `AccessoryService` fulfil one common stock-restoring interface that `ReturnService` calls without testing the class of the item. The exception of `ProductService.restoreStock` for an unknown product is kept. The same hook serves `SaleService`. Pattern applied: Polymorphism.
 - **Other integrante's code:** Yes. `Product` and `Console` (Developer 1), and `SaleService` and `ProductService` (Technical Leader).
+
+#### V-06 - Monthly sales total computed from the internals of Sale
+
+- **Pattern:** Information Expert
+- **Module:** Returns (Requirement 3); monthly balance changed in Requirement 5 (A6)
+- **Evidence:** `ReturnService.calculateMonthlySales`, lines 201-206: it loops over `saleService.getAllSales()`, parses `LocalDate.parse(sale.getDate())` (line 204) and adds `sale.getTotal()` (line 206).
+- **Explanation:** The sales, their totals and the format of their date belong to the sales module. The returns service aggregates them and interprets the string date of `Sale` by itself.
+- **Consequence:** If `Sale` changes the type of its date, as developer1-audit proposes for `Sale.canBeReturned`, `calculateMonthlySales` stops compiling, and the sales total lives apart from the classes that know about sales.
+- **Proposed solution:** `SaleService` gets a method that returns the total of the sales of a month and year. `ReturnService.calculateMonthlySales` keeps its signature and delegates to it, so `generateMonthlyBalance` and the menu behave the same. Pattern applied: Information Expert.
+- **Other integrante's code:** Yes. The new method goes in `SaleService` (Technical Leader).
+
+#### V-07 - Sale lookup by id copied in three classes
+
+- **Pattern:** Information Expert (related: Low Coupling)
+- **Module:** Returns (Requirement 3) and Warranties (Requirement 4)
+- **Evidence:** `private Sale findSaleById(String saleId)` is defined in `ReturnService.java` line 143 (called at line 66), in `ReturnRepository.java` line 170 (called at line 139) and in `WarrantyRepository.java` line 153 (called at line 138). Each one iterates over the sales and compares `String.valueOf(sale.getId()).equals(saleId)`.
+- **Explanation:** Knowing the sales and how they are identified belongs to `SaleService` and `SaleRepository`. Three other classes repeat that knowledge, including that the id is an `int` compared as text.
+- **Consequence:** If the type of the sale id changes, three classes must change. Each lookup goes through `SaleService.getAllSales()` or `SaleRepository.findAll()`, which read and rebuild every sale from `sales.txt`, and `ReturnRepository.parseLine` does it for every stored return.
+- **Proposed solution:** Add a lookup by id to `SaleService` and `SaleRepository`, keeping the same comparison, and make the three classes use it, deleting their private copies. Pattern applied: Information Expert.
+- **Other integrante's code:** Yes. The lookup goes in `SaleService` and `SaleRepository` (Technical Leader).
+
+#### V-08 - Persistence classes depend on services
+
+- **Pattern:** Low Coupling (related: Indirection)
+- **Module:** Returns (Requirement 3, adjusted in A4) and Warranties (Requirement 4)
+- **Evidence:** `ReturnRepository.java` lines 16-18: `import com.gamezone.service.AccessoryService;`, `ProductService` and `SaleService`, injected through the constructors and used in `parseLine` and `resolveItem` to rebuild sales and returned items. `WarrantyRepository.java` line 18: `import com.gamezone.service.ProductService;`, used in `parseLine` through `productService.findProductById(productId)`.
+- **Explanation:** The allowed direction is ui, service, persistence, model. These repositories depend on the layer above them. Adjustment A2 removed `SaleService` from `WarrantyRepository` but left `ProductService`.
+- **Consequence:** The repositories cannot be built without the services, so the construction order in `Main` has to be arranged by hand, the cycle that A2 had to break can appear again, and any change to a service constructor reaches the repositories.
+- **Proposed solution:** Make the repositories load and persist identifiers only, as adjustment A2 describes for `WarrantyRepository`, and rebuild the objects in the services, which already have the sale, product and accessory lookups. It is the same mechanism that the consolidated audit proposes for `SaleRepository.findAll`, so persistence is decoupled in one consistent way. Pattern applied: Low Coupling, with Indirection.
+- **Other integrante's code:** Yes. `SaleRepository` and `Main` (Technical Leader).
+
+#### V-09 - Services depend on concrete repository classes
+
+- **Pattern:** Indirection (related: Protected Variations)
+- **Module:** Accessories (Requirement 1), Promotions (Requirement 2), Returns (Requirement 3) and Warranties (Requirement 4)
+- **Evidence:** `AccessoryService.java` line 30 `private AccessoryRepository accessoryRepository;`, `PromotionService.java` line 20 `private final PromotionRepository promotionRepository;`, `ReturnService.java` line 21 `private ReturnRepository returnRepository;` and `WarrantyService.java` line 23 `private WarrantyRepository warrantyRepository;`. These four are classes that read and write files. In contrast, `PersonService.java` line 22 uses the interface `PersonRepository` and `ProductService.java` line 19 uses the interface `ProductRepository`.
+- **Explanation:** The project already uses an interface plus a file implementation for persons and products. Accessories, promotions, returns and warranties skip that indirection, so their services are tied to file storage.
+- **Consequence:** Changing the storage, or testing a service with a fake repository, requires editing the four services.
+- **Proposed solution:** Extract the interfaces `AccessoryRepository`, `PromotionRepository`, `ReturnRepository` and `WarrantyRepository`, rename the current classes to `FileAccessoryRepository`, `FilePromotionRepository`, `FileReturnRepository` and `FileWarrantyRepository`, and make the services depend on the interfaces. Behaviour and file formats do not change. The interfaces take the signatures that V-08 leaves, so V-08 is done first. Pattern applied: Indirection.
+- **Other integrante's code:** Yes. `Main` (Technical Leader) must create the file implementations.
+
+#### V-10 - Constructor dependency that is never used
+
+- **Pattern:** Low Coupling
+- **Module:** Warranties (Requirement 4)
+- **Evidence:** `WarrantyService.java` line 25 `private ProductService productService;`, line 34 the constructor parameter `ProductService productService` and line 37 `this.productService = productService;`. No method of the class uses the field.
+- **Explanation:** The class depends on `ProductService` without using it, and that dependency has no relation to the warranty rules.
+- **Consequence:** `Main` has to build `ProductService` before `WarrantyService` for no reason, and a change in `ProductService` reaches a class that does not need it.
+- **Proposed solution:** Remove the field and the constructor parameter. Pattern applied: Low Coupling.
+- **Other integrante's code:** Yes. `Main` (Technical Leader) passes that argument when it creates the service and must be updated in the same step.
