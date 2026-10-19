@@ -146,12 +146,12 @@ public class Sale {
      * @param evaluationDate the date to compare against the sale date
      * @return true if the sale is within 30 days of evaluationDate; false otherwise
      */
-    public boolean canBeReturned(java.time.LocalDate evaluationDate) {
+    public boolean canBeReturned(LocalDate evaluationDate) {
         if (this.date == null || this.date.trim().isEmpty() || evaluationDate == null) {
             return false;
         }
         
-        java.time.LocalDate saleDate = java.time.LocalDate.parse(this.date.trim());
+        LocalDate saleDate = LocalDate.parse(this.date.trim());
         return !evaluationDate.isAfter(saleDate.plusDays(30));
     }
 
@@ -161,78 +161,168 @@ public class Sale {
      * @return true if the sale date is within 30 days of the current date; false otherwise
      */
     public boolean canBeReturned() {
-        return canBeReturned(java.time.LocalDate.now());
+        return canBeReturned(LocalDate.now());
     }
 
+    /**
+     * Gets the unique sale ID.
+     *
+     * @return the sale ID
+     */
     public int getId() { 
         return id; 
     }
 
+    /**
+     * Sets the unique sale ID.
+     *
+     * @param id the sale ID to set
+     */
     public void setId(int id) { 
         this.id = id; 
     }
 
+    /**
+     * Gets the sale date.
+     *
+     * @return the sale date string
+     */
     public String getDate() { 
         return date; 
     }
 
+    /**
+     * Sets the sale date.
+     *
+     * @param date the sale date string to set
+     */
     public void setDate(String date) { 
         this.date = date; 
     }
 
+    /**
+     * Gets the purchasing client.
+     *
+     * @return the client entity
+     */
     public Client getClient() { 
         return client; 
     }
 
+    /**
+     * Sets the purchasing client.
+     *
+     * @param client the client entity to set
+     */
     public void setClient(Client client) { 
         this.client = client; 
     }
 
+    /**
+     * Gets the attending seller.
+     *
+     * @return the seller entity
+     */
     public Seller getSeller() { 
         return seller; 
     }
 
+    /**
+     * Sets the attending seller.
+     *
+     * @param seller the seller entity to set
+     */
     public void setSeller(Seller seller) { 
         this.seller = seller; 
     }
 
+    /**
+     * Gets the list of products and accessories in the sale.
+     *
+     * @return the list of products
+     */
     public List<Product> getProducts() { 
         return products; 
     }
 
+    /**
+     * Sets the list of products and recalculates total.
+     *
+     * @param products the list of products to set
+     */
     public void setProducts(List<Product> products) {
         this.products = products;
         this.total = calculateTotal(); 
     }
 
+    /**
+     * Gets the final total price of the sale.
+     *
+     * @return the final total amount
+     */
     public double getTotal() { 
         return total; 
     }
 
+    /**
+     * Sets the final total price of the sale.
+     *
+     * @param total the final total amount to set
+     */
     public void setTotal(double total) { 
         this.total = total; 
     }
 
+    /**
+     * Gets the name of the applied promotion.
+     *
+     * @return the applied promotion name
+     */
     public String getAppliedPromotionName() { 
         return appliedPromotionName; 
     }
 
+    /**
+     * Sets the name of the applied promotion.
+     *
+     * @param appliedPromotionName the promotion name to set
+     */
     public void setAppliedPromotionName(String appliedPromotionName) { 
         this.appliedPromotionName = appliedPromotionName; 
     }
 
+    /**
+     * Gets the monetary discount amount applied to the sale.
+     *
+     * @return the discount amount
+     */
     public double getDiscountAmount() { 
         return discountAmount; 
     }
 
+    /**
+     * Sets the monetary discount amount applied to the sale.
+     *
+     * @param discountAmount the discount amount to set
+     */
     public void setDiscountAmount(double discountAmount) { 
         this.discountAmount = discountAmount; 
     }
 
+    /**
+     * Gets the cumulative cost of extended warranties requested in this sale.
+     *
+     * @return the total extended warranty cost
+     */
     public double getExtendedWarrantyCost() { 
         return extendedWarrantyCost; 
     }
 
+    /**
+     * Sets the cumulative cost of extended warranties.
+     *
+     * @param extendedWarrantyCost the extended warranty cost to set
+     */
     public void setExtendedWarrantyCost(double extendedWarrantyCost) { 
         this.extendedWarrantyCost = extendedWarrantyCost; 
     }
