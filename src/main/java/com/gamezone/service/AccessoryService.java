@@ -198,7 +198,7 @@ public class AccessoryService {
         if (accessory.getStock() < quantity) {
             return false;
         }
-        accessory.setStock(accessory.getStock() - quantity);
+        accessory.reduceStock(quantity);
         accessoryRepository.saveAll(accessories);
         return true;
     }
@@ -215,7 +215,7 @@ public class AccessoryService {
         if (accessory == null) {
             throw new IllegalArgumentException("Accessory not found with ID: " + accessoryId);
         }
-        accessory.setStock(accessory.getStock() + quantity);
+        accessory.addStock(quantity);
         accessoryRepository.saveAll(accessories);
     }
 }
