@@ -135,7 +135,7 @@ public class WarrantyRepository {
         LocalDate startDate = LocalDate.parse(fields[4]);
 
         Product product = productService.findProductById(productId);
-        Sale sale = findSaleById(saleId);
+        Sale sale = (saleRepository != null) ? saleRepository.findById(saleId) : null;
 
         if (product == null || sale == null) {
             return null;
@@ -147,18 +147,6 @@ public class WarrantyRepository {
             return new BasicWarranty(id, product, sale, startDate);
         }
 
-        return null;
-    }
-
-    private Sale findSaleById(String saleId) {
-        if (saleRepository == null) {
-            return null;
-        }
-        for (Sale sale : saleRepository.findAll()) {
-            if (String.valueOf(sale.getId()).equals(saleId)) {
-                return sale;
-            }
-        }
         return null;
     }
 }

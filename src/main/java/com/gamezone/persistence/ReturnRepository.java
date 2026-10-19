@@ -136,7 +136,7 @@ public class ReturnRepository {
         String reason = fields[4];
         double warrantyRefund = (fields.length > 6 && !fields[6].isBlank()) ? Double.parseDouble(fields[6]) : 0.0;
 
-        Sale sale = findSaleById(saleId);
+        Sale sale = saleService.findSaleById(saleId);
         if (sale == null) {
             return null;
         }
@@ -165,14 +165,5 @@ public class ReturnRepository {
             return product;
         }
         return accessoryService.findById(itemId);
-    }
-
-    private Sale findSaleById(String saleId) {
-        for (Sale sale : saleService.getAllSales()) {
-            if (String.valueOf(sale.getId()).equals(saleId)) {
-                return sale;
-            }
-        }
-        return null;
     }
 }

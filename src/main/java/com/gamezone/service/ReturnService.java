@@ -64,7 +64,7 @@ public class ReturnService {
      *                                   available to return
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
-        Sale sale = findSaleById(saleId);
+        Sale sale = saleService.findSaleById(saleId);
         ReturnValidator.validateReturnableSale(sale, saleId);
 
         List<Return> previousReturns = viewReturnsBySale(saleId);
@@ -102,15 +102,6 @@ public class ReturnService {
         returnRepository.saveAll(returns);
 
         return returnRecord;
-    }
-
-    private Sale findSaleById(String saleId) {
-        for (Sale sale : saleService.getAllSales()) {
-            if (String.valueOf(sale.getId()).equals(saleId)) {
-                return sale;
-            }
-        }
-        return null;
     }
 
     /**
