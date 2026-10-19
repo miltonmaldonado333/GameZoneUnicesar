@@ -10,6 +10,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
 import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.validation.ReturnValidator;
 
 /**
  * Handles the business logic for managing product returns, including
@@ -64,52 +65,15 @@ public class ReturnService {
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
         Sale sale = findSaleById(saleId);
-        if (sale == null) {
-            throw new IllegalArgumentException("The specified sale does not exist: " + saleId);
-        }
-
-        if (!sale.canBeReturned()) {
-            throw new IllegalArgumentException("The sale has exceeded the 30-day return policy window.");
-        }
+        ReturnValidator.validateReturnableSale(sale, saleId);
 
         List<Return> previousReturns = viewReturnsBySale(saleId);
 
         List<Product> returnedProducts = new ArrayList<>();
         for (String productId : productIds) {
             Product product = findProductInSale(sale, productId);
-            if (product == null) {
-                throw new IllegalArgumentException("Product " + productId + " does not belong to sale " + saleId);
-            }
-
-            long originalQuantity = 0;
-            for (Product p : sale.getProducts()) {
-                if (p.getId().equalsIgnoreCase(productId)) {
-                    originalQuantity++;
-                }
-            }
-
-            long alreadyReturnedQuantity = 0;
-            for (Return prevReturn : previousReturns) {
-                for (Product p : prevReturn.getReturnedProducts()) {
-                    if (p.getId().equalsIgnoreCase(productId)) {
-                        alreadyReturnedQuantity++;
-                    }
-                }
-            }
-
-            long requestedInCurrentBatch = 0;
-            for (String id : productIds) {
-                if (id.equalsIgnoreCase(productId)) {
-                    requestedInCurrentBatch++;
-                }
-            }
-
-            if (alreadyReturnedQuantity + requestedInCurrentBatch > originalQuantity) {
-                throw new IllegalArgumentException("Product " + productId +
-                    " has no units available for return in sale " + saleId +
-                    " (Purchased: " + originalQuantity + ", Previously returned: " + alreadyReturnedQuantity + ").");
-            }
-
+            ReturnValidator.validateProductBelongsToSale(product, productId, saleId);
+            ReturnValidator.validateReturnableQuantity(sale, previousReturns, productIds, productId, saleId);
             returnedProducts.add(product);
         }
 
