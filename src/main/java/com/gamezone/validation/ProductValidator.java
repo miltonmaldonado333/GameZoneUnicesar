@@ -16,10 +16,11 @@ public class ProductValidator {
 
     /**
      * Validates primitive attributes required for a product.
-     * @param id
-     * @param title
-     * @param price
-     * @param stock
+     * 
+     * @param id    product identifier
+     * @param title product title
+     * @param price product price
+     * @param stock product stock
      */
     public static void validateProductData(String id, String title, double price, int stock) {
         if (id == null || id.trim().isEmpty()) {
@@ -38,8 +39,9 @@ public class ProductValidator {
 
     /**
      * Validates that requested quantity is available in stock.
-     * @param product
-     * @param requestedQuantity
+     * 
+     * @param product           product instance
+     * @param requestedQuantity quantity requested in sale
      */
     public static void validateStockAvailability(Product product, int requestedQuantity) {
         if (product != null && product.getStock() < requestedQuantity) {
@@ -52,12 +54,27 @@ public class ProductValidator {
 
     /**
      * Validates that a product instance exists.
-     * @param product
-     * @param productId
+     * 
+     * @param product   product lookup result
+     * @param productId requested product ID
      */
     public static void validateProductExists(Product product, String productId) {
         if (product == null) {
             throw new ResourceNotFoundException("producto", productId);
+        }
+    }
+
+    /**
+     * Ensures no duplicate product exists in the collection for a given ID.
+     * 
+     * @param existingProduct product lookup result
+     * @param newId           the ID being registered
+     */
+    public static void validateUniqueProduct(Product existingProduct, String newId) {
+        if (existingProduct != null) {
+            throw new BusinessRuleException(
+                String.format("Ya existe un producto registrado con el identificador '%s'.", newId)
+            );
         }
     }
 }
