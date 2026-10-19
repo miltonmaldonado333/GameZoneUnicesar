@@ -1,5 +1,6 @@
 package com.gamezone.model;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -59,7 +60,9 @@ public class Sale {
         double sum = 0.0;
         if (products != null) {
             for (Product product : products) {
-                sum += product.getPrice();
+                if (product != null) {
+                    sum += product.getPrice();
+                }
             }
         }
         return sum;
@@ -85,8 +88,8 @@ public class Sale {
     public String generateReceipt() {
         StringBuilder sb = new StringBuilder();
         sb.append("=========================================\n");
-        sb.append("           GAMEZONE UNICESAR             \n");
-        sb.append("           RECIBO DE VENTA               \n");
+        sb.append("            GAMEZONE UNICESAR             \n");
+        sb.append("            RECIBO DE VENTA               \n");
         sb.append("=========================================\n");
         sb.append("ID Venta: ").append(id).append("\n");
         sb.append("Fecha   : ").append(date).append("\n");
@@ -101,7 +104,9 @@ public class Sale {
 
         if (products != null) {
             for (Product item : products) {
-                sb.append(String.format("- %s ($%.2f)\n", item.getTitle(), item.getPrice()));
+                if (item != null) {
+                    sb.append(String.format("- %s ($%.2f)\n", item.getTitle(), item.getPrice()));
+                }
             }
         }
 
@@ -133,180 +138,101 @@ public class Sale {
     }
 
     /**
-     * Checks whether the sale transaction is eligible for a return based on the 30-day return policy.
+     * Evaluates return policy eligibility against an explicit reference date.
      * 
-     * @return true if the sale date is within 30 days of the current date; false otherwise
+     * GRASP Protected Variations (V-14): Decouples the 30-day policy rule from 
+     * direct system clock reliance.
+     *
+     * @param evaluationDate the date to compare against the sale date
+     * @return true if the sale is within 30 days of evaluationDate; false otherwise
      */
-    public boolean canBeReturned() {
-        if (this.date == null || this.date.isEmpty()) {
+    public boolean canBeReturned(java.time.LocalDate evaluationDate) {
+        if (this.date == null || this.date.trim().isEmpty() || evaluationDate == null) {
             return false;
         }
         
-        java.time.LocalDate saleDate = java.time.LocalDate.parse(this.date);
-        java.time.LocalDate currentDate = java.time.LocalDate.now();
-        
-        return !currentDate.isAfter(saleDate.plusDays(30));
+        java.time.LocalDate saleDate = java.time.LocalDate.parse(this.date.trim());
+        return !evaluationDate.isAfter(saleDate.plusDays(30));
     }
 
     /**
-     * Gets the unique sale ID.
+     * Checks whether the sale transaction is eligible for a return based on current system date.
      *
-     * @return the sale ID
+     * @return true if the sale date is within 30 days of the current date; false otherwise
      */
+    public boolean canBeReturned() {
+        return canBeReturned(java.time.LocalDate.now());
+    }
+
     public int getId() { 
         return id; 
     }
 
-    /**
-     * Sets the unique sale ID.
-     *
-     * @param id the sale ID to set
-     */
     public void setId(int id) { 
         this.id = id; 
     }
 
-    /**
-     * Gets the sale date.
-     *
-     * @return the sale date string
-     */
     public String getDate() { 
         return date; 
     }
 
-    /**
-     * Sets the sale date.
-     *
-     * @param date the sale date string to set
-     */
     public void setDate(String date) { 
         this.date = date; 
     }
 
-    /**
-     * Gets the purchasing client.
-     *
-     * @return the client entity
-     */
     public Client getClient() { 
         return client; 
     }
 
-    /**
-     * Sets the purchasing client.
-     *
-     * @param client the client entity to set
-     */
     public void setClient(Client client) { 
         this.client = client; 
     }
 
-    /**
-     * Gets the attending seller.
-     *
-     * @return the seller entity
-     */
     public Seller getSeller() { 
         return seller; 
     }
 
-    /**
-     * Sets the attending seller.
-     *
-     * @param seller the seller entity to set
-     */
     public void setSeller(Seller seller) { 
         this.seller = seller; 
     }
 
-    /**
-     * Gets the list of products and accessories in the sale.
-     *
-     * @return the list of products
-     */
     public List<Product> getProducts() { 
         return products; 
     }
 
-    /**
-     * Sets the list of products and recalculates total.
-     *
-     * @param products the list of products to set
-     */
     public void setProducts(List<Product> products) {
         this.products = products;
         this.total = calculateTotal(); 
     }
 
-    /**
-     * Gets the final total price of the sale.
-     *
-     * @return the final total amount
-     */
     public double getTotal() { 
         return total; 
     }
 
-    /**
-     * Sets the final total price of the sale.
-     *
-     * @param total the final total amount to set
-     */
     public void setTotal(double total) { 
         this.total = total; 
     }
 
-    /**
-     * Gets the name of the applied promotion.
-     *
-     * @return the applied promotion name
-     */
     public String getAppliedPromotionName() { 
         return appliedPromotionName; 
     }
 
-    /**
-     * Sets the name of the applied promotion.
-     *
-     * @param appliedPromotionName the promotion name to set
-     */
     public void setAppliedPromotionName(String appliedPromotionName) { 
         this.appliedPromotionName = appliedPromotionName; 
     }
 
-    /**
-     * Gets the monetary discount amount applied to the sale.
-     *
-     * @return the discount amount
-     */
     public double getDiscountAmount() { 
         return discountAmount; 
     }
 
-    /**
-     * Sets the monetary discount amount applied to the sale.
-     *
-     * @param discountAmount the discount amount to set
-     */
     public void setDiscountAmount(double discountAmount) { 
         this.discountAmount = discountAmount; 
     }
 
-    /**
-     * Gets the cumulative cost of extended warranties requested in this sale.
-     *
-     * @return the total extended warranty cost
-     */
     public double getExtendedWarrantyCost() { 
         return extendedWarrantyCost; 
     }
 
-    /**
-     * Sets the cumulative cost of extended warranties.
-     *
-     * @param extendedWarrantyCost the extended warranty cost to set
-     */
     public void setExtendedWarrantyCost(double extendedWarrantyCost) { 
         this.extendedWarrantyCost = extendedWarrantyCost; 
     }
