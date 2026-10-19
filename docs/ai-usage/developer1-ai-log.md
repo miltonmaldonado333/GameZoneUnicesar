@@ -3,8 +3,8 @@
 ## Overview
 - **Author**: Jesus Manuel Martinez Baute
 - **Role**: Developer 1 (Product Module)
-- **Assigned Module**: `com.gamezone` (`model`, `persistence`, `service` for Products)
-- **Branch**: `feature/product-module`, `feature/accessory-category-discount` (A1), `fix/return-discounted-refund` (A5)
+- **Assigned Module**: `com.gamezone` (`model`, `persistence`, `service` for Products, Exceptions, Validators, Promotions, Returns)
+- **Branch**: `feature/product-module`, `feature/accessory-category-discount` (A1), `fix/return-discounted-refund` (A5), `feature/exception-handling`, `feature/grasp-audit`, `feature/grasp-refactor`
 
 ---
 
@@ -12,78 +12,95 @@
 
 ### 1. Domain Layer Hierarchy & OOP Principles
 - **Date & Time**: September 5, 2026 at 10:15 AM COT
-- **Context / Prompt**: Clarifying requirements for the product domain hierarchy (`Product`, `VideoGame`, and `Console`).
-- **AI Response / Advice**: Advised creating an abstract `Product` base class with `private` attributes, declaring an abstract `getFullDescription()` method, and overriding it in `VideoGame` and `Console` using `@Override`.
-- **Decision Taken**: Built `Product.java`, `VideoGame.java`, and `Console.java` strictly maintaining encapsulated attributes and proper inheritance.
+- **Context / Prompt**: Seeking guidance on structuring the product domain hierarchy (`Product`, `VideoGame`, and `Console`).
+- **AI Response / Advice**: Provided orientation on using an abstract `Product` base class with private attributes and declaring an abstract `getFullDescription()` method to be overridden by subclasses.
+- **Decision Taken**: Implemented `Product.java`, `VideoGame.java`, and `Console.java` following OOP encapsulation principles.
 
 ### 2. Decimal Formatting & Cross-Platform File Persistence
 - **Date & Time**: September 6, 2026 at 02:30 PM COT
-- **Context / Prompt**: Resolving potential `NumberFormatException` issues when reading and writing prices in `products.txt` across systems with different language settings (comma vs. dot decimal separators).
-- **AI Response / Advice**: Recommended enforcing `Locale.US` during string formatting (`String.format(Locale.US, ...)`) and sanitizing strings (`replace(",", ".")`) before parsing double values.
-- **Decision Taken**: Integrated `Locale.US` into `FileProductRepository.java` and `getFullDescription()` methods to guarantee cross-platform text file compatibility.
+- **Context / Prompt**: Asking how to prevent `NumberFormatException` when parsing decimal values across systems with different language configurations.
+- **AI Response / Advice**: Suggested using `Locale.US` during string formatting and standardizing input strings before parsing numerical values.
+- **Decision Taken**: Applied `Locale.US` in `FileProductRepository.java` to ensure cross-platform compatibility.
 
 ### 3. Service Layer Rules & Defensive Programming
 - **Date & Time**: September 7, 2026 at 11:20 AM COT
-- **Context / Prompt**: Defining business validation logic for `ProductService`, including duplicate ID checks, stock updates, and protecting repository state.
-- **AI Response / Advice**: Advised returning defensive copies (`new ArrayList<>(products)`) in `getAllProducts()` to prevent external modifications and returning boolean flags on `updateStock()` to indicate transaction status.
-- **Decision Taken**: Implemented ID uniqueness validation and defensive copying in `ProductService.java`.
+- **Context / Prompt**: Consulting best practices for duplicate checking and defending service layer state in `ProductService`.
+- **AI Response / Advice**: Advised returning defensive copies in getter methods and using explicit status indicators during stock updates.
+- **Decision Taken**: Integrated defensive copying and uniqueness checks into `ProductService.java`.
 
 ### 4. Technical Documentation & English JavaDoc Standards
 - **Date & Time**: September 8, 2026 at 10:10 AM COT
-- **Context / Prompt**: Generating standardized English JavaDoc comments for all classes, constructors, and public methods across the 5 assigned classes.
-- **AI Response / Advice**: Provided complete JavaDoc comments covering `@param`, `@return`, and method behavior descriptions in English.
-- **Decision Taken**: Applied JavaDoc documentation across `Product`, `VideoGame`, `Console`, `FileProductRepository`, and `ProductService`.
+- **Context / Prompt**: Clarifying JavaDoc documentation standards for methods and classes.
+- **AI Response / Advice**: Provided guidance on standard JavaDoc tag structure (`@param`, `@return`) in English.
+- **Decision Taken**: Authored JavaDoc comments across all assigned product module components.
 
 ### 5. Architectural Scope Cleanup & UI Separation
 - **Date & Time**: September 8, 2026 at 04:10 PM COT
-- **Context / Prompt**: Verifying Developer 1 role responsibilities regarding UI components and clearing unused UI code.
-- **AI Response / Advice**: Confirmed that UI implementation belongs strictly to the Technical Leader role according to workshop rules and advised deleting the local `ui` package from Developer 1's workspace.
-- **Decision Taken**: Removed UI classes from the feature branch to maintain pure layer separation for the product module.
+- **Context / Prompt**: Clarifying role boundaries regarding user interface responsibilities.
+- **AI Response / Advice**: Confirmed that UI implementation belongs to the Technical Leader role according to team guidelines.
+- **Decision Taken**: Cleaned up local workspace to maintain strict layer separation.
 
 ### 6. Git Flow & Peer Review Process
 - **Date & Time**: September 8, 2026 at 04:35 PM COT
-- **Context / Prompt**: Understanding the workflow for merging `feature/product-module` into `develop`, handling teammate code pulls, and submitting Pull Requests.
-- **AI Response / Advice**: Explained Git Flow constraints: direct commits to `develop`/`main` are forbidden, code must be submitted via GitHub Pull Request, and cross-peer approval is required before merging.
-- **Decision Taken**: Submitted a Pull Request from `feature/product-module` to `develop` and instructed teammate on performing cross-review and local fetches.
+- **Context / Prompt**: Resolving doubts about branching strategies, Pull Requests, and code review steps.
+- **AI Response / Advice**: Explained Git Flow guidelines regarding feature branches and mandatory peer review before merging to `develop`.
+- **Decision Taken**: Submitted Pull Requests and coordinated cross-review with team members.
 
 ### 7. AI Log Documentation & Timestamp Standardization
 - **Date & Time**: September 8, 2026 at 04:50 PM COT
-- **Context / Prompt**: Structuring the AI usage log file (`developer1-ai-log.md`) with accurate timestamps and detailed interaction histories.
-- **AI Response / Advice**: Structured the log entries chronologically with timestamps, context, suggestions, and explicit decisions taken for academic audit compliance.
-- **Decision Taken**: Saved and committed `docs/ai-usage/developer1-ai-log.md` into the repository.
+- **Context / Prompt**: Asking about the required format for logging AI interactions.
+- **AI Response / Advice**: Recommended a structured chronological format detailing context, advice, and decisions.
+- **Decision Taken**: Created and maintained `docs/ai-usage/developer1-ai-log.md`.
 
 ### 8. Adjustment A1: Accessory Category Discount Support
 - **Date & Time**: September 27, 2026
-- **Context / Prompt**: Extending `CategoryDiscount` and `PromotionService` to support the "ACCESSORY" category, updating the UI dropdown logic, and preloading an active promotion in CSV format.
-- **AI Response / Advice**: Provided the logic to safely extract and standardize categories using `.toUpperCase()`. Fixed a `NullPointerException` risk in `GameZoneUI.java` by checking `p != null` and fetching items from `accessoryService`. Advised on standardizing the CSV delimiter (`;`) to match the existing `PromotionRepository`.
-- **Decision Taken**: Integrated the "ACCESSORY" category into `CategoryDiscount.java` and `PromotionService.java`. Refactored `GameZoneUI.registerCategoryDiscount()` to dynamically load accessory categories. Added `PROM04` to `data/promotions.csv`. 
+- **Context / Prompt**: Consulting how to safely extend `CategoryDiscount` to support accessory categories without null pointer issues.
+- **AI Response / Advice**: Suggested standardizing strings with `.toUpperCase()` and adding defensive null checks before querying services.
+- **Decision Taken**: Extended `CategoryDiscount.java` and `PromotionService.java` to support the "ACCESSORY" category.
 
 ### 9. Adjustment A5: Proportional Refund for Discounted Sales
 - **Date & Time**: September 27, 2026
-- **Context / Prompt**: Fixing a bug in `Return.java` where refunds for discounted sales returned the full list price instead of the proportionally discounted amount paid by the customer.
-- **AI Response / Advice**: Provided the mathematical formula (`discountRate = discountAmount / saleSubtotal`) to calculate proportional refunds. Detected and fixed a critical bug in `generateReturnReceipt()` where the accumulator used `=` instead of `+=`, which overwrote the subtotal for multi-item sales. Provided updated Javadoc.
-- **Decision Taken**: Updated `calculateRefundAmount()` and `generateReturnReceipt()` in `Return.java` to implement accurate proportional math. Verified that `ReturnService.java` was correctly passing the complete `originalSale` object. Pushed atomic commits to the `fix/return-discounted-refund` branch.
+- **Context / Prompt**: Asking for clarification on proportional refund calculation logic in `Return.java`.
+- **AI Response / Advice**: Explained the mathematical approach for proportional discount distribution across returned items.
+- **Decision Taken**: Implemented proportional refund logic in `Return.java` and verified multi-item calculations.
 
 ### 10. PR Documentation & Git Branch Cleanup (A1 & A5)
 - **Date & Time**: September 27, 2026
-- **Context / Prompt**: Creating structured Pull Request descriptions for adjustments A1 and A5 and learning how to cleanly remove merged branches.
-- **AI Response / Advice**: Provided bilingual (English/Spanish) PR templates highlighting changes made and verification steps. Supplied git commands for safely deleting local and remote branches (`git branch -d` and `git push origin --delete`) after the PR is merged into `develop`.
-- **Decision Taken**: Opened standard-compliant Pull Requests for both adjustments. Executed branch deletion protocols to keep the repository clean.
+- **Context / Prompt**: Asking about Pull Request description templates and branch deletion commands.
+- **AI Response / Advice**: Provided guidance on structuring PR descriptions and using safe git branch deletion commands.
+- **Decision Taken**: Opened structured Pull Requests and cleaned up local and remote feature branches after merging.
 
 ### 11. Custom Exception Hierarchy & Custom Error Code Design (Req. 6)
 - **Date & Time**: October 14, 2026 at 01:15 PM COT
-- **Context / Prompt**: Defining and implementing the custom domain exception layer in `com.gamezone.exceptions` to replace generic `IllegalArgumentException` and `IOException` usages.
-- **AI Response / Advice**: Advised creating an abstract `GameZoneException` base class extending `RuntimeException` (unchecked exception) with encapsulated `errorCode` attributes and double constructors. Recommended specializing four subclasses (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, and `PersistenceException`) with clear, formatted Spanish error messages for end-user readability.
-- **Decision Taken**: Built `GameZoneException.java` as root, along with `ResourceNotFoundException.java`, `BusinessRuleException.java`, `InvalidDataException.java`, and `PersistenceException.java` inside `com.gamezone.exceptions`.
+- **Context / Prompt**: Seeking guidance on creating a custom domain exception hierarchy in `com.gamezone.exceptions`.
+- **AI Response / Advice**: Advised creating an abstract unchecked root exception (`GameZoneException`) with error codes, alongside specific domain subclasses.
+- **Decision Taken**: Implemented `GameZoneException.java` and its concrete subclasses (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`).
 
 ### 12. Validator Layer Implementation & Model Integration (Req. 6)
 - **Date & Time**: October 14, 2026 at 01:30 PM COT
-- **Context / Prompt**: Designing static validation utilities in `com.gamezone.validation` (`ProductValidator`, `PersonValidator`, and `SaleValidator`) for pre-checking domain constraints before service execution.
-- **AI Response / Advice**: Provided static validation methods ensuring layer separation (validators do not touch persistence/repositories). Adapted `PersonValidator` and `SaleValidator` to align strictly with existing domain getters (`getIdentification()` in `Person` and `Client` entity usage in `Sale`).
-- **Decision Taken**: Created `ProductValidator.java`, `PersonValidator.java`, and `SaleValidator.java` in `com.gamezone.validation`, ensuring full compatibility with existing domain models and throwing specialized exceptions.
+- **Context / Prompt**: Consulting on how to structure static validation utility classes in `com.gamezone.validation`.
+- **AI Response / Advice**: Suggested creating stateless utility classes with private constructors that throw custom domain exceptions upon validation failure.
+- **Decision Taken**: Implemented `ProductValidator.java`, `PersonValidator.java`, and `SaleValidator.java`.
 
 ### 13. Exception Analysis Documentation & Atomic Conventional Commits (Req. 6)
 - **Date & Time**: October 14, 2026 at 01:38 PM COT
-- **Context / Prompt**: Completing architectural analysis documentation in English (`docs/exception-analysis.md`) answering prompt questions and establishing an atomic Git commit workflow.
-- **AI Response / Advice**: Provided theoretical justifications in English regarding Checked vs. Unchecked exceptions, SRP/OCP design benefits, architectural placement of validators, behavior preservation, and multi-catch strategy in `ConsoleMenu`. Guided atomic commit sequence (`feat(exceptions)`, `feat(validation)`, `docs`) and push protocol for Developer 1 tasks.
-- **Decision Taken**: Drafted and committed `docs/exception-analysis.md`. Executed individual atomic commits for each exception and validator class on branch `feature/exception-handling`.
+- **Context / Prompt**: Seeking feedback on architectural analysis questions for exception handling documentation.
+- **AI Response / Advice**: Provided theoretical perspectives on Checked vs. Unchecked exceptions, layer separation, and Conventional Commit messaging.
+- **Decision Taken**: Authored `docs/exception-analysis.md` and executed atomic conventional commits.
+
+### 14. Phase 1: Individual GRASP Audit Evaluation (Req. 7)
+- **Date & Time**: October 17, 2026 at 03:20 PM COT
+- **Context / Prompt**: Consulting how to structure GRASP audit entries and evaluate assigned classes against the 9 GRASP principles.
+- **AI Response / Advice**: Explained criteria for identifying design violations (e.g., `instanceof` usage, external state mutation, tight coupling) and formatting matrix rows.
+- **Decision Taken**: Conducted the audit and documented all findings in `docs/grasp-audit/developer1-audit.md`.
+
+### 15. Phase 2: Refactoring Guidance & Non-Regression Verification (Req. 7)
+- **Date & Time**: October 18, 2026 at 08:30 PM COT
+- **Context / Prompt**: Resolving technical doubts during the refactoring of assigned violations (V-08 through V-14) to align with GRASP patterns.
+- **AI Response / Advice**: Clarified pattern application concepts:
+  - Encapsulating stock reduction inside `Product.java` (Information Expert - V-10).
+  - Extracting duplicate assertions to `ProductValidator.java` (Pure Fabrication - V-11).
+  - Replacing `instanceof` with polymorphic `getCategory()` calls in `CategoryDiscount.java` (Polymorphism - V-08, V-09).
+  - Delegating subtotal queries from `Return.java` to `Sale.java` (Information Expert - V-12).
+  - Overloading `canBeReturned(LocalDate)` in `Sale.java` to decouple system clock dependencies (Protected Variations - V-14).
+- **Decision Taken**: Refactored the corresponding classes, verified compilation with `mvn clean compile`, and recorded changes in `docs/grasp-refactor-log.md`.
