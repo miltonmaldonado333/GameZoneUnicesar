@@ -122,4 +122,20 @@ public class SaleRepository {
 
         return sales;
     }
+
+    /**
+     * Finds a recorded sale by its identifier.
+     *
+     * @param saleId the sale identifier, compared as text
+     * @return the matching sale, or null if there is none
+     * @throws PersistenceException if the sales file cannot be read
+     */
+    public Sale findById(String saleId) {
+        for (Sale sale : findAll()) {
+            if (String.valueOf(sale.getId()).equals(saleId)) {
+                return sale;
+            }
+        }
+        return null;
+    }
 }

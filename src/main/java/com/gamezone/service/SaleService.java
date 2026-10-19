@@ -220,6 +220,16 @@ public class SaleService {
     }
 
     /**
+     * Finds a recorded sale by its identifier.
+     *
+     * @param saleId the sale identifier, compared as text
+     * @return the matching sale, or null if there is none
+     */
+    public Sale findSaleById(String saleId) {
+        return saleRepository.findById(saleId);
+    }
+
+    /**
      * Retrieves sales associated with a specific client identification.
      *
      * @param clientId the customer identification number
