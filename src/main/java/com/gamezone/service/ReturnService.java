@@ -163,14 +163,7 @@ public class ReturnService {
      * @return the total sales amount for that period
      */
     public double calculateMonthlySales(int month, int year) {
-        double totalSales = 0.0;
-        for (Sale sale : saleService.getAllSales()) {
-            LocalDate saleDate = LocalDate.parse(sale.getDate());
-            if (saleDate.getMonthValue() == month && saleDate.getYear() == year) {
-                totalSales += sale.getTotal();
-            }
-        }
-        return totalSales;
+        return saleService.calculateMonthlyTotal(month, year);
     }
 
     /**

@@ -202,6 +202,24 @@ public class SaleService {
     }
 
     /**
+     * Calculates the sum of the totals of the sales registered in the given month and year.
+     *
+     * @param month the month to evaluate (1-12)
+     * @param year  the year to evaluate
+     * @return the sum of the totals of the sales of that period
+     */
+    public double calculateMonthlyTotal(int month, int year) {
+        double total = 0.0;
+        for (Sale sale : saleRepository.findAll()) {
+            LocalDate saleDate = LocalDate.parse(sale.getDate());
+            if (saleDate.getMonthValue() == month && saleDate.getYear() == year) {
+                total += sale.getTotal();
+            }
+        }
+        return total;
+    }
+
+    /**
      * Retrieves sales associated with a specific client identification.
      *
      * @param clientId the customer identification number
