@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Service class handling product domain logic, stock management, and unified catalog queries.
  * 
- *Applies GRASP principles by acting as a Controller for product creation and 
+ * Applies GRASP principles by acting as a Controller for product creation and 
  * delegating state mutation directly to domain entities (Information Expert).
  */
 public class ProductService {
@@ -82,7 +82,7 @@ public class ProductService {
     /**
      * Dynamically extracts all distinct product categories currently available in the system.
      * 
-     * GRASP High Cohesion:Encapsulates category discovery in the service layer 
+     * GRASP High Cohesion: Encapsulates category discovery in the service layer 
      * to eliminate reflection logic in UI controllers.
      *
      * @return a list of unique category names
@@ -123,9 +123,13 @@ public class ProductService {
      */
     public boolean registerVideoGame(String platform, String genre, String ageRating, String id, String title, double price, int stock) {
         ProductValidator.validateProductData(id, title, price, stock);
+        
+        // GRASP Pure Fabrication / High Cohesion (V-11): Delegate existence check to ProductValidator
         if (findProductById(id) != null) {
+            ProductValidator.validateUniqueProduct(findProductById(id), id);
             return false;
         }
+        
         VideoGame game = new VideoGame(platform, genre, ageRating, id, title, price, stock);
         products.add(game);
         productRepository.saveProducts(products);
@@ -147,9 +151,13 @@ public class ProductService {
      */
     public boolean registerConsole(String brand, String model, String generation, String id, String title, double price, int stock) {
         ProductValidator.validateProductData(id, title, price, stock);
+        
+        // GRASP Pure Fabrication / High Cohesion (V-11): Delegate existence check to ProductValidator
         if (findProductById(id) != null) {
+            ProductValidator.validateUniqueProduct(findProductById(id), id);
             return false;
         }
+        
         Console console = new Console(brand, model, generation, id, title, price, stock);
         products.add(console);
         productRepository.saveProducts(products);
@@ -167,6 +175,9 @@ public class ProductService {
 
     /**
      * Subtracts the sold quantity from product inventory and saves the state.
+     * 
+     * GRASP Information Expert (V-10): Delegates stock reduction directly to 
+     * product.reduceStock(quantitySold) instead of performing arithmetic externally.
      *
      * @param productId    the unique identifier of the sold product
      * @param quantitySold the quantity sold to subtract
@@ -174,10 +185,9 @@ public class ProductService {
     public void updateStock(String productId, int quantitySold) {
         Product product = findProductById(productId);
         if (product != null) {
-            if (product.getStock() >= quantitySold) {
-                product.setStock(product.getStock() - quantitySold);
-                productRepository.saveProducts(products);
-            }
+            // Delegate state mutation to Product (Information Expert - V-10)
+            product.reduceStock(quantitySold);
+            productRepository.saveProducts(products);
         }
     }
 
