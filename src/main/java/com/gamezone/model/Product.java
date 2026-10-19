@@ -77,10 +77,26 @@ public abstract class Product {
      * @return the category name used for filtering and promotion rules
      */
     public abstract String getCategory();
-    
+
+    /**
+     * Increases stock by the specified quantity.
+     *
+     * @param quantity quantity to add
+     */
     public void addStock(int quantity) {
-    if (quantity > 0) {
-        this.stock += quantity;
+        if (quantity > 0) {
+            this.stock += quantity;
+        }
     }
-}
+
+    /**
+     * Deducts stock from the product if sufficient quantity is available.
+     *
+     * @param quantity quantity to subtract
+     */
+    public void reduceStock(int quantity) {
+        if (quantity > 0 && this.stock >= quantity) {
+            this.stock -= quantity;
+        }
+    }
 }
