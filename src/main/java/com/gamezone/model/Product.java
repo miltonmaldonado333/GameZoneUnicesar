@@ -99,4 +99,14 @@ public abstract class Product {
             this.stock -= quantity;
         }
     }
+
+    /**
+     * Indicates whether this product is eligible for extended warranty coverage.
+     * Default implementation returns false; overridden in specific subclasses like Console (V-05).
+     *
+     * @return true if extended warranty applies; false by default
+     */
+    public boolean hasWarrantyCoverage() {
+        return false;
+    }
 }

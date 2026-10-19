@@ -78,4 +78,9 @@ public class Console extends Product {
         return String.format("Console: [ID: %s, Title: %s, Price: $%.2f, Stock: %d, Brand: %s, Model: %s, Generation: %s]",
                 getId(), getTitle(), getPrice(), getStock(), brand, model, generation);
     }
+    
+    @Override
+    public boolean hasWarrantyCoverage() {
+        return true;
+    }
 }
