@@ -8,6 +8,7 @@ import com.gamezone.model.Accessory;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
+import com.gamezone.persistence.ReturnRecord;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.validation.ReturnValidator;
 
@@ -76,7 +77,7 @@ public class ReturnService {
             returnedProducts.add(product);
         }
 
-        String returnId = "RET" + String.format("%04d", returnRepository.loadAll().size() + 1);
+        String returnId = "RET" + String.format("%04d", loadReturns().size() + 1);
         // Cancel the warranties of every returned console and collect the refundable cost
         double warrantyRefund = 0.0;
         for (Product product : returnedProducts) {
@@ -96,11 +97,43 @@ public class ReturnService {
             }
         }
 
-        List<Return> returns = returnRepository.loadAll();
+        List<Return> returns = loadReturns();
         returns.add(returnRecord);
         returnRepository.saveAll(returns);
 
         return returnRecord;
+    }
+
+    /**
+     * Loads the stored returns and rebuilds each one from its raw record,
+     * resolving the sale, the products and the accessories through the services.
+     * A record whose sale cannot be found is skipped.
+     *
+     * @return the list of rebuilt returns
+     */
+    private List<Return> loadReturns() {
+        List<Return> returns = new ArrayList<>();
+        for (ReturnRecord stored : returnRepository.loadAll()) {
+            Sale sale = saleService.findSaleById(stored.getSaleId());
+            if (sale == null) {
+                continue;
+            }
+
+            List<Product> products = new ArrayList<>();
+            for (String productId : stored.getProductIds()) {
+                Product product = productService.findProductById(productId);
+                if (product == null) {
+                    product = accessoryService.findById(productId);
+                }
+                if (product != null) {
+                    products.add(product);
+                }
+            }
+
+            returns.add(new Return(stored.getReturnId(), stored.getDate(), sale, products,
+                    stored.getReason(), stored.getWarrantyRefundAmount()));
+        }
+        return returns;
     }
 
     /**
@@ -109,7 +142,7 @@ public class ReturnService {
      * @return the full list of registered returns
      */
     public List<Return> viewAllReturns() {
-        return returnRepository.loadAll();
+        return loadReturns();
     }
 
     /**
@@ -120,7 +153,7 @@ public class ReturnService {
      */
     public List<Return> viewReturnsByCustomer(String customerId) {
         List<Return> matching = new ArrayList<>();
-        for (Return returnRecord : returnRepository.loadAll()) {
+        for (Return returnRecord : loadReturns()) {
             if (returnRecord.getOriginalSale().getClient().getIdentification().equalsIgnoreCase(customerId)) {
                 matching.add(returnRecord);
             }
@@ -136,7 +169,7 @@ public class ReturnService {
      */
     public List<Return> viewReturnsBySale(String saleId) {
         List<Return> matching = new ArrayList<>();
-        for (Return returnRecord : returnRepository.loadAll()) {
+        for (Return returnRecord : loadReturns()) {
             if (String.valueOf(returnRecord.getOriginalSale().getId()).equals(saleId)) {
                 matching.add(returnRecord);
             }
@@ -166,7 +199,7 @@ public class ReturnService {
      */
     public double calculateMonthlyReturns(int month, int year) {
         double totalReturns = 0.0;
-        for (Return returnRecord : returnRepository.loadAll()) {
+        for (Return returnRecord : loadReturns()) {
             LocalDate returnDate = returnRecord.getDate();
             if (returnDate.getMonthValue() == month && returnDate.getYear() == year) {
                 totalReturns += returnRecord.getRefundAmount();

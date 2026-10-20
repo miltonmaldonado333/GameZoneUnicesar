@@ -49,7 +49,7 @@ public class main {
         SaleService saleService = new SaleService(saleRepository, productService, accessoryService, promotionService, warrantyService);
 
         // 6. Return Repository and Service
-        ReturnRepository returnRepository = new ReturnRepository(saleService, productService, accessoryService);
+        ReturnRepository returnRepository = new ReturnRepository();
         ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService, warrantyService);
 
         // 7. Dependency Injection for unified search
