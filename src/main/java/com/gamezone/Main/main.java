@@ -1,6 +1,7 @@
 package com.gamezone.Main;
 
 import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.FileAccessoryRepository;
 import com.gamezone.persistence.FilePersonRepository;
 import com.gamezone.persistence.FileProductRepository;
 import com.gamezone.persistence.PersonRepository;
@@ -29,7 +30,7 @@ public class main {
         // 1. Base Repositories
         ProductRepository productRepository = new FileProductRepository();
         PersonRepository personRepository = new FilePersonRepository("persons.txt");
-        AccessoryRepository accessoryRepository = new AccessoryRepository();
+        AccessoryRepository accessoryRepository = new FileAccessoryRepository();
         PromotionRepository promotionRepository = new PromotionRepository();
 
         // 2. Base Services
