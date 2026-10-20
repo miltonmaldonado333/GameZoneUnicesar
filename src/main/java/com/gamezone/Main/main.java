@@ -12,6 +12,7 @@ import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.FileReturnRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
+import com.gamezone.persistence.FileWarrantyRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
@@ -43,7 +44,7 @@ public class main {
 
         // 3. Repositories depending on base Services
         SaleRepository saleRepository = new SaleRepository(personService, productService);
-        WarrantyRepository warrantyRepository = new WarrantyRepository();
+        WarrantyRepository warrantyRepository = new FileWarrantyRepository();
 
         // 4. Warranty Service (Full Dependency Injection)
         WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository);

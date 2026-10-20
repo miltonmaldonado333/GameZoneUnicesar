@@ -1,118 +1,27 @@
 package com.gamezone.persistence;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
-import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Warranty;
 
 /**
- * File-based repository for warranties. It saves each Warranty with the
- * identifiers of its product and sale in a CSV file, using a type discriminator,
- * and loads the stored lines as raw WarrantyRecord objects, so it depends on no
- * service. The service layer rebuilds the Warranty objects from those records.
+ * Defines the persistence operations available for warranties. Stored warranties
+ * are loaded as raw WarrantyRecord objects and the service layer rebuilds the
+ * Warranty objects from them. Implementations choose how and where the data is stored.
  */
-public class WarrantyRepository {
-
-    private static final String DEFAULT_FILE_PATH = "data/warranties.csv";
-
-    private String filePath;
+public interface WarrantyRepository {
 
     /**
-     * Constructs a WarrantyRepository with the default file path.
-     */
-    public WarrantyRepository() {
-        this(DEFAULT_FILE_PATH);
-    }
-
-    /**
-     * Constructs a WarrantyRepository with a custom file path.
+     * Loads the raw records of all stored warranties.
      *
-     * @param filePath custom path to the CSV storage file
+     * @return the list of raw warranty records; empty if nothing has been stored yet
      */
-    public WarrantyRepository(String filePath) {
-        this.filePath = filePath;
-    }
+    List<WarrantyRecord> loadAll();
 
     /**
-     * Loads the raw records stored in the CSV file. If the file does not exist,
-     * an empty list is returned. Lines with fewer than five fields are skipped.
+     * Saves the given warranties, replacing any previously stored data.
      *
-     * @return the list of raw warranty records read from the file
+     * @param warranties the list of warranties to save
      */
-    public List<WarrantyRecord> loadAll() {
-        List<WarrantyRecord> records = new ArrayList<>();
-        File file = new File(filePath);
-
-        if (!file.exists()) {
-            return records;
-        }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) {
-                    continue;
-                }
-                WarrantyRecord stored = parseLine(line);
-                if (stored != null) {
-                    records.add(stored);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading warranty data: " + e.getMessage());
-        }
-
-        return records;
-    }
-
-    /**
-     * Persists the given list of warranties into the CSV file, creating
-     * parent directories if they do not exist.
-     *
-     * @param warranties list of warranties to persist
-     */
-    public void saveAll(List<Warranty> warranties) {
-        File file = new File(filePath);
-        File parentDir = file.getParentFile();
-        if (parentDir != null && !parentDir.exists()) {
-            parentDir.mkdirs();
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            for (Warranty warranty : warranties) {
-                writer.write(toLine(warranty));
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("Error writing warranty data: " + e.getMessage());
-        }
-    }
-
-    private String toLine(Warranty warranty) {
-        String type = (warranty instanceof ExtendedWarranty) ? "EXTENDED" : "BASIC";
-
-        return String.join(";",
-                type,
-                warranty.getId(),
-                warranty.getProduct().getId(),
-                String.valueOf(warranty.getSale().getId()),
-                warranty.getStartDate().toString());
-    }
-
-    private WarrantyRecord parseLine(String line) {
-        String[] fields = line.split(";", -1);
-        if (fields.length < 5) {
-            return null;
-        }
-
-        return new WarrantyRecord(fields[0], fields[1], fields[2], fields[3], LocalDate.parse(fields[4]));
-    }
+    void saveAll(List<Warranty> warranties);
 }
