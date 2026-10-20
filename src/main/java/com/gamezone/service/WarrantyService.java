@@ -10,6 +10,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
 import com.gamezone.persistence.SaleRepository;
+import com.gamezone.persistence.WarrantyRecord;
 import com.gamezone.persistence.WarrantyRepository;
 
 /**
@@ -45,6 +46,44 @@ public class WarrantyService {
     }
 
     /**
+     * Loads the stored warranties and rebuilds each one from its raw record. The
+     * sale is resolved through the sale repository and the product is taken from
+     * that sale. A record whose sale or product cannot be found, or whose type is
+     * unknown, is skipped.
+     *
+     * @return the list of rebuilt warranties
+     */
+    private List<Warranty> loadWarranties() {
+        List<Warranty> warranties = new ArrayList<>();
+        for (WarrantyRecord stored : warrantyRepository.loadAll()) {
+            Sale sale = (saleRepository != null) ? saleRepository.findById(stored.getSaleId()) : null;
+            Product product = findProductInSale(sale, stored.getProductId());
+            if (sale == null || product == null) {
+                continue;
+            }
+
+            if ("EXTENDED".equalsIgnoreCase(stored.getType())) {
+                warranties.add(new ExtendedWarranty(stored.getId(), product, sale, stored.getStartDate()));
+            } else if ("BASIC".equalsIgnoreCase(stored.getType())) {
+                warranties.add(new BasicWarranty(stored.getId(), product, sale, stored.getStartDate()));
+            }
+        }
+        return warranties;
+    }
+
+    private Product findProductInSale(Sale sale, String productId) {
+        if (sale == null) {
+            return null;
+        }
+        for (Product item : sale.getProducts()) {
+            if (item.getId().equalsIgnoreCase(productId)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Creates and persists an automatic basic warranty for a given product and sale.
      *
      * @param product   the product covered by the warranty
@@ -53,7 +92,7 @@ public class WarrantyService {
      * @return the created and persisted BasicWarranty instance
      */
     public BasicWarranty assignBasicWarranty(Product product, Sale sale, LocalDate startDate) {
-        List<Warranty> warranties = warrantyRepository.loadAll();
+        List<Warranty> warranties = loadWarranties();
 
         String warrantyId = "WAR" + String.format("%04d", warranties.size() + 1);
         BasicWarranty warranty = new BasicWarranty(warrantyId, product, sale, startDate);
@@ -75,7 +114,7 @@ public class WarrantyService {
      * @return the created and persisted ExtendedWarranty instance
      */
     public ExtendedWarranty assignExtendedWarranty(Product product, Sale sale, LocalDate startDate) {
-        List<Warranty> warranties = warrantyRepository.loadAll();
+        List<Warranty> warranties = loadWarranties();
 
         warranties.removeIf(w -> w.getProduct().getId().equalsIgnoreCase(product.getId())
                               && String.valueOf(w.getSale().getId()).equalsIgnoreCase(String.valueOf(sale.getId())));
@@ -101,7 +140,7 @@ public class WarrantyService {
             return null;
         }
 
-        for (Warranty warranty : warrantyRepository.loadAll()) {
+        for (Warranty warranty : loadWarranties()) {
             boolean matchesProduct = warranty.getProduct().getId().equalsIgnoreCase(productId);
             boolean matchesSale = String.valueOf(warranty.getSale().getId()).equalsIgnoreCase(saleId);
             if (matchesProduct && matchesSale) {
@@ -117,7 +156,7 @@ public class WarrantyService {
      * @return a list containing all registered warranties
      */
     public List<Warranty> listAllWarranties() {
-        return warrantyRepository.loadAll();
+        return loadWarranties();
     }
 
     /**
@@ -129,7 +168,7 @@ public class WarrantyService {
         List<Warranty> active = new ArrayList<>();
         LocalDate today = LocalDate.now();
 
-        for (Warranty warranty : warrantyRepository.loadAll()) {
+        for (Warranty warranty : loadWarranties()) {
             if (warranty.isActive(today)) {
                 active.add(warranty);
             }
@@ -148,7 +187,7 @@ public class WarrantyService {
         LocalDate today = LocalDate.now();
         LocalDate limit = today.plusDays(daysAhead);
 
-        for (Warranty warranty : warrantyRepository.loadAll()) {
+        for (Warranty warranty : loadWarranties()) {
             LocalDate endDate = warranty.getEndDate();
             boolean withinWindow = !endDate.isBefore(today) && !endDate.isAfter(limit);
             if (withinWindow) {
@@ -171,7 +210,7 @@ public class WarrantyService {
             return;
         }
 
-        List<Warranty> currentWarranties = warrantyRepository.loadAll();
+        List<Warranty> currentWarranties = loadWarranties();
         boolean hasChanges = false;
 
         for (Sale sale : saleRepository.findAll()) {
@@ -218,7 +257,7 @@ public class WarrantyService {
         double refundableCost = 0.0;
         boolean removedAny = false;
 
-        for (Warranty warranty : warrantyRepository.loadAll()) {
+        for (Warranty warranty : loadWarranties()) {
             boolean matchesProduct = warranty.getProduct().getId().equalsIgnoreCase(productId);
             boolean matchesSale = String.valueOf(warranty.getSale().getId()).equalsIgnoreCase(saleId);
 

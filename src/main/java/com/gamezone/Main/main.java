@@ -40,7 +40,7 @@ public class main {
 
         // 3. Repositories depending on base Services
         SaleRepository saleRepository = new SaleRepository(personService, productService);
-        WarrantyRepository warrantyRepository = new WarrantyRepository(saleRepository, productService);
+        WarrantyRepository warrantyRepository = new WarrantyRepository();
 
         // 4. Warranty Service (Full Dependency Injection)
         WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository);

@@ -10,64 +10,49 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.gamezone.model.BasicWarranty;
 import com.gamezone.model.ExtendedWarranty;
-import com.gamezone.model.Product;
-import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
-import com.gamezone.service.ProductService;
 
 /**
- * File-based repository for Warranty objects (BasicWarranty, ExtendedWarranty).
- * Persists all warranties in a CSV file using a type discriminator, resolving
- * references to Sale and Product during loading through the injected
- * SaleRepository and ProductService. Depending on SaleRepository instead of
- * SaleService avoids a circular dependency, since SaleService depends on
- * WarrantyService.
+ * File-based repository for warranties. It saves each Warranty with the
+ * identifiers of its product and sale in a CSV file, using a type discriminator,
+ * and loads the stored lines as raw WarrantyRecord objects, so it depends on no
+ * service. The service layer rebuilds the Warranty objects from those records.
  */
 public class WarrantyRepository {
 
     private static final String DEFAULT_FILE_PATH = "data/warranties.csv";
 
     private String filePath;
-    private SaleRepository saleRepository;
-    private ProductService productService;
 
     /**
-     * Constructs a WarrantyRepository with default file path.
-     *
-     * @param saleRepository repository used to resolve sales
-     * @param productService service used to resolve products
+     * Constructs a WarrantyRepository with the default file path.
      */
-    public WarrantyRepository(SaleRepository saleRepository, ProductService productService) {
-        this(DEFAULT_FILE_PATH, saleRepository, productService);
+    public WarrantyRepository() {
+        this(DEFAULT_FILE_PATH);
     }
 
     /**
      * Constructs a WarrantyRepository with a custom file path.
      *
-     * @param filePath       custom path to the CSV storage file
-     * @param saleRepository repository used to resolve sales
-     * @param productService service used to resolve products
+     * @param filePath custom path to the CSV storage file
      */
-    public WarrantyRepository(String filePath, SaleRepository saleRepository, ProductService productService) {
+    public WarrantyRepository(String filePath) {
         this.filePath = filePath;
-        this.saleRepository = saleRepository;
-        this.productService = productService;
     }
 
     /**
-     * Loads all warranties from the CSV storage file, reconstructing
-     * relationships using the injected SaleRepository and ProductService.
+     * Loads the raw records stored in the CSV file. If the file does not exist,
+     * an empty list is returned. Lines with fewer than five fields are skipped.
      *
-     * @return list of stored warranties
+     * @return the list of raw warranty records read from the file
      */
-    public List<Warranty> loadAll() {
-        List<Warranty> warranties = new ArrayList<>();
+    public List<WarrantyRecord> loadAll() {
+        List<WarrantyRecord> records = new ArrayList<>();
         File file = new File(filePath);
 
         if (!file.exists()) {
-            return warranties;
+            return records;
         }
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -76,16 +61,16 @@ public class WarrantyRepository {
                 if (line.isBlank()) {
                     continue;
                 }
-                Warranty warranty = parseLine(line);
-                if (warranty != null) {
-                    warranties.add(warranty);
+                WarrantyRecord stored = parseLine(line);
+                if (stored != null) {
+                    records.add(stored);
                 }
             }
         } catch (IOException e) {
             System.out.println("Error reading warranty data: " + e.getMessage());
         }
 
-        return warranties;
+        return records;
     }
 
     /**
@@ -122,31 +107,12 @@ public class WarrantyRepository {
                 warranty.getStartDate().toString());
     }
 
-    private Warranty parseLine(String line) {
+    private WarrantyRecord parseLine(String line) {
         String[] fields = line.split(";", -1);
         if (fields.length < 5) {
             return null;
         }
 
-        String type = fields[0];
-        String id = fields[1];
-        String productId = fields[2];
-        String saleId = fields[3];
-        LocalDate startDate = LocalDate.parse(fields[4]);
-
-        Product product = productService.findProductById(productId);
-        Sale sale = (saleRepository != null) ? saleRepository.findById(saleId) : null;
-
-        if (product == null || sale == null) {
-            return null;
-        }
-
-        if ("EXTENDED".equalsIgnoreCase(type)) {
-            return new ExtendedWarranty(id, product, sale, startDate);
-        } else if ("BASIC".equalsIgnoreCase(type)) {
-            return new BasicWarranty(id, product, sale, startDate);
-        }
-
-        return null;
+        return new WarrantyRecord(fields[0], fields[1], fields[2], fields[3], LocalDate.parse(fields[4]));
     }
 }
