@@ -301,7 +301,7 @@ public class GameZoneUI {
             String model = promptString("Modelo: ");
             String generation = promptString("Generación: ");
 
-            boolean registered = productService.registerConsole(brand, model, generation, id, title, price, stock);
+            boolean registered = productService.registerVideoGame(brand, model, generation, id, title, price, stock);
             if (registered) {
                 System.out.println("¡Consola registrada y guardada exitosamente!");
             } else {

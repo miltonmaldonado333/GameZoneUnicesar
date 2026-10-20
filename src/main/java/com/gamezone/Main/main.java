@@ -50,7 +50,7 @@ public class main {
         WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository);
 
         // 5. Sale Service
-        SaleService saleService = new SaleService(saleRepository, productService, accessoryService, promotionService, warrantyService);
+        SaleService saleService = new SaleService(saleRepository, productService, promotionService, warrantyService);
 
         // 6. Return Repository and Service
         ReturnRepository returnRepository = new FileReturnRepository();
