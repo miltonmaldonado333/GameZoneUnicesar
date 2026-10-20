@@ -178,7 +178,7 @@ public class WarrantyService {
             LocalDate saleDate = LocalDate.parse(sale.getDate());
 
             for (Product item : sale.getProducts()) {
-                if (item instanceof com.gamezone.model.Console) {
+                if (item.hasWarrantyCoverage()) {
                     boolean alreadyHasWarranty = currentWarranties.stream().anyMatch(w ->
                         w.getProduct().getId().equalsIgnoreCase(item.getId()) &&
                         String.valueOf(w.getSale().getId()).equalsIgnoreCase(String.valueOf(sale.getId()))
