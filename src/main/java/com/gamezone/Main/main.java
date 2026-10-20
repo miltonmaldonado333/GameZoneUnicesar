@@ -9,6 +9,7 @@ import com.gamezone.persistence.ProductRepository;
 import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.FilePromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.persistence.FileReturnRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.AccessoryService;
@@ -51,7 +52,7 @@ public class main {
         SaleService saleService = new SaleService(saleRepository, productService, accessoryService, promotionService, warrantyService);
 
         // 6. Return Repository and Service
-        ReturnRepository returnRepository = new ReturnRepository();
+        ReturnRepository returnRepository = new FileReturnRepository();
         ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService, warrantyService);
 
         // 7. Dependency Injection for unified search
