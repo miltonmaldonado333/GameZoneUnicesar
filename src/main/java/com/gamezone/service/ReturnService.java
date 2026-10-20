@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.gamezone.model.Accessory;
-import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
@@ -81,7 +80,7 @@ public class ReturnService {
         // Cancel the warranties of every returned console and collect the refundable cost
         double warrantyRefund = 0.0;
         for (Product product : returnedProducts) {
-            if (product instanceof Console) {
+            if (product.hasWarrantyCoverage()) {
                 warrantyRefund += warrantyService.cancelWarranties(product.getId(), saleId);
             }
         }
