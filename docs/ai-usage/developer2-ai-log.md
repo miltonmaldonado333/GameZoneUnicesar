@@ -94,3 +94,35 @@ Each entry: problem, how the AI helped, and my decision.
 - Respuesta: a verdict per pattern, ten violations (V-01 to V-10) and six out-of-scope observations (F-01 to F-06). In the consolidated audit they became V-15 to V-22 plus extensions of V-04 and V-05, keeping the IDs already used by the other two reports.
 - Decision: audited origin/develop at 336790c, not the branch, and checked every cited line with git grep before each commit. Did not report the instanceof in toLine/parseLine, because serialization must stay in persistence. The branch also carried code commits of the Technical Leader and had emptied the AI logs, so I restored the logs from develop and he reverted his two commits without force push.
 - Commit relacionado: 8facee7, 7c6dc0a, 4cfd9b4, 8214835, 0a68d7c, bfe14dd, eeff611, 28cfe7a, 6438fe6, 27849ef, c6c147a, dcb8c43, 2034b67, f80c1b8, add328a, 9e8753a, 0f254e4
+
+### Phase 2 - Correction (feature/grasp-refactor)
+
+#### Entry 1 - Corrections that did not need other integrantes
+- Fecha: 2026-10-18 to 2026-10-19
+- Herramienta: Claude (Anthropic)
+- Fase y rama: Requirement 7, Phase 2 - feature/grasp-refactor
+- Objetivo: correct my violations of the consolidated audit that did not depend on other integrantes.
+- Consulta: shared my classes, the consolidated rows and the branch log, and asked for each correction.
+- Respuesta: remove the unused ProductService from WarrantyService (V-22); PromotionValidator for the category check (V-17); Product.reduceStock and addStock in AccessoryService (V-15); getCategory() instead of instanceof (V-16); ReturnValidator for the return checks (V-18); SaleService.calculateMonthlyTotal (V-19); one shared sale lookup replacing three copies (V-20).
+- Decision: kept the exception types, messages and results of each method; counted only refactor commits as corrections; edited SaleService and SaleRepository with the Technical Leader's authorization; ran mvn clean compile before each commit.
+- Commit relacionado: 0471c4d, dea802a, 75571df, f822d12, 7745bb0, d56cde0, fcf0a50, 28b14ce, 013f9da
+
+#### Entry 2 - V-05, warranty part
+- Fecha: 2026-10-19
+- Herramienta: Claude (Anthropic)
+- Fase y rama: Requirement 7, Phase 2 - feature/grasp-refactor
+- Objetivo: remove the instanceof Console tests from ReturnService and WarrantyService.
+- Consulta: shared Developer 1's commit fa51543 with Product.hasWarrantyCoverage().
+- Respuesta: replace both tests with the polymorphic query, which is false by default and true only in Console.
+- Decision: behaviour unchanged because Console is the only class that answers true. The instanceof Accessory that chooses the stock service was not touched, because the common stock contract does not exist yet, so V-05 stays partially corrected.
+- Commit relacionado: e3a3db2, 50eff64
+
+#### Entry 3 - V-04 and V-21
+- Fecha: 2026-10-19 to 2026-10-20
+- Herramienta: Claude (Anthropic)
+- Fase y rama: Requirement 7, Phase 2 - feature/grasp-refactor
+- Objetivo: stop ReturnRepository and WarrantyRepository from depending on services, and extract the repository interfaces.
+- Consulta: shared the repositories, the services and Main, and asked for a mechanism that rebuilds objects in the service layer.
+- Respuesta: raw ReturnRecord and WarrantyRecord loaded by the repositories and rebuilt by the services (V-04); an interface per repository with the implementation renamed to File...Repository, including PromotionService because the consolidated audit lists four services (V-21).
+- Decision: the warranty product is taken from its sale, so V-22 stays valid; records without a sale are still skipped; each commit changes one line of Main. Every commit compiled, but the menu was not run, so the equivalence of behaviour was argued by reading the code.
+- Commit relacionado: a0d84b8, 4577aa1, 54657a0, 590d72c, 677abad, 93af52f, b435f9c
