@@ -130,3 +130,103 @@
 - **Status**: Correct
 - **Evidence**: Lines 18, 27 (`private final ProductRepository productRepository;`)
 - **Justification**: Depends on the abstraction `ProductRepository` (interface) rather than a concrete low-level persistence implementation, permitting flexible injection of repository strategy instances.
+
+### Class: `com.gamezone.model.Accessory`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 8-39 (entire class definition)
+- **Justification**: The `Accessory` class acts purely as an abstract domain entity encapsulating compatibility attributes (`compatibleConsoleIds`) along with inherited product attributes. It contains no file persistence or presentation logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 36-38 (`getCategory()`)
+- **Justification**: Overrides `getCategory()` from `Product` to define a unified accessory category while remaining abstract, allowing concrete subclasses (`Controller`, `Cable`, `Memory`) to extend specific behavior without modifying `Accessory`.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 8-39
+- **Justification**: `Accessory` cleanly substitutes `Product` across system operations without breaking base class invariants or behavior expectations.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `Accessory` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model entity with no external module dependencies.
+
+### Class: `com.gamezone.model.Controller`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 9-52 (entire class definition)
+- **Justification**: The `Controller` class acts strictly as a concrete domain entity encapsulating controller-specific properties (`connectionType`) alongside inherited accessory and product attributes. It contains no persistence, file I/O, or user interface logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 43-51 (`getCategory()` and `getFullDescription()`)
+- **Justification**: Fulfills the abstract contracts of `Accessory` and `Product` to extend domain behavior without modifying superclass code.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 9-52
+- **Justification**: `Controller` can substitute `Accessory` or `Product` cleanly in any system operation without breaking invariants or expected behaviors.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `Controller` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model entity with no external module dependencies.
+
+### Class: `com.gamezone.model.Cable`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 9-61 (entire class definition)
+- **Justification**: The `Cable` class strictly acts as a concrete domain entity encapsulating cable-specific properties (`length`, `connectorType`) along with inherited accessory and product attributes. It contains no persistence, file I/O, or presentation logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 52-60 (`getFullDescription()` and `getCategory()`)
+- **Justification**: Extends domain behavior by overriding abstract/base methods from `Accessory` and `Product` without modifying superclass implementation details.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 9-61
+- **Justification**: `Cable` can substitute `Accessory` or `Product` seamlessly in any polymorphic operation without breaking system expectations or contract invariants.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `Cable` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model entity with no external module dependencies.
+
+### Class: `com.gamezone.model.Memory`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 9-47 (entire class definition)
+- **Justification**: The `Memory` class strictly acts as a concrete domain entity encapsulating storage-specific properties (`capacityGB`, `storageType`) along with inherited accessory and product state. It contains no persistence, file I/O, or presentation logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 37-46 (`getCategory()` and `getFullDescription()`)
+- **Justification**: Fulfills abstract and base methods from `Accessory` and `Product` to extend domain functionality without altering superclass code.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 9-47
+- **Justification**: `Memory` cleanly substitutes `Accessory` or `Product` instances across all system operations without violating contracts or breaking expectations.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `Memory` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model entity with no external module dependencies.
