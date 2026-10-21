@@ -230,3 +230,108 @@
 #### 5. Dependency Inversion Principle (DIP)
 - **Status**: Not Applicable
 - **Justification**: Pure domain model entity with no external module dependencies.
+
+### Class: `com.gamezone.model.Promotion`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 9-112 (entire class definition)
+- **Justification**: The `Promotion` class strictly acts as an abstract domain model encapsulating promotion metadata (`id`, `name`, `startDate`, `endDate`) and date validation logic (`isActive`). It contains no persistence, file I/O, or user interface presentation code.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 65 and 111 (`calculateDiscount(Sale sale)` and `getDetails()`)
+- **Justification**: Defines abstract contracts for calculating discounts and retrieving promotion details, allowing concrete promotion types (`PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`) to extend behavior without modifying `Promotion`.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 33-49 (`isActive`)
+- **Justification**: Provides non-breaking, consistent date range validation that sub-types rely on, ensuring concrete promotions substitute `Promotion` predictably across system calculations.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `Promotion` is an abstract base class and does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model abstraction with no external module dependencies.
+
+### Class: `com.gamezone.model.PercentageDiscount`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 8-36 (entire class definition)
+- **Justification**: The `PercentageDiscount` class strictly acts as a concrete domain model encapsulating flat percentage discount state (`percentage`) and discount calculation logic. It contains no persistence, file I/O, or presentation code.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 26-34 (`calculateDiscount` and `getDetails`)
+- **Justification**: Implements the abstract contracts defined in `Promotion` to extend discount strategy behavior without modifying the superclass.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 8-36
+- **Justification**: `PercentageDiscount` substitutes `Promotion` seamlessly across system calculations, returning predicted discount amounts based on the sale total without altering expected behavior.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `PercentageDiscount` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model entity with no external module dependencies.
+
+### Class: `com.gamezone.model.CategoryDiscount`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Violation
+- **ID**: V-DEV1-02
+- **Module**: Promotion / Requisition 2
+- **Evidence**: Lines 48-50 (`System.out.println("DEBUG - ID Producto: " ... )`)
+- **Explanation**: The class embeds console output debug code (`System.out.println`) inside domain business calculation logic. Presentation/console I/O concerns should not leak into domain model calculations.
+- **Consequence**: Pollutes system standard output during routine business operations and violates separation of UI/logging concerns from domain logic.
+- **Proposed Solution**: Remove `System.out.println` debug lines or replace with a proper logging abstraction.
+- **Other Member Code Involved**: No
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 40-61 (`calculateDiscount`)
+- **Justification**: Calculates category-specific discounts polymorphically by invoking `product.getCategory()` rather than using type checking (`instanceof`) or conditional branching per concrete product class.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 5-66
+- **Justification**: Substitutes `Promotion` without breaking expected calculation outcomes or throwing unexpected unchecked exceptions during standard evaluations.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `CategoryDiscount` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model entity with no external module dependencies.
+
+### Class: `com.gamezone.model.BulkPurchaseDiscount`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 9-47 (entire class definition)
+- **Justification**: The `BulkPurchaseDiscount` class strictly acts as a concrete domain entity encapsulating bulk purchase conditions (`minQuantity`, `percentage`) and calculating discounts based on product volume. It contains no file persistence or UI presentation logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 37-46 (`calculateDiscount` and `getDetails`)
+- **Justification**: Implements the abstract methods of `Promotion` to extend discount rule strategies without modifying superclass implementation details.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 9-47
+- **Justification**: Substitutes `Promotion` seamlessly across system calculations, returning expected discount values when minimum quantity thresholds are met or zero when not.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `BulkPurchaseDiscount` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model entity with no external module dependencies.
