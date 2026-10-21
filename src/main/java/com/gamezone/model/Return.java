@@ -60,6 +60,9 @@ public class Return {
      * proportion to the discount of the original sale, plus the refundable
      * cost of the cancelled warranties.
      *
+     * GRASP Information Expert: Delegates sale subtotal calculation to Sale
+     * instead of manually iterating over sale.getProducts() (V-12).
+     *
      * @return the calculated refund amount
      */
     public double calculateRefundAmount() {
@@ -71,11 +74,8 @@ public class Return {
         }
 
         double itemsRefund = rawSubtotal;
-        if (originalSale != null && originalSale.getProducts() != null && !originalSale.getProducts().isEmpty()) {
-            double saleSubtotal = 0.0;
-            for (Product p : originalSale.getProducts()) {
-                saleSubtotal += p.getPrice();
-            }
+        if (originalSale != null) {
+            double saleSubtotal = originalSale.getSubtotal();
             double discountAmount = originalSale.getDiscountAmount();
 
             if (saleSubtotal > 0 && discountAmount > 0) {
@@ -105,15 +105,8 @@ public class Return {
         receipt.append("Motivo: ").append(this.reason).append("\n");
         receipt.append("=== Productos Devueltos ===\n");
 
-        double saleSubtotal = 0.0;
-        double discountAmount = 0.0;
-        if (originalSale != null && originalSale.getProducts() != null) {
-            for (Product p : originalSale.getProducts()) {
-                saleSubtotal += p.getPrice();
-            }
-            discountAmount = originalSale.getDiscountAmount();
-        }
-
+        double saleSubtotal = (originalSale != null) ? originalSale.getSubtotal() : 0.0;
+        double discountAmount = (originalSale != null) ? originalSale.getDiscountAmount() : 0.0;
         double discountRate = (saleSubtotal > 0) ? (discountAmount / saleSubtotal) : 0.0;
 
         if (this.returnedProducts != null) {
@@ -142,65 +135,30 @@ public class Return {
         return receipt.toString();
     }
 
-    /**
-     * Gets the return identifier.
-     *
-     * @return the return ID
-     */
     public String getReturnId() {
         return returnId;
     }
 
-    /**
-     * Gets the date the return was registered.
-     *
-     * @return the return date
-     */
     public LocalDate getDate() {
         return date;
     }
 
-    /**
-     * Gets the sale the returned products belong to.
-     *
-     * @return the original sale
-     */
     public Sale getOriginalSale() {
         return originalSale;
     }
 
-    /**
-     * Gets the products being returned.
-     *
-     * @return the list of returned products
-     */
     public List<Product> getReturnedProducts() {
         return returnedProducts;
     }
 
-    /**
-     * Gets the reason for the return.
-     *
-     * @return the reason
-     */
     public String getReason() {
         return reason;
     }
 
-    /**
-     * Gets the amount refunded for warranties cancelled by this return.
-     *
-     * @return the warranty refund amount
-     */
     public double getWarrantyRefundAmount() {
         return warrantyRefundAmount;
     }
 
-    /**
-     * Gets the total refunded amount (items plus warranties).
-     *
-     * @return the total refund amount
-     */
     public double getRefundAmount() {
         return refundAmount;
     }

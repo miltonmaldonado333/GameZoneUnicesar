@@ -5,11 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.gamezone.model.Accessory;
-import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
+import com.gamezone.persistence.ReturnRecord;
 import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.validation.ReturnValidator;
 
 /**
  * Handles the business logic for managing product returns, including
@@ -63,61 +64,24 @@ public class ReturnService {
      *                                   available to return
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
-        Sale sale = findSaleById(saleId);
-        if (sale == null) {
-            throw new IllegalArgumentException("The specified sale does not exist: " + saleId);
-        }
-
-        if (!sale.canBeReturned()) {
-            throw new IllegalArgumentException("The sale has exceeded the 30-day return policy window.");
-        }
+        Sale sale = saleService.findSaleById(saleId);
+        ReturnValidator.validateReturnableSale(sale, saleId);
 
         List<Return> previousReturns = viewReturnsBySale(saleId);
 
         List<Product> returnedProducts = new ArrayList<>();
         for (String productId : productIds) {
             Product product = findProductInSale(sale, productId);
-            if (product == null) {
-                throw new IllegalArgumentException("Product " + productId + " does not belong to sale " + saleId);
-            }
-
-            long originalQuantity = 0;
-            for (Product p : sale.getProducts()) {
-                if (p.getId().equalsIgnoreCase(productId)) {
-                    originalQuantity++;
-                }
-            }
-
-            long alreadyReturnedQuantity = 0;
-            for (Return prevReturn : previousReturns) {
-                for (Product p : prevReturn.getReturnedProducts()) {
-                    if (p.getId().equalsIgnoreCase(productId)) {
-                        alreadyReturnedQuantity++;
-                    }
-                }
-            }
-
-            long requestedInCurrentBatch = 0;
-            for (String id : productIds) {
-                if (id.equalsIgnoreCase(productId)) {
-                    requestedInCurrentBatch++;
-                }
-            }
-
-            if (alreadyReturnedQuantity + requestedInCurrentBatch > originalQuantity) {
-                throw new IllegalArgumentException("Product " + productId +
-                    " has no units available for return in sale " + saleId +
-                    " (Purchased: " + originalQuantity + ", Previously returned: " + alreadyReturnedQuantity + ").");
-            }
-
+            ReturnValidator.validateProductBelongsToSale(product, productId, saleId);
+            ReturnValidator.validateReturnableQuantity(sale, previousReturns, productIds, productId, saleId);
             returnedProducts.add(product);
         }
 
-        String returnId = "RET" + String.format("%04d", returnRepository.loadAll().size() + 1);
+        String returnId = "RET" + String.format("%04d", loadReturns().size() + 1);
         // Cancel the warranties of every returned console and collect the refundable cost
         double warrantyRefund = 0.0;
         for (Product product : returnedProducts) {
-            if (product instanceof Console) {
+            if (product.hasWarrantyCoverage()) {
                 warrantyRefund += warrantyService.cancelWarranties(product.getId(), saleId);
             }
         }
@@ -133,20 +97,43 @@ public class ReturnService {
             }
         }
 
-        List<Return> returns = returnRepository.loadAll();
+        List<Return> returns = loadReturns();
         returns.add(returnRecord);
         returnRepository.saveAll(returns);
 
         return returnRecord;
     }
 
-    private Sale findSaleById(String saleId) {
-        for (Sale sale : saleService.getAllSales()) {
-            if (String.valueOf(sale.getId()).equals(saleId)) {
-                return sale;
+    /**
+     * Loads the stored returns and rebuilds each one from its raw record,
+     * resolving the sale, the products and the accessories through the services.
+     * A record whose sale cannot be found is skipped.
+     *
+     * @return the list of rebuilt returns
+     */
+    private List<Return> loadReturns() {
+        List<Return> returns = new ArrayList<>();
+        for (ReturnRecord stored : returnRepository.loadAll()) {
+            Sale sale = saleService.findSaleById(stored.getSaleId());
+            if (sale == null) {
+                continue;
             }
+
+            List<Product> products = new ArrayList<>();
+            for (String productId : stored.getProductIds()) {
+                Product product = productService.findProductById(productId);
+                if (product == null) {
+                    product = accessoryService.findById(productId);
+                }
+                if (product != null) {
+                    products.add(product);
+                }
+            }
+
+            returns.add(new Return(stored.getReturnId(), stored.getDate(), sale, products,
+                    stored.getReason(), stored.getWarrantyRefundAmount()));
         }
-        return null;
+        return returns;
     }
 
     /**
@@ -155,7 +142,7 @@ public class ReturnService {
      * @return the full list of registered returns
      */
     public List<Return> viewAllReturns() {
-        return returnRepository.loadAll();
+        return loadReturns();
     }
 
     /**
@@ -166,7 +153,7 @@ public class ReturnService {
      */
     public List<Return> viewReturnsByCustomer(String customerId) {
         List<Return> matching = new ArrayList<>();
-        for (Return returnRecord : returnRepository.loadAll()) {
+        for (Return returnRecord : loadReturns()) {
             if (returnRecord.getOriginalSale().getClient().getIdentification().equalsIgnoreCase(customerId)) {
                 matching.add(returnRecord);
             }
@@ -182,7 +169,7 @@ public class ReturnService {
      */
     public List<Return> viewReturnsBySale(String saleId) {
         List<Return> matching = new ArrayList<>();
-        for (Return returnRecord : returnRepository.loadAll()) {
+        for (Return returnRecord : loadReturns()) {
             if (String.valueOf(returnRecord.getOriginalSale().getId()).equals(saleId)) {
                 matching.add(returnRecord);
             }
@@ -199,14 +186,7 @@ public class ReturnService {
      * @return the total sales amount for that period
      */
     public double calculateMonthlySales(int month, int year) {
-        double totalSales = 0.0;
-        for (Sale sale : saleService.getAllSales()) {
-            LocalDate saleDate = LocalDate.parse(sale.getDate());
-            if (saleDate.getMonthValue() == month && saleDate.getYear() == year) {
-                totalSales += sale.getTotal();
-            }
-        }
-        return totalSales;
+        return saleService.calculateMonthlyTotal(month, year);
     }
 
     /**
@@ -219,7 +199,7 @@ public class ReturnService {
      */
     public double calculateMonthlyReturns(int month, int year) {
         double totalReturns = 0.0;
-        for (Return returnRecord : returnRepository.loadAll()) {
+        for (Return returnRecord : loadReturns()) {
             LocalDate returnDate = returnRecord.getDate();
             if (returnDate.getMonthValue() == month && returnDate.getYear() == year) {
                 totalReturns += returnRecord.getRefundAmount();

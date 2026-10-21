@@ -1,14 +1,18 @@
 package com.gamezone.Main;
 
 import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.FileAccessoryRepository;
 import com.gamezone.persistence.FilePersonRepository;
 import com.gamezone.persistence.FileProductRepository;
 import com.gamezone.persistence.PersonRepository;
 import com.gamezone.persistence.ProductRepository;
 import com.gamezone.persistence.PromotionRepository;
+import com.gamezone.persistence.FilePromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.persistence.FileReturnRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
+import com.gamezone.persistence.FileWarrantyRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
@@ -25,37 +29,59 @@ import com.gamezone.ui.GameZoneUI;
  */
 public class main {
 
+    /**
+     * Main method that executes application initialization and launches the UI.
+     *
+     * @param args command-line arguments passed during execution
+     */
     public static void main(String[] args) {
-        // 1. Base Repositories
+        // Step 1: Initialize base persistence repositories
         ProductRepository productRepository = new FileProductRepository();
         PersonRepository personRepository = new FilePersonRepository("persons.txt");
-        AccessoryRepository accessoryRepository = new AccessoryRepository();
-        PromotionRepository promotionRepository = new PromotionRepository();
+        AccessoryRepository accessoryRepository = new FileAccessoryRepository();
+        PromotionRepository promotionRepository = new FilePromotionRepository("data/promotions.csv");
 
-        // 2. Base Services
+        // Step 2: Initialize base domain services
         ProductService productService = new ProductService(productRepository);
         PersonService personService = new PersonService(personRepository);
         AccessoryService accessoryService = new AccessoryService(accessoryRepository, productRepository);
         PromotionService promotionService = new PromotionService(promotionRepository);
 
-        // 3. Repositories depending on base Services
-        SaleRepository saleRepository = new SaleRepository(personService, productService);
-        WarrantyRepository warrantyRepository = new WarrantyRepository(saleRepository, productService);
+        // Step 3: Initialize repositories for complex domain objects
+        SaleRepository saleRepository = new SaleRepository();
+        WarrantyRepository warrantyRepository = new FileWarrantyRepository();
 
-        // 4. Warranty Service (Full Dependency Injection)
-        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository, productService);
+        // Step 4: Initialize WarrantyService without immediate SaleService dependency
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository);
 
-        // 5. Sale Service
-        SaleService saleService = new SaleService(saleRepository, productService, accessoryService, promotionService, warrantyService);
+        // Step 5: Initialize SaleService with full dependency injection
+        SaleService saleService = new SaleService(
+                saleRepository,
+                productService,     // Implements IStockService contract
+                promotionService,
+                warrantyService,
+                personService,      // Required for sale reconstruction
+                productService      // Required for sale reconstruction
+        );
 
-        // 6. Return Repository and Service
-        ReturnRepository returnRepository = new ReturnRepository(saleService, productService, accessoryService);
-        ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService, warrantyService);
+        // Step 6: Resolve circular dependency via setter injection and sync historical console warranties
+        warrantyService.setSaleService(saleService);
+        warrantyService.syncPastConsoleWarranties();
 
-        // 7. Dependency Injection for unified search
+        // Step 7: Initialize ReturnRepository and ReturnService
+        ReturnRepository returnRepository = new FileReturnRepository();
+        ReturnService returnService = new ReturnService(
+                returnRepository,
+                saleService,
+                productService,
+                accessoryService,
+                warrantyService
+        );
+
+        // Step 8: Inject AccessoryService into ProductService for unified search capability
         productService.setAccessoryService(accessoryService);
 
-        // 8. Launch User Interface
+        // Step 9: Wire all services into the GameZone UI controller and launch application
         GameZoneUI ui = new GameZoneUI(
                 saleService,
                 productService,

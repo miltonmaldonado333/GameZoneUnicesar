@@ -129,11 +129,7 @@ public class AccessoryService {
     public List<Accessory> listAccessoriesByType(String type) {
         List<Accessory> result = new ArrayList<>();
         for (Accessory accessory : accessories) {
-            if (type.equalsIgnoreCase("CONTROLLER") && accessory instanceof Controller) {
-                result.add(accessory);
-            } else if (type.equalsIgnoreCase("CABLE") && accessory instanceof Cable) {
-                result.add(accessory);
-            } else if (type.equalsIgnoreCase("MEMORY") && accessory instanceof Memory) {
+            if (type.equalsIgnoreCase(accessory.getCategory())) {
                 result.add(accessory);
             }
         }
@@ -198,7 +194,7 @@ public class AccessoryService {
         if (accessory.getStock() < quantity) {
             return false;
         }
-        accessory.setStock(accessory.getStock() - quantity);
+        accessory.reduceStock(quantity);
         accessoryRepository.saveAll(accessories);
         return true;
     }
@@ -215,7 +211,7 @@ public class AccessoryService {
         if (accessory == null) {
             throw new IllegalArgumentException("Accessory not found with ID: " + accessoryId);
         }
-        accessory.setStock(accessory.getStock() + quantity);
+        accessory.addStock(quantity);
         accessoryRepository.saveAll(accessories);
     }
 }
