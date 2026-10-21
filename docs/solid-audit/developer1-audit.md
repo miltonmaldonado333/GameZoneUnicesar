@@ -335,3 +335,56 @@
 #### 5. Dependency Inversion Principle (DIP)
 - **Status**: Not Applicable
 - **Justification**: Pure domain model entity with no external module dependencies.
+
+### Class: `com.gamezone.model.Return`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Violation
+- **ID**: V-DEV1-03
+- **Module**: Return / Requisition 3
+- **Evidence**: Lines 95-135 (`public String generateReturnReceipt()`)
+- **Explanation**: The `Return` domain class combines core domain responsibilities (calculating refund amounts, storing return metadata) with UI presentation concerns (formatting a text-based physical receipt in Spanish for console output). Changes to the receipt presentation layout or text force modifications onto the core domain entity.
+- **Consequence**: High coupling between the domain model and presentation layout formatting.
+- **Proposed Solution**: Extract receipt string formatting into a dedicated presentation helper or printer service (e.g., `ReturnReceiptPrinter`).
+- **Other Member Code Involved**: No
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 69-93 (`calculateRefundAmount()`)
+- **Justification**: Calculates refund totals polymorphically by delegating subtotal and price retrieval to `Sale` and `Product` instances without using concrete class checking (`instanceof`) or type branching.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Not Applicable
+- **Justification**: `Return` is a concrete domain class and does not participate in an inheritance hierarchy.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `Return` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain entity with no external infrastructural or service module dependencies.
+
+### Component / Method: `Sale.canBeReturned` (in `com.gamezone.model.Sale`)
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 1-16 (`canBeReturned(LocalDate evaluationDate)` and `canBeReturned()`)
+- **Justification**: The method strictly evaluates domain-level business eligibility rules for product returns based on transaction dates (30-day window). It contains no UI messaging, persistence logic, or file I/O operations.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 1-8
+- **Justification**: Accepts an explicit `LocalDate evaluationDate` parameter, allowing date-based evaluation rules to be tested or extended with custom dates without modifying method implementations.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Not Applicable
+- **Justification**: `Sale` is a concrete domain class and `canBeReturned` does not override a base class method.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: The method is part of a domain entity and is not declared as part of an interface contract.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain rule evaluation method relying only on standard JDK date abstractions (`LocalDate`).
