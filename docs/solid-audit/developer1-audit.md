@@ -388,3 +388,83 @@
 #### 5. Dependency Inversion Principle (DIP)
 - **Status**: Not Applicable
 - **Justification**: Pure domain rule evaluation method relying only on standard JDK date abstractions (`LocalDate`).
+
+### Class: `com.gamezone.model.Warranty`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Violation
+- **ID**: V-DEV1-04
+- **Module**: Warranty / Requisition 4
+- **Evidence**: Lines 57-70 (`public String generateWarrantyCertificate()`)
+- **Explanation**: The abstract domain class `Warranty` combines domain model responsibilities (managing warranty metadata, calculating coverage periods) with presentation concerns (formatting a text-based certificate string for display). Changes to certificate formatting or presentation rules force changes on the core domain abstraction.
+- **Consequence**: High coupling between domain entities and UI/presentation output formatting.
+- **Proposed Solution**: Extract certificate formatting logic into a dedicated printer component (e.g., `WarrantyCertificatePrinter`).
+- **Other Member Code Involved**: No
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 29, 36, and 43 (`getDurationInMonths()`, `getWarrantyType()`, `getAdditionalCost()`)
+- **Justification**: Declares abstract methods for variable warranty behaviors, allowing new warranty types (e.g., `BasicWarranty`, `ExtendedWarranty`) to extend functionality without modifying the base `Warranty` class.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 50-52 (`isActive`)
+- **Justification**: Defines a consistent, predictable date evaluation contract that works uniformly across all concrete subclasses.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `Warranty` is an abstract base class and does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model abstraction with no external infrastructural module dependencies.
+
+### Class: `com.gamezone.model.BasicWarranty`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 5-30 (entire class definition)
+- **Justification**: The `BasicWarranty` class strictly acts as a concrete domain model encapsulating basic warranty rules (fixed 6-month duration, zero additional cost). It contains no persistence or presentation logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 15-28 (`getDurationInMonths`, `getWarrantyType`, `getAdditionalCost`)
+- **Justification**: Implements abstract base contracts from `Warranty` to extend warranty behavior without modifying superclass code.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 5-30
+- **Justification**: Substitutes `Warranty` predictably in all system calculations and workflows without altering base contract assumptions.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `BasicWarranty` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model entity with no external module dependencies.
+
+### Class: `com.gamezone.model.ExtendedWarranty`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 8-32 (entire class definition)
+- **Justification**: The `ExtendedWarranty` class strictly acts as a concrete domain model encapsulating extended warranty specifications (fixed 12-month duration, 10% additional product cost calculation). It contains no persistence, file I/O, or user interface logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 16-29 (`getDurationInMonths`, `getWarrantyType`, `getAdditionalCost`)
+- **Justification**: Fulfills the abstract contracts of `Warranty` to extend domain behavior without modifying superclass implementation details.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Lines 8-32
+- **Justification**: Substitutes `Warranty` cleanly across all system workflows, dynamically computing additional coverage costs based on the associated `Product` without altering expected base class contract behavior.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `ExtendedWarranty` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure domain model entity with no external module dependencies.
