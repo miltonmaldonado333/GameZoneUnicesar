@@ -85,11 +85,11 @@ public class Sale {
      *
      * @return a formatted receipt string for user display
      */
-    public String generateReceipt() {
+   public String generateReceipt() {
         StringBuilder sb = new StringBuilder();
         sb.append("=========================================\n");
-        sb.append("            GAMEZONE UNICESAR             \n");
-        sb.append("            RECIBO DE VENTA               \n");
+        sb.append("            GAMEZONE UNICESAR            \n");
+        sb.append("            RECIBO DE VENTA              \n");
         sb.append("=========================================\n");
         sb.append("ID Venta: ").append(id).append("\n");
         sb.append("Fecha   : ").append(date).append("\n");
@@ -114,13 +114,19 @@ public class Sale {
         sb.append("-----------------------------------------\n");
         sb.append(String.format("Subtotal                : $%.2f\n", subtotal));
 
-        if (appliedPromotionName != null && !appliedPromotionName.isEmpty() && discountAmount > 0) {
-            sb.append(String.format("Descuento (%s) : -$%.2f\n", appliedPromotionName, discountAmount));
+        // Renderizado flexible de descuento: muestra el valor real siempre que sea mayor a 0
+        if (discountAmount > 0) {
+            if (appliedPromotionName != null && !appliedPromotionName.trim().isEmpty()) {
+                sb.append(String.format("Descuento (%s) : -$%.2f\n", appliedPromotionName, discountAmount));
+            } else {
+                sb.append(String.format("Descuento               : -$%.2f\n", discountAmount));
+            }
         } else {
             sb.append("Descuento               : -$0.00\n");
         }
 
-        sb.append(String.format("Garantías Extendidas    : +$%.2f\n", extendedWarrantyCost));
+        // Renderizado de Garantías Extendidas utilizando el getter
+        sb.append(String.format("Garantías Extendidas    : +$%.2f\n", getExtendedWarrantyCost()));
         sb.append("-----------------------------------------\n");
         sb.append(String.format("TOTAL FINAL             : $%.2f\n", total));
         sb.append("=========================================\n");

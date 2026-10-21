@@ -15,14 +15,21 @@ import java.util.List;
 public class ProductService implements IStockService {
 
     private final ProductRepository productRepository;
+    private AccessoryService accessoryService;
 
     /**
      * Constructs a ProductService instance with the required repository.
      *
-     * @param productRepository the persistence repository for managing product data
+     * @param productRepository the persistence repository for managing product
+     * data
      */
     public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
+
+    }
+
+    public void setAccessoryService(AccessoryService accessoryService) {
+        this.accessoryService = accessoryService;
     }
 
     @Override
@@ -34,67 +41,67 @@ public class ProductService implements IStockService {
         return product.getStock() >= requestedQuantity;
     }
 
-    
     @Override
     public void reduceStock(String productId, int quantity) {
         List<Product> products = productRepository.loadProducts();
-        
+
         //Here it's compare ids for found a product id
         Product targetProduct = null;
         for (Product p : products) {
-            if(p.getId().equalsIgnoreCase(productId)){
+            if (p.getId().equalsIgnoreCase(productId)) {
                 targetProduct = p;
                 break;
             }
         }
-        
-        if(targetProduct == null){
+
+        if (targetProduct == null) {
             throw new BusinessRuleException("Producto no encontrado con ID: " + productId);
         }
-        if(targetProduct.getStock() < quantity ){
+        if (targetProduct.getStock() < quantity) {
             throw new BusinessRuleException("Stock no suficiente para el producto con el ID: " + productId);
         }
-        
+
         targetProduct.setStock(targetProduct.getStock() - quantity);
-        
+
         productRepository.saveProducts(products);
     }
 
     @Override
     public void restoreStock(String productId, int quantity) {
         List<Product> products = productRepository.loadProducts();
-        
+
         Product targetProduct = null;
         for (Product p : products) {
-            if(p.getId().equalsIgnoreCase(productId)){
+            if (p.getId().equalsIgnoreCase(productId)) {
                 targetProduct = p;
+                break;
             }
         }
-        
-        if(targetProduct == null){
+
+        if (targetProduct == null) {
             throw new BusinessRuleException("Producto no encontado con ID: " + productId);
         }
-        
-        targetProduct.setStock(targetProduct.getStock() - quantity);
-        
+
+        targetProduct.setStock(targetProduct.getStock() + quantity);
+
         productRepository.saveProducts(products);
     }
-    
-    public List<String> getAvailableCategories(){
-     List<Product> products = productRepository.loadProducts();
-     
-     List<String> categories = new ArrayList<>();
-        if(products != null){
+
+    public List<String> getAvailableCategories() {
+        List<Product> products = productRepository.loadProducts();
+
+        List<String> categories = new ArrayList<>();
+        if (products != null) {
             for (Product p : products) {
-              String category = p.getCategory();
-              if(!categories.contains(category.toUpperCase())){
-                  categories.add(category.toUpperCase());
-              }
+                String category = p.getCategory();
+                if (category != null && !categories.contains(category.toUpperCase())) {
+                    categories.add(category.toUpperCase());
+                }
             }
         }
         return categories;
     }
-    
+
     // Registers a new VideoGame product in the inventory after checking for ID uniqueness.
     // @param platform target gaming console or system platform
     // @param genre game genre or category
@@ -105,7 +112,7 @@ public class ProductService implements IStockService {
     // @param stock initial quantity available in inventory
     // @return true if successfully registered; false if a product with the same ID already exists
     public boolean registerVideoGame(String platform, String genre, String ageRating,
-                                    String id, String title, double price, int stock) {
+            String id, String title, double price, int stock) {
         List<Product> products = productRepository.loadProducts();
         if (products == null) {
             products = new ArrayList<>();
@@ -145,4 +152,5 @@ public class ProductService implements IStockService {
     public Product findProductById(String id) {
         return productRepository.findById(id);
     }
+
 }

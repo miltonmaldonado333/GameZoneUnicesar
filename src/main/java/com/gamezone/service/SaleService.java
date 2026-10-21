@@ -27,20 +27,30 @@ public class SaleService {
     private final PromotionService promotionService;
     // Service for managing basic and extended warranties.
     private final WarrantyService warrantyService;
+    // Service for looking up clients and sellers.
+    private final PersonService personService;
+    // Service for looking up product catalog entities.
+    private final ProductService productService;
 
     // Constructs a SaleService instance with all required dependencies.
     // @param saleRepository the repository for managing sales records
     // @param stockService the service managing stock and inventory operations
     // @param promotionService the service evaluating promotions and discounts
     // @param warrantyService the service managing product warranties
+    // @param personService the service looking up clients and sellers
+    // @param productService the service looking up products
     public SaleService(SaleRepository saleRepository,
-                       IStockService stockService,
-                       PromotionService promotionService,
-                       WarrantyService warrantyService) {
+            IStockService stockService,
+            PromotionService promotionService,
+            WarrantyService warrantyService,
+            PersonService personService,
+            ProductService productService) {
         this.saleRepository = saleRepository;
         this.stockService = stockService;
         this.promotionService = promotionService;
         this.warrantyService = warrantyService;
+        this.personService = personService;
+        this.productService = productService;
     }
 
     // Overloaded registerSale method for transactions without extended warranties.
@@ -70,7 +80,7 @@ public class SaleService {
         }
 
         // Step 3: Sale creation and initial subtotal calculation
-        int nextId = saleRepository.findAll().size() + 1;
+        int nextId = getAllSales().size() + 1;
         LocalDate saleDate = LocalDate.now();
         Sale sale = new Sale(nextId, saleDate.toString(), client, seller, items);
         sale.calculateTotal();
@@ -83,10 +93,11 @@ public class SaleService {
                 discountAmount = bestPromotion.calculateDiscount(sale);
                 if (discountAmount > 0) {
                     sale.setAppliedPromotionName(bestPromotion.getName());
-                    sale.setDiscountAmount(discountAmount);
                 }
             }
         }
+        // Explicitly set calculated discount on Sale entity
+        sale.setDiscountAmount(discountAmount);
 
         // Step 5: Polymorphic warranty management
         double totalExtendedWarrantyCost = 0.0;
@@ -96,7 +107,6 @@ public class SaleService {
                     : new ArrayList<>();
 
             for (Product item : items) {
-                // Polymorphic delegation: product determines if it supports warranty
                 if (item.hasWarrantyCoverage()) {
                     boolean wantsExtended = remainingExtendedIds.contains(item.getId());
                     if (wantsExtended) {
@@ -112,7 +122,10 @@ public class SaleService {
             }
         }
 
-        // Step 6: Final total calculation
+// === ASIGNACIÓN CLAVE AGREGADA AQUÍ ===
+        sale.setExtendedWarrantyCost(totalExtendedWarrantyCost);
+
+// Step 6: Final total calculation
         double subtotal = sale.getSubtotal();
         double finalTotal = subtotal - discountAmount + totalExtendedWarrantyCost;
         sale.setTotal(finalTotal);
@@ -128,10 +141,96 @@ public class SaleService {
         return sale;
     }
 
-    // Retrieves all recorded sales in the system.
-    // @return a list containing all recorded sales
+    /**
+     * Retrieves all sales by reading raw persistence lines and rebuilding
+     * associated Client, Seller, and Product objects with backward
+     * compatibility.
+     *
+     * @return a list of fully populated Sale objects
+     */
+    /**
+     * Retrieves all sales by reading raw persistence lines and rebuilding
+     * associated Client, Seller, and Product objects with backward
+     * compatibility.
+     *
+     * @return a list of fully populated Sale objects
+     */
     public List<Sale> getAllSales() {
-        return saleRepository.findAll();
+        List<Sale> sales = new ArrayList<>();
+        List<String> rawLines = saleRepository.readAllRawLines();
+
+        for (String line : rawLines) {
+            String[] parts = line.split(";");
+            if (parts.length < 5) {
+                continue;
+            }
+
+            try {
+                int id = Integer.parseInt(parts[0]);
+                String date = parts[1];
+
+                Client client = personService.findClientById(parts[2]);
+                Seller seller = personService.findSellerByCode(parts[3]);
+
+                double discountAmount = 0.0;
+                double extendedWarrantyCost = 0.0;
+                double total = 0.0;
+                int productStartIdx = 4;
+                boolean isNewFormat = false;
+
+                // Detect if the line uses the new format with extended warranty and discount
+                if (parts.length >= 8) {
+                    try {
+                        discountAmount = Double.parseDouble(parts[4]);
+                        extendedWarrantyCost = Double.parseDouble(parts[5]);
+                        total = Double.parseDouble(parts[6]);
+                        productStartIdx = 7;
+                        isNewFormat = true;
+                    } catch (NumberFormatException e) {
+                        try {
+                            discountAmount = Double.parseDouble(parts[4]);
+                            total = Double.parseDouble(parts[5]);
+                            productStartIdx = 6;
+                            isNewFormat = true;
+                        } catch (NumberFormatException ex) {
+                            productStartIdx = 4;
+                        }
+                    }
+                } else if (parts.length >= 7) {
+                    try {
+                        discountAmount = Double.parseDouble(parts[4]);
+                        total = Double.parseDouble(parts[5]);
+                        productStartIdx = 6;
+                        isNewFormat = true;
+                    } catch (NumberFormatException e) {
+                        productStartIdx = 4;
+                    }
+                }
+
+                List<Product> products = new ArrayList<>();
+                for (int i = productStartIdx; i < parts.length; i++) {
+                    Product p = productService.findProductById(parts[i]);
+                    if (p != null) {
+                        products.add(p);
+                    }
+                }
+
+                if (client != null && seller != null && !products.isEmpty()) {
+                    Sale sale = new Sale(id, date, client, seller, products);
+                    if (isNewFormat) {
+                        sale.setDiscountAmount(discountAmount);
+                        sale.setExtendedWarrantyCost(extendedWarrantyCost);
+                        sale.setTotal(total);
+                    } else {
+                        sale.calculateTotal();
+                    }
+                    sales.add(sale);
+                }
+            } catch (Exception e) {
+                // Skips any corrupt line without crashing the system
+            }
+        }
+        return sales;
     }
 
     // Calculates the total sum of sales registered for a specific month and year.
@@ -140,7 +239,7 @@ public class SaleService {
     // @return the sum of sales totals for the specified month and year
     public double calculateMonthlyTotal(int month, int year) {
         double total = 0.0;
-        for (Sale sale : saleRepository.findAll()) {
+        for (Sale sale : getAllSales()) {
             LocalDate saleDate = LocalDate.parse(sale.getDate());
             if (saleDate.getMonthValue() == month && saleDate.getYear() == year) {
                 total += sale.getTotal();
@@ -153,14 +252,19 @@ public class SaleService {
     // @param saleId the unique identifier of the sale
     // @return the matching sale instance, or null if not found
     public Sale findSaleById(String saleId) {
-        return saleRepository.findById(saleId);
+        for (Sale sale : getAllSales()) {
+            if (String.valueOf(sale.getId()).equals(saleId)) {
+                return sale;
+            }
+        }
+        return null;
     }
 
     // Retrieves all sales associated with a specific client identification.
     // @param clientId the customer identification number
     // @return a list of sales matching the given client identification
     public List<Sale> getSalesByClient(String clientId) {
-        return saleRepository.findAll().stream()
+        return getAllSales().stream()
                 .filter(sale -> sale.getClient().getIdentification().equalsIgnoreCase(clientId))
                 .toList();
     }
@@ -169,7 +273,7 @@ public class SaleService {
     // @param sellerCode the employee code of the seller
     // @return a list of sales matching the given seller code
     public List<Sale> getSalesBySeller(String sellerCode) {
-        return saleRepository.findAll().stream()
+        return getAllSales().stream()
                 .filter(sale -> sale.getSeller().getEmployeeCode().equalsIgnoreCase(sellerCode))
                 .toList();
     }
