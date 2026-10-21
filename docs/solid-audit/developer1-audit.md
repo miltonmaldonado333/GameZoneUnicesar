@@ -468,3 +468,128 @@
 #### 5. Dependency Inversion Principle (DIP)
 - **Status**: Not Applicable
 - **Justification**: Pure domain model entity with no external module dependencies.
+
+### Class: `com.gamezone.exceptions.GameZoneException`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 7-42 (entire class definition)
+- **Justification**: The `GameZoneException` class strictly serves as the root application exception, encapsulating error messages and error code identifiers (`errorCode`). It contains no business orchestration, file persistence, or UI presentation code.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 7-42
+- **Justification**: Designed as an abstract base class extending `RuntimeException`, allowing domain-specific custom exceptions (e.g., `BusinessRuleException`, `EntityNotFoundException`) to extend application exception behavior without modifying this superclass.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Line 7 (`extends RuntimeException`)
+- **Justification**: Extends standard `RuntimeException` cleanly, allowing all custom sub-exceptions to substitute `GameZoneException` or `RuntimeException` without breaking exception-handling mechanisms across application layers.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `GameZoneException` is an abstract class and does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Infrastructure error component relying strictly on standard JDK exceptions with no external module dependencies.
+
+### Class: `com.gamezone.exceptions.BusinessRuleException`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 6-17 (entire class definition)
+- **Justification**: The `BusinessRuleException` class strictly acts as a custom domain exception capturing business rule violation details and setting a standardized error code (`BUSINESS_RULE_VIOLATION`). It contains no business logic, persistence, or presentation concerns.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 6-17
+- **Justification**: Extends `GameZoneException` to specialize error handling for domain invariants without modifying superclass behavior or requiring changes to the core exception framework.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Line 6 (`extends GameZoneException`)
+- **Justification**: Cleanly substitutes `GameZoneException` and `RuntimeException` in try-catch blocks across service layers without altering standard exception-handling contracts.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `BusinessRuleException` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Pure exception model with no external module dependencies.
+
+### Class: `com.gamezone.exceptions.InvalidDataException`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 6-18 (entire class definition)
+- **Justification**: The `InvalidDataException` class strictly acts as a custom domain exception capturing data validation error details and standardizing error messaging for invalid input fields. It contains no file persistence, business orchestration, or UI rendering logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 6-18
+- **Justification**: Extends `GameZoneException` to specialize error handling for input validation without modifying superclass behavior or requiring changes to the core exception framework.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Line 6 (`extends GameZoneException`)
+- **Justification**: Cleanly substitutes `GameZoneException` and `RuntimeException` in exception-handling blocks across service and validation layers without breaking contracts.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `InvalidDataException` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Infrastructure error model relying strictly on JDK constructs with no external module dependencies.
+
+### Class: `com.gamezone.exceptions.PersistenceException`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 6-18 (entire class definition)
+- **Justification**: The `PersistenceException` class strictly serves as a custom infrastructure exception encapsulating low-level file and storage I/O failures along with their root causes (`Throwable cause`). It contains no business orchestration or presentation logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 6-18
+- **Justification**: Extends `GameZoneException` to specialize error handling for persistence failures without requiring modifications to the superclass or core exception hierarchy.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Line 6 (`extends GameZoneException`)
+- **Justification**: Cleanly substitutes `GameZoneException` and `RuntimeException` in try-catch blocks across persistence repositories and service layers without violating exception contracts.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `PersistenceException` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Infrastructure exception class relying strictly on standard JDK exception capabilities with no external module dependencies.
+
+### Class: `com.gamezone.exceptions.ResourceNotFoundException`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 6-18 (entire class definition)
+- **Justification**: The `ResourceNotFoundException` class strictly acts as a custom domain exception capturing details about missing system entities and standardizing error messages for resource lookups. It contains no persistence, business logic, or UI presentation code.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 6-18
+- **Justification**: Extends `GameZoneException` to specialize error handling for missing resources without modifying superclass behavior or requiring changes to the core exception framework.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Correct
+- **Evidence**: Line 6 (`extends GameZoneException`)
+- **Justification**: Cleanly substitutes `GameZoneException` and `RuntimeException` in try-catch blocks across repository and service layers without breaking exception contracts.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `ResourceNotFoundException` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Not Applicable
+- **Justification**: Infrastructure error model relying strictly on standard JDK features with no external module dependencies.
