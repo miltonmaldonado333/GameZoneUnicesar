@@ -593,3 +593,83 @@
 #### 5. Dependency Inversion Principle (DIP)
 - **Status**: Not Applicable
 - **Justification**: Infrastructure error model relying strictly on standard JDK features with no external module dependencies.
+
+### Class: `com.gamezone.validation.ProductValidator`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 11-78 (entire class definition)
+- **Justification**: The `ProductValidator` class strictly acts as an infrastructure utility component encapsulating validation rules and invariant checks for product state and data inputs (`validateProductData`, `validateStockAvailability`, `validateProductExists`, `validateUniqueProduct`). It contains no business orchestration, file I/O, or presentation logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 26-77
+- **Justification**: Validation checks are encapsulated in independent static methods, allowing new validation methods to be added for new product attributes without modifying existing validation routines.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Not Applicable
+- **Justification**: `ProductValidator` is a utility class with a private constructor and does not participate in an inheritance hierarchy.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `ProductValidator` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Correct
+- **Evidence**: Lines 45 and 58 (`Product product`)
+- **Justification**: Operates on the abstract `Product` domain entity rather than concrete product subclasses (`VideoGame`, `Console`, `Accessory`), keeping validation rules decoupled from specific product specializations.
+
+### Class: `com.gamezone.validation.PersonValidator` (Assigned to Developer 2)
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 13-57 (entire class definition)
+- **Justification**: The `PersonValidator` class strictly acts as an infrastructure utility component encapsulating validation rules and invariant checks for person entities (`validatePersonData`, `validatePersonExists`, `validateUniquePerson`). It contains no business orchestration, persistence file I/O, or presentation logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 20-56
+- **Justification**: Validation routines are encapsulated in independent static methods, allowing new validation methods to be added for person attributes without altering existing validation logic.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Not Applicable
+- **Justification**: Utility class with a private constructor that does not participate in an inheritance hierarchy.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `PersonValidator` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Correct
+- **Evidence**: Lines 37 and 44 (`Person person`, `List<Person> existing`)
+- **Justification**: Operates on the abstract `Person` domain class rather than concrete subclasses (`Customer`, `Seller`), keeping validation rules decoupled from specific role specializations.
+
+### Class: `com.gamezone.validation.SaleValidator`
+
+#### 1. Single Responsibility Principle (SRP)
+- **Status**: Correct
+- **Evidence**: Lines 16-47 (entire class definition)
+- **Justification**: The `SaleValidator` class strictly acts as an infrastructure utility encapsulating validation checks for sale transactions (`validateSaleData`, `validateSaleExists`). It contains no business orchestration, file I/O, or presentation logic.
+
+#### 2. Open/Closed Principle (OCP)
+- **Status**: Correct
+- **Evidence**: Lines 28-46
+- **Justification**: Validation checks are encapsulated in independent static methods, allowing developers to add new validation routines for sales without altering existing methods.
+
+#### 3. Liskov Substitution Principle (LSP)
+- **Status**: Not Applicable
+- **Justification**: Utility class with a private constructor that does not participate in an inheritance hierarchy.
+
+#### 4. Interface Segregation Principle (ISP)
+- **Status**: Not Applicable
+- **Justification**: `SaleValidator` does not implement Java interfaces.
+
+#### 5. Dependency Inversion Principle (DIP)
+- **Status**: Violation
+- **ID**: V-DEV1-03
+- **Module**: Validation / Requisition 6
+- **Evidence**: Line 28 (`public static void validateSaleData(Client client, Seller seller, List<Product> products)`)
+- **Explanation**: The method signature depends directly on concrete sub-role classes (`Client`, `Seller`) instead of depending on the base abstraction `Person` or a general role contract.
+- **Consequence**: Tight coupling to specific role subclasses, limiting reuse if general person entities or other sub-roles are passed.
+- **Proposed Solution**: Generalize method parameters to accept base `Person` references if subclass-specific fields are not required.
+- **Other Member Code Involved**: Yes (Developer 2 - Person hierarchy)
