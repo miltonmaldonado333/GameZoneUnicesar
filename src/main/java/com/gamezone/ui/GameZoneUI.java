@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -821,7 +822,13 @@ public class GameZoneUI {
         }
     }
 
-    // ================= PROMOTION SUBMENU =================
+
+// ================= PROMOTION SUBMENU =================
+
+    /**
+     * Date formatter for displaying dates in DD/MM/YYYY format in presentation layer.
+     */
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     /**
      * Manages the promotion management subsystem menu loop.
@@ -943,7 +950,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays currently active promotional discounts.
+     * Fetches and displays currently active promotional discounts formatted with dd/MM/yyyy.
      */
     private void listActivePromotions() {
         try {
@@ -956,11 +963,14 @@ public class GameZoneUI {
             }
 
             for (Promotion promo : activePromos) {
+                String startDateFormatted = promo.getStartDate().format(DATE_FORMATTER);
+                String endDateFormatted = promo.getEndDate().format(DATE_FORMATTER);
+
                 System.out.printf("ID: %s | Nombre: %s | Activa: %s a %s | %s%n",
                         promo.getId(),
                         promo.getName(),
-                        promo.getStartDate(),
-                        promo.getEndDate(),
+                        startDateFormatted,
+                        endDateFormatted,
                         promo.getDetails());
             }
         } catch (PersistenceException e) {
@@ -971,7 +981,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays all promotions (active and expired).
+     * Fetches and displays all promotions (active and expired) formatted with dd/MM/yyyy and status label.
      */
     private void listAllPromotions() {
         try {
@@ -980,9 +990,18 @@ public class GameZoneUI {
             if (promotions == null || promotions.isEmpty()) {
                 System.out.println("No hay promociones registradas.");
             } else {
+                LocalDate today = LocalDate.now();
                 for (Promotion p : promotions) {
-                    System.out.println("ID: " + p.getId() + " | Nombre: " + p.getName()
-                            + " | Activa: " + p.getStartDate() + " a " + p.getEndDate());
+                    String startDateFormatted = p.getStartDate().format(DATE_FORMATTER);
+                    String endDateFormatted = p.getEndDate().format(DATE_FORMATTER);
+                    String status = p.isActive(today) ? "[ACTIVA]" : "[INACTIVA]";
+
+                    System.out.printf("ID: %s | Nombre: %s | Estado: %s | Vigencia: %s a %s%n",
+                            p.getId(),
+                            p.getName(),
+                            status,
+                            startDateFormatted,
+                            endDateFormatted);
                 }
             }
         } catch (PersistenceException e) {

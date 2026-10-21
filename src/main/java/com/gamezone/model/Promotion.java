@@ -1,6 +1,7 @@
 package com.gamezone.model;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Abstract base class representing a generic promotion in the system.
@@ -11,6 +12,8 @@ public abstract class Promotion {
     private String name;
     private LocalDate startDate;
     private LocalDate endDate;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public Promotion(String id, String name, LocalDate startDate, LocalDate endDate) {
         this.id = id;
@@ -24,11 +27,36 @@ public abstract class Promotion {
      *
      * @param date the date to check
      * @return true if the date is within the promotion's start and end dates,
-     * false otherwise
+     *         false otherwise
      */
     public boolean isActive(LocalDate date) {
+        if (date == null || startDate == null || endDate == null) {
+            return false;
+        }
         return (date.isEqual(startDate) || date.isAfter(startDate))
                 && (date.isEqual(endDate) || date.isBefore(endDate));
+    }
+
+    /**
+     * Checks if the promotion is active on the current system date.
+     *
+     * @return true if today is within the promotion's start and end dates,
+     *         false otherwise
+     */
+    public boolean isActive() {
+        return isActive(LocalDate.now());
+    }
+
+    /**
+     * Formats the promotion date range in dd/MM/yyyy format.
+     *
+     * @return formatted date range string (e.g. "15/10/2026 a 29/10/2026")
+     */
+    public String getFormattedDateRange() {
+        if (startDate == null || endDate == null) {
+            return "N/A";
+        }
+        return startDate.format(DATE_FORMATTER) + " a " + endDate.format(DATE_FORMATTER);
     }
 
     /**
@@ -39,7 +67,6 @@ public abstract class Promotion {
      */
     public abstract double calculateDiscount(Sale sale);
 
-    // Genera aquí los Getters y Setters para id, name, startDate y endDate
     public String getId() {
         return id;
     }
