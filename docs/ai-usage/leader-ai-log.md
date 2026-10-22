@@ -426,4 +426,65 @@ This log records technical consultations, logic verifications, and syntax checks
 
 ## Section 2: Phase 2 — Refactoring
 
-_(Entries for Phase 2 will be recorded during the execution of code refactoring)_
+### Entry 33
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Extract printing logic from the `Product` domain class to adhere to the Single Responsibility Principle.
+- **Query:** "How to extract console printing logic from the `Product` class to follow the Single Responsibility Principle?"
+- **Response:** Recommended moving all `System.out.println` statements to a dedicated `ProductView` or `ConsolePrinter` utility class.
+- **Decision:** Created a `ConsolePrinter` class to handle all UI outputs, keeping `Product` strictly for data.
+- **Related Commit:** `refactor: extract printing logic from product model`
+
+---
+
+### Entry 34
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Replace a hardcoded switch statement for discount types.
+- **Query:** "What is the simplest way to replace a large switch statement for different discount types in Java?"
+- **Response:** Suggested using the Strategy pattern by creating a `DiscountStrategy` interface and implementing separate classes for each discount type.
+- **Decision:** Implemented `DiscountStrategy` and refactored the promotion calculator.
+- **Related Commit:** `refactor: replace discount switch with strategy pattern`
+
+---
+
+### Entry 35
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Fix a Liskov Substitution Principle violation in the accessory hierarchy.
+- **Query:** "Why does throwing `UnsupportedOperationException` in a subclass override violate LSP?"
+- **Response:** Explained that subclasses must uphold the expected behavior of the base class; throwing unexpected runtime exceptions breaks base class contracts.
+- **Decision:** Restructured the class hierarchy using interfaces so subclasses only implement methods they actually support.
+- **Related Commit:** `refactor: fix lsp violation by restructuring inheritance`
+
+---
+
+### Entry 36
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Implement Dependency Inversion Principle for repository access.
+- **Query:** "How to inject a repository interface into a service class without using a framework like Spring?"
+- **Response:** Demonstrated manual constructor injection by passing the repository interface as a parameter in the service's constructor.
+- **Decision:** Applied constructor injection to `SaleService`, making it depend on the interface rather than the concrete CSV repository.
+- **Related Commit:** `refactor: apply constructor injection to services`
+
+---
+
+### Entry 37
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Keep the local refactoring branch updated with the main development line.
+- **Query:** "What is the git command to update my current feature branch with the latest changes from develop using rebase?"
+- **Response:** Provided the commands `git fetch origin` followed by `git rebase origin/develop`.
+- **Decision:** Rebased the local `feature/solid-refactor` branch to maintain a clean linear commit history.
+- **Related Commit:** `chore: rebase refactor branches onto develop`
