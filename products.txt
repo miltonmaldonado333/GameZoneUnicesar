@@ -4,3 +4,6 @@ Console;xbox;2020;2020;11;new;1789.00;56
 Console;ps5;2026;2026;c1;ps5;2000.00;13
 VideoGame;PS5;Accion;18+;101;GTA V;200.00;17
 VideoGame;SONY;2026;5;1011;PS5;200.00;29
+VideoGame;PS5;Accion;16+;110010;Far Cry 5;120.00;18
+VideoGame;SONY;5;5;110011;PS5;2009.00;7
+Console;XBOX;20;5;c2;Xbox;1500.00;11

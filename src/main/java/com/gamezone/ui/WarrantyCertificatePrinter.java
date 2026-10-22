@@ -5,7 +5,7 @@ import com.gamezone.model.Warranty;
 public class WarrantyCertificatePrinter {
 
     private WarrantyCertificatePrinter() {
-        // Constructor privado
+        //private constructor
     }
 
     public static String generateWarrantyCertificate(Warranty warranty) {

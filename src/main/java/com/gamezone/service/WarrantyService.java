@@ -9,21 +9,20 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
-import com.gamezone.persistence.SaleRepository;
+import com.gamezone.persistence.ISaleRepository;
 import com.gamezone.persistence.WarrantyRecord;
 import com.gamezone.persistence.WarrantyRepository;
 
 /**
  * Service class responsible for managing the business logic of product
  * warranties. Handles the creation, persistence, replacement, and retrieval of
- * basic and extended warranties. Depends on SaleRepository (rather than
- * SaleService) to avoid a circular dependency, since SaleService itself depends
- * on WarrantyService.
+ * basic and extended warranties. Depends on ISaleRepository abstraction to comply
+ * with Dependency Inversion Principle (DIP).
  */
 public class WarrantyService {
 
     private final WarrantyRepository warrantyRepository;
-    private SaleRepository saleRepository;
+    private ISaleRepository saleRepository;
     private SaleService saleService;
 
     /**
@@ -37,17 +36,16 @@ public class WarrantyService {
     }
 
     /**
-     * Constructs a new WarrantyService with all required dependencies.
+     * Constructs a new WarrantyService with all required abstractions.
      *
      * @param warrantyRepository the persistence repository for warranties
-     * @param saleRepository the persistence repository for sales, used for
-     * historical sync
+     * @param saleRepository the persistence repository abstraction for sales
      */
-    public WarrantyService(WarrantyRepository warrantyRepository, SaleRepository saleRepository) {
+    public WarrantyService(WarrantyRepository warrantyRepository, ISaleRepository saleRepository) {
         this.warrantyRepository = warrantyRepository;
         this.saleRepository = saleRepository;
     }
-    
+
     public void setSaleService(SaleService saleService) {
         this.saleService = saleService;
     }
@@ -212,9 +210,6 @@ public class WarrantyService {
     /**
      * Scans all historical sales and automatically generates a basic warranty
      * for any console product that does not already have a warranty assigned.
-     * Uses the injected SaleRepository directly instead of receiving
-     * SaleService as a parameter, since SaleService is not available at this
-     * point in construction without causing a circular dependency.
      */
     public void syncPastConsoleWarranties() {
         if (saleService == null) {

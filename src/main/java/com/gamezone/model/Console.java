@@ -61,11 +61,11 @@ public class Console extends Product {
     /**
      * Returns the category identifier for console products.
      *
-     * @return the category name "Console"
+     * @return the category name "CONSOLE"
      */
     @Override
     public String getCategory() {
-        return "Console";
+        return "CONSOLE";
     }
 
     /**
@@ -78,7 +78,7 @@ public class Console extends Product {
         return String.format("Console: [ID: %s, Title: %s, Price: $%.2f, Stock: %d, Brand: %s, Model: %s, Generation: %s]",
                 getId(), getTitle(), getPrice(), getStock(), brand, model, generation);
     }
-    
+
     @Override
     public boolean hasWarrantyCoverage() {
         return true;

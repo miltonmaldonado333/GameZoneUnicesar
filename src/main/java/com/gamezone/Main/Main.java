@@ -10,7 +10,8 @@ import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.FilePromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.FileReturnRepository;
-import com.gamezone.persistence.SaleRepository;
+import com.gamezone.persistence.ISaleRepository;
+import com.gamezone.persistence.FileSaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.persistence.FileWarrantyRepository;
 import com.gamezone.service.AccessoryService;
@@ -24,10 +25,10 @@ import com.gamezone.ui.GameZoneUI;
 
 /**
  * Main application entry point.
- * Acts as the composition root (Bootstrap), instantiating repositories,
- * wiring service dependencies, and launching the interactive UI.
+ * Acts as the composition root (Bootstrap/IoC Container), instantiating repositories,
+ * wiring service dependencies via interfaces, and launching the interactive UI.
  */
-public class main {
+public class Main {
 
     /**
      * Main method that executes application initialization and launches the UI.
@@ -35,7 +36,7 @@ public class main {
      * @param args command-line arguments passed during execution
      */
     public static void main(String[] args) {
-        // Step 1: Initialize base persistence repositories
+        // Step 1: Initialize base persistence repositories using abstractions
         ProductRepository productRepository = new FileProductRepository();
         PersonRepository personRepository = new FilePersonRepository("persons.txt");
         AccessoryRepository accessoryRepository = new FileAccessoryRepository();
@@ -47,14 +48,14 @@ public class main {
         AccessoryService accessoryService = new AccessoryService(accessoryRepository, productRepository);
         PromotionService promotionService = new PromotionService(promotionRepository);
 
-        // Step 3: Initialize repositories for complex domain objects
-        SaleRepository saleRepository = new SaleRepository();
+        // Step 3: Initialize repositories for complex domain objects using ISaleRepository interface
+        ISaleRepository saleRepository = new FileSaleRepository("data/sales.csv");
         WarrantyRepository warrantyRepository = new FileWarrantyRepository();
 
-        // Step 4: Initialize WarrantyService without immediate SaleService dependency
+        // Step 4: Initialize WarrantyService
         WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository);
 
-        // Step 5: Initialize SaleService with full dependency injection
+        // Step 5: Initialize SaleService with full dependency injection (DIP compliant)
         SaleService saleService = new SaleService(
                 saleRepository,
                 productService,     // Implements IStockService contract

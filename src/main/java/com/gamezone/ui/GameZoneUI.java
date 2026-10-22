@@ -20,8 +20,6 @@ import com.gamezone.service.PromotionService;
 import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
-import com.gamezone.ui.WarrantyCertificatePrinter;
-import com.gamezone.ui.ReturnReceiptPrinter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,8 +37,8 @@ import java.util.List;
  * Handles the interactive console user interface for the GameZone system.
  * Serves strictly as a presentation controller in accordance with GRASP
  * principles. Manages user interaction, menu rendering, and input/output
- * parsing, delegating all domain operations and orchestration tasks to
- * specialized service classes.
+ * parsing, delegating all domain operations to specialized service classes and
+ * printing formatters (ReturnReceiptPrinter, WarrantyCertificatePrinter).
  *
  * <p>
  * Applies the Single Responsibility Principle (SRP) by isolating console I/O,
@@ -61,18 +59,12 @@ public class GameZoneUI {
      * Constructs a {@code GameZoneUI} instance initializing console reader
      * streams and injecting required service dependencies.
      *
-     * <p>
-     * Applies Dependency Inversion (SOLID) by receiving service instances
-     * externally rather than constructing them internally. Configures standard
-     * output and input streams to use UTF-8.</p>
-     *
      * @param saleService the service handling sale transactions
      * @param productService the service managing product catalog operations
      * @param personService the service handling client and seller records
      * @param accessoryService the service managing game accessories
      * @param promotionService the service orchestrating promotional discounts
-     * @param returnService the service processing product returns and financial
-     * balances
+     * @param returnService the service processing product returns and financial balances
      * @param warrantyService the service managing warranty certificates
      */
     public GameZoneUI(SaleService saleService, ProductService productService,
@@ -105,7 +97,7 @@ public class GameZoneUI {
         int option = -1;
 
         System.out.println("===========================================");
-        System.out.println("        BIENVENIDO AL SISTEMA GAMEZONE     ");
+        System.out.println("         BIENVENIDO AL SISTEMA GAMEZONE     ");
         System.out.println("===========================================");
 
         do {
@@ -124,62 +116,27 @@ public class GameZoneUI {
     }
 
     // ================= I/O HELPER METHODS (SRP / GRASP) =================
-    /**
-     * Prompts the user and reads a raw string from standard input.
-     *
-     * @param message prompt message to display
-     * @return user input string
-     * @throws IOException if an I/O error occurs
-     */
     private String promptString(String message) throws IOException {
         System.out.print(message);
         return reader.readLine();
     }
 
-    /**
-     * Prompts the user and parses an integer value from standard input.
-     *
-     * @param message prompt message to display
-     * @return parsed integer value
-     * @throws IOException if an I/O error occurs
-     * @throws NumberFormatException if the input cannot be parsed into an
-     * integer
-     */
     private int promptInt(String message) throws IOException, NumberFormatException {
         System.out.print(message);
         return Integer.parseInt(reader.readLine());
     }
 
-    /**
-     * Prompts the user and parses a double precision floating-point number.
-     *
-     * @param message prompt message to display
-     * @return parsed double value
-     * @throws IOException if an I/O error occurs
-     * @throws NumberFormatException if the input cannot be parsed into a double
-     */
     private double promptDouble(String message) throws IOException, NumberFormatException {
         System.out.print(message);
         return Double.parseDouble(reader.readLine());
     }
 
-    /**
-     * Prompts the user and parses an ISO local date (YYYY-MM-DD).
-     *
-     * @param message prompt message to display
-     * @return parsed {@link LocalDate} instance
-     * @throws IOException if an I/O error occurs
-     * @throws DateTimeParseException if the input format is invalid
-     */
     private LocalDate promptDate(String message) throws IOException, DateTimeParseException {
         System.out.print(message);
         return LocalDate.parse(reader.readLine());
     }
 
     // ================= MAIN MENU =================
-    /**
-     * Displays main navigation options to the console.
-     */
     private void displayMainMenu() {
         System.out.println("\n---------------- MENÚ PRINCIPAL ----------------");
         System.out.println("1. Gestión de Productos (Consolas y Videojuegos)");
@@ -194,11 +151,6 @@ public class GameZoneUI {
         System.out.print("Seleccione una opción: ");
     }
 
-    /**
-     * Reads menu selection input safely without crashing on formatting errors.
-     *
-     * @return chosen option number, or {@code -1} if invalid
-     */
     private int readOption() {
         try {
             return Integer.parseInt(reader.readLine());
@@ -211,41 +163,22 @@ public class GameZoneUI {
         }
     }
 
-    /**
-     * Routes the selected main menu option to its corresponding subsystem
-     * handler.
-     *
-     * @param option selected menu option number
-     */
     private void processMainMenuOption(int option) {
         switch (option) {
-            case 1 ->
-                handleProductMenu();
-            case 2 ->
-                handlePersonMenu();
-            case 3 ->
-                handleSalesMenu();
-            case 4 ->
-                handleAccessoryMenu();
-            case 5 ->
-                handlePromotionMenu();
-            case 6 ->
-                handleReturnMenu();
-            case 7 ->
-                generateMonthlyBalance();
-            case 8 ->
-                handleWarrantyMenu();
-            case 0, -1 -> {
-            }
-            default ->
-                System.out.println("Opción inválida. Por favor, intente de nuevo.");
+            case 1 -> handleProductMenu();
+            case 2 -> handlePersonMenu();
+            case 3 -> handleSalesMenu();
+            case 4 -> handleAccessoryMenu();
+            case 5 -> handlePromotionMenu();
+            case 6 -> handleReturnMenu();
+            case 7 -> generateMonthlyBalance();
+            case 8 -> handleWarrantyMenu();
+            case 0, -1 -> {}
+            default -> System.out.println("Opción inválida. Por favor, intente de nuevo.");
         }
     }
 
     // ================= PRODUCT SUBMENU =================
-    /**
-     * Manages the interactive product subsystem menu loop.
-     */
     private void handleProductMenu() {
         int option = -1;
         do {
@@ -258,24 +191,15 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerVideoGame();
-                case 2 ->
-                    registerConsole();
-                case 3 ->
-                    listProducts();
-                case 0 -> {
-                }
-                default ->
-                    System.out.println("Opción inválida.");
+                case 1 -> registerVideoGame();
+                case 2 -> registerConsole();
+                case 3 -> listProducts();
+                case 0 -> {}
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
-    /**
-     * Prompts for video game attributes and delegates registration to
-     * {@link ProductService}.
-     */
     private void registerVideoGame() {
         try {
             System.out.println("\n--- REGISTRAR VIDEOJUEGO ---");
@@ -293,25 +217,11 @@ public class GameZoneUI {
             } else {
                 System.out.println("Error: Ya existe un producto con este ID.");
             }
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException e) {
-            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando videojuego: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for gaming console details and delegates creation to
-     * {@link ProductService}.
-     */
     private void registerConsole() {
         try {
             System.out.println("\n--- REGISTRAR CONSOLA ---");
@@ -323,30 +233,17 @@ public class GameZoneUI {
             String model = promptString("Modelo: ");
             String generation = promptString("Generación: ");
 
-            boolean registered = productService.registerVideoGame(brand, model, generation, id, title, price, stock);
+            boolean registered = productService.registerConsole(brand, model, generation, id, title, price, stock);
             if (registered) {
                 System.out.println("¡Consola registrada y guardada exitosamente!");
             } else {
                 System.out.println("Error: Ya existe un producto con este ID.");
             }
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException e) {
-            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando consola: " + e.getMessage());
         }
     }
 
-    /**
-     * Fetches and displays all registered products in the inventory.
-     */
     private void listProducts() {
         try {
             System.out.println("\n--- INVENTARIO DE PRODUCTOS ---");
@@ -358,17 +255,12 @@ public class GameZoneUI {
                     System.out.println(p.getFullDescription());
                 }
             }
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando inventario: " + e.getMessage());
         }
     }
 
     // ================= PERSON SUBMENU =================
-    /**
-     * Manages the person records subsystem menu loop.
-     */
     private void handlePersonMenu() {
         int option = -1;
         do {
@@ -382,26 +274,16 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerClient();
-                case 2 ->
-                    registerSeller();
-                case 3 ->
-                    listClients();
-                case 4 ->
-                    listSellers();
-                case 0 -> {
-                }
-                default ->
-                    System.out.println("Opción inválida.");
+                case 1 -> registerClient();
+                case 2 -> registerSeller();
+                case 3 -> listClients();
+                case 4 -> listSellers();
+                case 0 -> {}
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
-    /**
-     * Prompts for client details and delegates insertion to
-     * {@link PersonService}.
-     */
     private void registerClient() {
         try {
             System.out.println("\n--- REGISTRAR CLIENTE ---");
@@ -412,23 +294,11 @@ public class GameZoneUI {
 
             personService.registerClient(name, id, phone, email);
             System.out.println("¡Cliente registrado exitosamente!");
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando cliente: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for seller details and delegates creation to
-     * {@link PersonService}.
-     */
     private void registerSeller() {
         try {
             System.out.println("\n--- REGISTRAR VENDEDOR ---");
@@ -440,22 +310,11 @@ public class GameZoneUI {
 
             personService.registerSeller(name, identification, phone, employeeCode, workShift);
             System.out.println("¡Vendedor registrado exitosamente!");
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando vendedor: " + e.getMessage());
         }
     }
 
-    /**
-     * Fetches and displays all registered client records.
-     */
     private void listClients() {
         try {
             System.out.println("\n--- LISTA DE CLIENTES ---");
@@ -467,16 +326,11 @@ public class GameZoneUI {
                     System.out.println("ID: " + c.getIdentification() + " | Nombre: " + c.getName() + " | Correo: " + c.getEmail());
                 }
             }
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando clientes: " + e.getMessage());
         }
     }
 
-    /**
-     * Fetches and displays all registered seller records.
-     */
     private void listSellers() {
         try {
             System.out.println("\n--- LISTA DE VENDEDORES ---");
@@ -488,17 +342,12 @@ public class GameZoneUI {
                     System.out.println("Código: " + s.getEmployeeCode() + " | Nombre: " + s.getName() + " | Turno: " + s.getWorkShift());
                 }
             }
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando vendedores: " + e.getMessage());
         }
     }
 
     // ================= SALES SUBMENU =================
-    /**
-     * Manages the sales transaction subsystem menu loop.
-     */
     private void handleSalesMenu() {
         int option = -1;
         do {
@@ -512,31 +361,16 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerSale();
-                case 2 ->
-                    listAllSales();
-                case 3 ->
-                    listSalesByClient();
-                case 4 ->
-                    listSalesBySeller();
-                case 0 -> {
-                }
-                default ->
-                    System.out.println("Opción inválida.");
+                case 1 -> registerSale();
+                case 2 -> listAllSales();
+                case 3 -> listSalesByClient();
+                case 4 -> listSalesBySeller();
+                case 0 -> {}
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
-    /**
-     * Orchestrates interactive sale registration for multiple items.
-     *
-     * <p>
-     * <b>GRASP Refactoring Note:</b> Uses a unified facade method
-     * ({@link ProductService#findSaleableItemById(String)}) to resolve products
-     * or accessories, replacing sequential fallback exception catching from
-     * presentation code.</p>
-     */
     private void registerSale() {
         try {
             System.out.println("\n--- REGISTRAR NUEVA VENTA UNIFICADA ---");
@@ -559,11 +393,11 @@ public class GameZoneUI {
                     products.add(item);
                     System.out.println("Artículo añadido al carrito: " + item.getTitle());
 
-                    if (item instanceof Console) {
-                        String extendedChoice = promptString("¿Desea agregar garantía extendida (+10% del costo) a la consola '"
+                    if (item.hasWarrantyCoverage()) {
+                        String extendedChoice = promptString("¿Desea agregar garantía extendida (+10% del costo) al producto '"
                                 + item.getTitle() + "'? (s/n): ");
                         if (extendedChoice.equalsIgnoreCase("s")) {
-                            extendedWarrantyProductIds.add(item.getId());
+                            extendedWarrantyProductIds.add(String.valueOf(item.getId()));
                         }
                     }
                 } else {
@@ -577,75 +411,43 @@ public class GameZoneUI {
             System.out.println("\n¡Venta registrada exitosamente!");
             System.out.println(registeredSale.generateReceipt());
 
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando venta: " + e.getMessage());
         }
     }
 
-    /**
-     * Fetches and displays the complete store sales history.
-     */
     private void listAllSales() {
         try {
             System.out.println("\n--- HISTORIAL COMPLETO DE VENTAS ---");
             List<Sale> allSales = saleService.getAllSales();
             printSalesList(allSales);
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando ventas: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for a client ID and displays their purchase history.
-     */
     private void listSalesByClient() {
         try {
             String searchClientId = promptString("Ingrese la Identificación del Cliente: ");
             List<Sale> clientSales = saleService.getSalesByClient(searchClientId);
             System.out.println("\n--- HISTORIAL DE COMPRAS DEL CLIENTE ---");
             printSalesList(clientSales);
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando historial del cliente: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for a seller code and displays their processed sales history.
-     */
     private void listSalesBySeller() {
         try {
             String searchSellerId = promptString("Ingrese el Código del Vendedor: ");
             List<Sale> sellerSales = saleService.getSalesBySeller(searchSellerId);
             System.out.println("\n--- HISTORIAL DE VENTAS DEL VENDEDOR ---");
             printSalesList(sellerSales);
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando historial del vendedor: " + e.getMessage());
         }
     }
 
-    /**
-     * Formats and prints a collection of sale receipts to standard output.
-     *
-     * @param sales list of sales to display
-     */
     private void printSalesList(List<Sale> sales) {
         if (sales == null || sales.isEmpty()) {
             System.out.println("No se encontraron registros de ventas.");
@@ -657,9 +459,6 @@ public class GameZoneUI {
     }
 
     // ================= ACCESSORY SUBMENU =================
-    /**
-     * Manages the accessory subsystem menu loop.
-     */
     private void handleAccessoryMenu() {
         int option = -1;
         do {
@@ -675,30 +474,18 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerController();
-                case 2 ->
-                    registerCable();
-                case 3 ->
-                    registerMemory();
-                case 4 ->
-                    listAllAccessories();
-                case 5 ->
-                    listAccessoriesByType();
-                case 6 ->
-                    consultCompatibleAccessories();
-                case 0 -> {
-                }
-                default ->
-                    System.out.println("Opción inválida.");
+                case 1 -> registerController();
+                case 2 -> registerCable();
+                case 3 -> registerMemory();
+                case 4 -> listAllAccessories();
+                case 5 -> listAccessoriesByType();
+                case 6 -> consultCompatibleAccessories();
+                case 0 -> {}
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
-    /**
-     * Prompts for controller details and delegates creation to
-     * {@link AccessoryService}.
-     */
     private void registerController() {
         try {
             System.out.println("\n--- REGISTRAR CONTROL ---");
@@ -708,7 +495,7 @@ public class GameZoneUI {
             int stock = promptInt("Stock: ");
             String connection = promptString("Tipo de Conexión (inalámbrico/cableado): ");
 
-            String consolesInput = promptString("IDs de Consolas Compatibles (separados por coma, ej., 11,12) [Dejar vacío si no hay]: ");
+            String consolesInput = promptString("IDs de Consolas Compatibles (separados por coma) [Dejar vacío si no hay]: ");
             List<String> compatibleConsoles = new ArrayList<>();
             if (!consolesInput.isBlank()) {
                 compatibleConsoles = Arrays.asList(consolesInput.split("\\s*,\\s*"));
@@ -716,25 +503,11 @@ public class GameZoneUI {
 
             accessoryService.registerController(id, title, price, stock, connection, compatibleConsoles);
             System.out.println("¡Control registrado exitosamente!");
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException e) {
-            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando control: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for cable accessory attributes and delegates registration to
-     * {@link AccessoryService}.
-     */
     private void registerCable() {
         try {
             System.out.println("\n--- REGISTRAR CABLE ---");
@@ -753,25 +526,11 @@ public class GameZoneUI {
 
             accessoryService.registerCable(id, title, price, stock, length, type, compatibleConsoles);
             System.out.println("¡Cable registrado exitosamente!");
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException e) {
-            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando cable: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for memory card specs and delegates creation to
-     * {@link AccessoryService}.
-     */
     private void registerMemory() {
         try {
             System.out.println("\n--- REGISTRAR MEMORIA ---");
@@ -790,24 +549,11 @@ public class GameZoneUI {
 
             accessoryService.registerMemory(id, title, price, stock, capacity, type, compatibleConsoles);
             System.out.println("¡Memoria registrada exitosamente!");
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException e) {
-            System.out.println("Los datos ingresados no son válidos: Se esperaba un valor numérico.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando memoria: " + e.getMessage());
         }
     }
 
-    /**
-     * Displays all accessories stored in the inventory.
-     */
     private void listAllAccessories() {
         try {
             System.out.println("\n--- TODOS LOS ACCESORIOS ---");
@@ -817,16 +563,11 @@ public class GameZoneUI {
             } else {
                 accessories.forEach(a -> System.out.println(a.getFullDescription()));
             }
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando accesorios: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for an accessory category type and lists matches.
-     */
     private void listAccessoriesByType() {
         try {
             String type = promptString("Ingrese el tipo de accesorio (Controller/Cable/Memory): ");
@@ -836,16 +577,11 @@ public class GameZoneUI {
             } else {
                 accessories.forEach(a -> System.out.println(a.getFullDescription()));
             }
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando accesorios por tipo: " + e.getMessage());
         }
     }
 
-    /**
-     * Queries and prints accessories compatible with a specified console ID.
-     */
     private void consultCompatibleAccessories() {
         try {
             String consoleId = promptString("Ingrese el ID de la Consola para comprobar compatibilidad: ");
@@ -855,25 +591,14 @@ public class GameZoneUI {
             } else {
                 accessories.forEach(a -> System.out.println(a.getFullDescription()));
             }
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando compatibilidad: " + e.getMessage());
         }
     }
 
-// ================= PROMOTION SUBMENU =================
-    /**
-     * Date formatter for displaying dates in DD/MM/YYYY format in presentation
-     * layer.
-     */
+    // ================= PROMOTION SUBMENU =================
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    /**
-     * Manages the promotion management subsystem menu loop.
-     */
     private void handlePromotionMenu() {
         int option = -1;
         do {
@@ -888,28 +613,17 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerPercentageDiscount();
-                case 2 ->
-                    registerCategoryDiscount();
-                case 3 ->
-                    registerBulkPurchaseDiscount();
-                case 4 ->
-                    listActivePromotions();
-                case 5 ->
-                    listAllPromotions();
-                case 0 -> {
-                }
-                default ->
-                    System.out.println("Opción inválida.");
+                case 1 -> registerPercentageDiscount();
+                case 2 -> registerCategoryDiscount();
+                case 3 -> registerBulkPurchaseDiscount();
+                case 4 -> listActivePromotions();
+                case 5 -> listAllPromotions();
+                case 0 -> {}
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
-    /**
-     * Prompts for percentage discount parameters and registers it in
-     * {@link PromotionService}.
-     */
     private void registerPercentageDiscount() {
         try {
             System.out.println("\n--- REGISTRAR DESCUENTO POR PORCENTAJE ---");
@@ -917,31 +631,15 @@ public class GameZoneUI {
             String name = promptString("Nombre: ");
             LocalDate startDate = promptDate("Fecha de Inicio (YYYY-MM-DD): ");
             LocalDate endDate = promptDate("Fecha de Fin (YYYY-MM-DD): ");
-            double percentage = promptDouble("Porcentaje de Descuento (ej., 10 o 15.5): ");
+            double percentage = promptDouble("Porcentaje de Descuento: ");
 
             promotionService.registerPercentageDiscount(id, name, startDate, endDate, percentage);
             System.out.println("¡Descuento por porcentaje registrado exitosamente!");
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException | DateTimeParseException e) {
-            System.out.println("Los datos ingresados no son válidos: Formato de número o fecha incorrecto.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando promoción: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for category discount attributes and registers the promotion.
-     *
-     * <p>
-     * <b>GRASP Refactoring Note:</b> Invokes
-     * {@link ProductService#getAvailableCategories()} to obtain categories
-     * dynamically, removing reflection operations from presentation logic.</p>
-     */
     private void registerCategoryDiscount() {
         try {
             System.out.println("\n--- REGISTRAR DESCUENTO POR CATEGORÍA ---");
@@ -949,32 +647,19 @@ public class GameZoneUI {
             String name = promptString("Nombre: ");
             LocalDate startDate = promptDate("Fecha de Inicio (YYYY-MM-DD): ");
             LocalDate endDate = promptDate("Fecha de Fin (YYYY-MM-DD): ");
-            double percentage = promptDouble("Porcentaje de Descuento (ej., 10 o 15.5): ");
+            double percentage = promptDouble("Porcentaje de Descuento: ");
 
             List<String> availableCategories = productService.getAvailableCategories();
-
             System.out.println("\nCategorías disponibles en inventario: " + availableCategories);
-            String category = promptString("Ingrese la Categoría Objetivo de la lista anterior (VIDEOGAME, CONSOLE, ACCESSORY): ");
+            String category = promptString("Ingrese la Categoría Objetivo (VIDEOGAME, CONSOLE, ACCESSORY): ");
 
             promotionService.registerCategoryDiscount(id, name, startDate, endDate, percentage, category);
             System.out.println("¡Descuento por categoría registrado exitosamente!");
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException | DateTimeParseException e) {
-            System.out.println("Los datos ingresados no son válidos: Formato de número o fecha incorrecto.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando promoción: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for bulk purchase parameters and registers a bulk discount
-     * promotion.
-     */
     private void registerBulkPurchaseDiscount() {
         try {
             System.out.println("\n--- REGISTRAR DESCUENTO POR COMPRA AL POR MAYOR ---");
@@ -983,59 +668,38 @@ public class GameZoneUI {
             LocalDate startDate = promptDate("Fecha de Inicio (YYYY-MM-DD): ");
             LocalDate endDate = promptDate("Fecha de Fin (YYYY-MM-DD): ");
             int minQuantity = promptInt("Cantidad Mínima: ");
-            double percentage = promptDouble("Porcentaje de Descuento (ej., 10 o 15.5): ");
+            double percentage = promptDouble("Porcentaje de Descuento: ");
 
             promotionService.registerBulkPurchaseDiscount(id, name, startDate, endDate, minQuantity, percentage);
             System.out.println("¡Descuento por compra al por mayor registrado exitosamente!");
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException | DateTimeParseException e) {
-            System.out.println("Los datos ingresados no son válidos: Formato de número o fecha incorrecto.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error registrando promoción: " + e.getMessage());
         }
     }
 
-    /**
-     * Fetches and displays currently active promotional discounts formatted
-     * with dd/MM/yyyy.
-     */
     private void listActivePromotions() {
         try {
             System.out.println("\n--- PROMOCIONES ACTIVAS ---");
             List<Promotion> activePromos = promotionService.listActivePromotions();
 
             if (activePromos == null || activePromos.isEmpty()) {
-                System.out.println("No hay promociones activas disponibles en este momento.");
+                System.out.println("No hay promociones activas disponibles.");
                 return;
             }
 
             for (Promotion promo : activePromos) {
-                String startDateFormatted = promo.getStartDate().format(DATE_FORMATTER);
-                String endDateFormatted = promo.getEndDate().format(DATE_FORMATTER);
-
                 System.out.printf("ID: %s | Nombre: %s | Activa: %s a %s | %s%n",
                         promo.getId(),
                         promo.getName(),
-                        startDateFormatted,
-                        endDateFormatted,
+                        promo.getStartDate().format(DATE_FORMATTER),
+                        promo.getEndDate().format(DATE_FORMATTER),
                         promo.getDetails());
             }
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando promociones: " + e.getMessage());
         }
     }
 
-    /**
-     * Fetches and displays all promotions (active and expired) formatted with
-     * dd/MM/yyyy and status label.
-     */
     private void listAllPromotions() {
         try {
             System.out.println("\n--- TODAS LAS PROMOCIONES ---");
@@ -1045,29 +709,21 @@ public class GameZoneUI {
             } else {
                 LocalDate today = LocalDate.now();
                 for (Promotion p : promotions) {
-                    String startDateFormatted = p.getStartDate().format(DATE_FORMATTER);
-                    String endDateFormatted = p.getEndDate().format(DATE_FORMATTER);
                     String status = p.isActive(today) ? "[ACTIVA]" : "[INACTIVA]";
-
                     System.out.printf("ID: %s | Nombre: %s | Estado: %s | Vigencia: %s a %s%n",
                             p.getId(),
                             p.getName(),
                             status,
-                            startDateFormatted,
-                            endDateFormatted);
+                            p.getStartDate().format(DATE_FORMATTER),
+                            p.getEndDate().format(DATE_FORMATTER));
                 }
             }
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando promociones: " + e.getMessage());
         }
     }
 
     // ================= RETURN SUBMENU =================
-    /**
-     * Manages the product return subsystem menu loop.
-     */
     private void handleReturnMenu() {
         int option = -1;
         do {
@@ -1081,31 +737,21 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    registerReturn();
-                case 2 ->
-                    listAllReturns();
-                case 3 ->
-                    listReturnsByClient();
-                case 4 ->
-                    listReturnsBySale();
-                case 0 -> {
-                }
-                default ->
-                    System.out.println("Opción inválida.");
+                case 1 -> registerReturn();
+                case 2 -> listAllReturns();
+                case 3 -> listReturnsByClient();
+                case 4 -> listReturnsBySale();
+                case 0 -> {}
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
-   /**
-     * Prompts for sale and item information to register a product return via
-     * {@link ReturnService}.
-     */
     private void registerReturn() {
         try {
             System.out.println("\n--- REGISTRAR NUEVA DEVOLUCIÓN ---");
             String saleId = promptString("Ingrese el ID de la Venta: ");
-            String inputProducts = promptString("Ingrese los IDs de los Productos a devolver (separados por coma, ej., P01,P02): ");
+            String inputProducts = promptString("Ingrese los IDs de los Productos a devolver (separados por coma): ");
             List<String> productIds = Arrays.asList(inputProducts.split("\\s*,\\s*"));
             String reason = promptString("Ingrese el Motivo de la Devolución: ");
 
@@ -1113,24 +759,11 @@ public class GameZoneUI {
             System.out.println("\n¡Devolución procesada exitosamente!");
             System.out.println(ReturnReceiptPrinter.generateReturnReceipt(processedReturn));
 
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error procesando devolución: " + e.getMessage());
         }
     }
 
-   /**
-     * Formats and prints a collection of return receipts to the console.
-     *
-     * @param returns list of return transactions to display
-     */
     private void printReturnList(List<Return> returns) {
         if (returns == null || returns.isEmpty()) {
             System.out.println("No se encontraron registros de devoluciones.");
@@ -1142,61 +775,38 @@ public class GameZoneUI {
         }
     }
 
-    /**
-     * Fetches and lists all processed returns.
-     */
     private void listAllReturns() {
         try {
             System.out.println("\n--- TODAS LAS DEVOLUCIONES ---");
             List<Return> returns = returnService.viewAllReturns();
             printReturnList(returns);
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando devoluciones: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for a customer ID and displays their registered returns.
-     */
     private void listReturnsByClient() {
         try {
             String customerId = promptString("Ingrese el ID del Cliente: ");
             List<Return> returns = returnService.viewReturnsByCustomer(customerId);
             System.out.println("\n--- DEVOLUCIONES POR CLIENTE ---");
             printReturnList(returns);
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando devoluciones: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for a sale transaction ID and lists associated returns.
-     */
     private void listReturnsBySale() {
         try {
             String saleId = promptString("Ingrese el ID de la Venta: ");
             List<Return> returns = returnService.viewReturnsBySale(saleId);
             System.out.println("\n--- DEVOLUCIONES POR VENTA ---");
             printReturnList(returns);
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando devoluciones: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for month and year parameters to compute and print monthly net
-     * income.
-     */
     private void generateMonthlyBalance() {
         try {
             System.out.println("\n--- REPORTE DE BALANCE MENSUAL ---");
@@ -1207,23 +817,12 @@ public class GameZoneUI {
             System.out.println(String.format("\n=== BALANCE MENSUAL (%02d/%d) ===", month, year));
             System.out.println(String.format("Balance Neto (Ventas - Devoluciones): $%.2f", netBalance));
 
-        } catch (BusinessRuleException e) {
-            System.out.println("No se puede completar la operación: " + e.getMessage());
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException e) {
-            System.out.println("Los datos ingresados no son válidos: Por favor, ingrese valores numéricos para mes y año.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error generando balance: " + e.getMessage());
         }
     }
 
     // ================= WARRANTY SUBMENU =================
-    /**
-     * Manages the warranty certificates subsystem menu loop.
-     */
     private void handleWarrantyMenu() {
         int option = -1;
         do {
@@ -1237,26 +836,16 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 ->
-                    consultWarrantyByProductAndSale();
-                case 2 ->
-                    listAllWarranties();
-                case 3 ->
-                    listActiveWarranties();
-                case 4 ->
-                    listWarrantiesExpiringSoon();
-                case 0 -> {
-                }
-                default ->
-                    System.out.println("Opción inválida.");
+                case 1 -> consultWarrantyByProductAndSale();
+                case 2 -> listAllWarranties();
+                case 3 -> listActiveWarranties();
+                case 4 -> listWarrantiesExpiringSoon();
+                case 0 -> {}
+                default -> System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
-    /**
-     * Prompts for sale ID and product ID to display warranty certificate
-     * details via {@link WarrantyService}.
-     */
     private void consultWarrantyByProductAndSale() {
         try {
             System.out.println("\n--- CONSULTAR GARANTÍA DE PRODUCTO ---");
@@ -1275,18 +864,11 @@ public class GameZoneUI {
             } else {
                 System.out.println("No se encontró garantía para el ID de Producto '" + productId + "' en el ID de Venta '" + saleId + "'.");
             }
-        } catch (ResourceNotFoundException e) {
-            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando garantía: " + e.getMessage());
         }
     }
 
-    /**
-     * Fetches and displays all registered warranty certificates.
-     */
     private void listAllWarranties() {
         try {
             System.out.println("\n--- TODAS LAS GARANTÍAS REGISTRADAS ---");
@@ -1297,16 +879,11 @@ public class GameZoneUI {
 
             List<Warranty> warranties = warrantyService.listAllWarranties();
             printWarrantyList(warranties);
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando garantías: " + e.getMessage());
         }
     }
 
-    /**
-     * Fetches and displays warranties currently active as of today.
-     */
     private void listActiveWarranties() {
         try {
             System.out.println("\n--- GARANTÍAS ACTIVAS (HOY) ---");
@@ -1317,17 +894,11 @@ public class GameZoneUI {
 
             List<Warranty> activeWarranties = warrantyService.listActiveWarranties();
             printWarrantyList(activeWarranties);
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando garantías activas: " + e.getMessage());
         }
     }
 
-    /**
-     * Prompts for a day threshold and lists warranties expiring within that
-     * period.
-     */
     private void listWarrantiesExpiringSoon() {
         try {
             System.out.println("\n--- GARANTÍAS PRÓXIMAS A EXPIRAR ---");
@@ -1340,14 +911,8 @@ public class GameZoneUI {
 
             List<Warranty> expiringWarranties = warrantyService.listWarrantiesExpiringSoon(daysAhead);
             printWarrantyList(expiringWarranties);
-        } catch (InvalidDataException e) {
-            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
-        } catch (PersistenceException e) {
-            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
-        } catch (NumberFormatException e) {
-            System.out.println("Los datos ingresados no son válidos: Por favor, ingrese un número válido de días.");
         } catch (Exception e) {
-            System.out.println("Error inesperado: " + e.getMessage());
+            System.out.println("Error consultando garantías próximas a expiración: " + e.getMessage());
         }
     }
 
