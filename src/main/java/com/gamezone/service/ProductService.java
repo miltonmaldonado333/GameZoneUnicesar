@@ -5,14 +5,13 @@ import com.gamezone.model.Product;
 import com.gamezone.persistence.ProductRepository;
 import com.gamezone.model.VideoGame;
 import java.util.ArrayList;
-
 import java.util.List;
 
 /**
  * Service handling product catalog operations and implementing the unified
- * stock management contract.
+ * product service contract.
  */
-public class ProductService implements IStockService {
+public class ProductService implements IProductService {
 
     private final ProductRepository productRepository;
     private AccessoryService accessoryService;
@@ -20,12 +19,10 @@ public class ProductService implements IStockService {
     /**
      * Constructs a ProductService instance with the required repository.
      *
-     * @param productRepository the persistence repository for managing product
-     * data
+     * @param productRepository the persistence repository for managing product data
      */
     public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
-
     }
 
     public void setAccessoryService(AccessoryService accessoryService) {
@@ -45,7 +42,6 @@ public class ProductService implements IStockService {
     public void reduceStock(String productId, int quantity) {
         List<Product> products = productRepository.loadProducts();
 
-        //Here it's compare ids for found a product id
         Product targetProduct = null;
         for (Product p : products) {
             if (p.getId().equalsIgnoreCase(productId)) {
@@ -62,7 +58,6 @@ public class ProductService implements IStockService {
         }
 
         targetProduct.setStock(targetProduct.getStock() - quantity);
-
         productRepository.saveProducts(products);
     }
 
@@ -83,10 +78,10 @@ public class ProductService implements IStockService {
         }
 
         targetProduct.setStock(targetProduct.getStock() + quantity);
-
         productRepository.saveProducts(products);
     }
 
+    @Override
     public List<String> getAvailableCategories() {
         List<Product> products = productRepository.loadProducts();
 
@@ -102,17 +97,9 @@ public class ProductService implements IStockService {
         return categories;
     }
 
-    // Registers a new VideoGame product in the inventory after checking for ID uniqueness.
-    // @param platform target gaming console or system platform
-    // @param genre game genre or category
-    // @param ageRating age classification rating
-    // @param id unique product identifier
-    // @param title display name of the video game
-    // @param price unit sale price
-    // @param stock initial quantity available in inventory
-    // @return true if successfully registered; false if a product with the same ID already exists
+    @Override
     public boolean registerVideoGame(String platform, String genre, String ageRating,
-            String id, String title, double price, int stock) {
+                                    String id, String title, double price, int stock) {
         List<Product> products = productRepository.loadProducts();
         if (products == null) {
             products = new ArrayList<>();
@@ -134,23 +121,13 @@ public class ProductService implements IStockService {
         return true;
     }
 
-    /**
-     * Retrieves all products registered in the catalog.
-     *
-     * @return a list containing all products
-     */
+    @Override
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
-    /**
-     * Finds a product by its unique identifier.
-     *
-     * @param id the unique identifier of the product
-     * @return the matching product instance, or null if not found
-     */
+    @Override
     public Product findProductById(String id) {
         return productRepository.findById(id);
     }
-
 }
