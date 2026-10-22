@@ -176,3 +176,27 @@ Where the principle is correctly applied: each service depends on the interface 
 - **Consequence:** the order of the wiring decides whether the warranties exist; a missing call silently hides them, and a later save would write the file without them.
 - **Proposed solution:** `WarrantyService` receives, at construction, a narrow `SaleLookup` abstraction implemented by a class that does not depend on `WarrantyService`, so the setter and the cycle disappear. It is the same abstraction proposed in V-06.
 - **Other integrante's code:** Yes: `SaleService` and `Main` (Technical Leader).
+
+## Findings involving other integrantes' code
+
+Registered here so that the Technical Leader can unify them in the consolidated audit and agree the order of the corrections.
+
+| ID | Other integrante | What the correction needs |
+| --- | --- | --- |
+| V-04 | Owner of `ProductService`, Technical Leader | An implementation of `IStockService` that resolves the item and delegates to the right service, and its construction in `Main`; making `AccessoryService` implement the contract is my part |
+| V-05 | Technical Leader | `Main` updated if it still passes the unused arguments |
+| V-06 | Technical Leader | `SaleService` implementing the new sale lookup interface, `ProductService` taking part in the stock contract, and `Main` |
+| V-07 | Technical Leader | The `SaleLookup` abstraction without a cycle, `SaleService`, and `Main` replacing the setter |
+
+Suggested order: the abstractions that belong to other integrantes first (V-04 and V-06), then my correction of the services that use them (V-04, V-06 and V-07), then the independent ones (V-01, V-02, V-03 and V-05).
+
+## Observations for the consolidation
+
+- The report of Developer 1 (`V-DEV1-03`, `SaleValidator`) and the report of the Technical Leader (`Sale`, DIP) propose replacing `Client` and `Seller` by `Person`. The person hierarchy audited here needs the role-specific data: the seller is found by `getEmployeeCode()` (`PersonService.java` line 127) and only `Seller` has it (`Seller.java` line 33). I recommend that the Leader reviews whether those are violations before assigning a correction in my hierarchy.
+- The report of Developer 1 uses the identifier `V-DEV1-03` for two different findings (`Return` and `SaleValidator`).
+
+## Out-of-scope functional observations
+
+Defects found while auditing that are not corrected in this requirement because fixing them would change what the user observes. The defects already registered in the GRASP audit (Requirement 7) are not repeated.
+
+- **F-01 - A corrupted line is handled differently by each repository.** `FilePromotionRepository.parseLine` catches every exception and skips the line (line 169). `FileReturnRepository` (line 117), `FileAccessoryRepository` (line 155), `FileWarrantyRepository` (line 118) and `FilePersonRepository` (line 130) parse without protection and only catch `IOException`, so a malformed line raises a runtime exception while the file is being loaded, for example when `AccessoryService` or `PersonService` is created.
