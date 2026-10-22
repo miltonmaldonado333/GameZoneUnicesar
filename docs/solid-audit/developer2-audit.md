@@ -76,3 +76,35 @@ Where the principle is correctly applied:
 - **Consequence:** a change in the warranty record, or in the way old sales are backfilled, edits the class that also assigns and cancels warranties.
 - **Proposed solution:** extract the rebuilding into a `WarrantyRecordMapper` and the historical synchronization into a `WarrantyBackfill`, both in the service package. `WarrantyService` keeps its public methods, including `syncPastConsoleWarranties`, and delegates to them.
 - **Other integrante's code:** No.
+
+## 2. Open/Closed Principle (OCP)
+
+**Verdict: violation** (V-03, V-04).
+
+Where the principle is correctly applied:
+- `PromotionService.findBestPromotionFor` asks each promotion for its discount (`promotion.calculateDiscount(sale)`, line 72) without testing its type.
+- `AccessoryService.listAccessoriesByType` compares the requested type with `accessory.getCategory()` (line 132), so a new accessory subtype needs no change there.
+- `ReturnService.registerReturn` (line 84) and `WarrantyService.syncPastConsoleWarranties` (line 231) ask each product `hasWarrantyCoverage()` instead of testing for `Console`.
+
+Considered and not reported: the three `register...` methods of `AccessoryService` and of `PromotionService` take different parameters per type, and adding a type adds a method without changing the existing ones; `PromotionValidator.validateTargetCategory` closes the list of categories to VIDEOGAME, CONSOLE and ACCESSORY, which is a rule fixed by Requirement 2 (A1) and not an extension point; `PersonService.getAllClients` and `getAllSellers` are explicit queries by role.
+
+### V-03 - The file repositories choose the stored format with a chain of type tests
+
+- **Principle:** OCP
+- **Module:** Persons (Taller 1), Accessories (Requirement 1), Promotions (Requirement 2), Warranties (Requirement 4) and the GRASP correction V-04 (Requirement 7)
+- **Evidence:** `FilePersonRepository.java` tests `person instanceof Client` (line 101) and `person instanceof Seller` (line 108), falls back to `return "";` (line 117) and rebuilds from the stored text in `parseLine` (line 129). `FileAccessoryRepository.java` tests the three subtypes (lines 110, 119 and 129), falls back to `return "";` (line 140) and reads the discriminator at line 160. `FilePromotionRepository.java` tests the three promotion subtypes (lines 105, 114 and 124) and falls back to `return "";` (line 135). `FileWarrantyRepository.java` line 102 stores every warranty that is not extended as "BASIC". `WarrantyService.loadWarranties` rebuilds the subtype from the stored text (lines 72 and 74).
+- **Explanation:** a new subtype (a person role, an accessory, a promotion or a warranty) cannot be stored without editing the repository where it is written and where it is read and, for warranties, also the code that rebuilds it.
+- **Consequence:** a subtype that is not listed is not rejected: a person, an accessory or a promotion of an unknown subtype is written as an empty line and lost on the next load, and a new kind of warranty would be stored as "BASIC" and reloaded as a basic warranty.
+- **Proposed solution:** one codec per subtype, in the persistence package, registered in a map of each repository (by class to write, by discriminator to read). A new subtype adds a codec and its registration and leaves the repository code unchanged. The dispatch of `WarrantyService.loadWarranties` moves with the mapper of V-02. The stored lines and the data files do not change.
+- **Other integrante's code:** No.
+- **Note:** the GRASP audit of Requirement 7 accepted the type tests because file logic cannot live in the model; OCP shows that the repository can still be closed for modification.
+
+### V-04 - ReturnService chooses the stock service with instanceof
+
+- **Principle:** OCP (related: DIP)
+- **Module:** Returns (Requirement 3), adjusted in A4 (Requirement 5); left partially corrected by the GRASP correction V-05 (Requirement 7)
+- **Evidence:** `ReturnService.java` line 93 tests `product instanceof Accessory` and calls `accessoryService.restoreStock(...)` (line 94); the other branch calls `productService.restoreStock(...)` (line 96). `IStockService.java` declares the stock contract at line 7, but `ReturnService` does not reference it and `AccessoryService` does not implement it (class at line 18).
+- **Explanation:** a new kind of item stored by a different service requires editing `registerReturn`. The common stock contract already exists and is not used here.
+- **Consequence:** the return workflow, which is stable, changes whenever the inventory of a new kind of item is added.
+- **Proposed solution:** `ReturnService` restores stock through the `IStockService` contract, with an implementation that resolves the item and delegates to the right service, so the type test disappears.
+- **Other integrante's code:** Yes. The implementation that resolves the item belongs to the owners of `ProductService` and `Main`; making `AccessoryService` implement the contract is my part.
