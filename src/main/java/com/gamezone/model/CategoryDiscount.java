@@ -48,11 +48,6 @@ public class CategoryDiscount extends Promotion {
 
         for (Product product : sale.getProducts()) {
             if (product != null) {
-                // DEBUG: Imprime en consola para diagnosticar la comparación
-                System.out.println("DEBUG - ID Producto: " + product.getId() 
-           + " | Categoria del producto: '" + product.getCategory() + "'" 
-           + " | Target: '" + targetCategory + "'");
-
                 if (targetCategory.equalsIgnoreCase(product.getCategory())) {
                     applicableSubtotal += product.getPrice();
                 }
