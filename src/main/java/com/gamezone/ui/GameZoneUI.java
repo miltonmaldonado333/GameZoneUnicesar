@@ -20,6 +20,7 @@ import com.gamezone.service.PromotionService;
 import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
+import com.gamezone.ui.WarrantyCertificatePrinter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,11 +36,13 @@ import java.util.List;
 
 /**
  * Handles the interactive console user interface for the GameZone system.
- * Serves strictly as a presentation controller in accordance with GRASP principles.
- * Manages user interaction, menu rendering, and input/output parsing, delegating 
- * all domain operations and orchestration tasks to specialized service classes.
- * 
- * <p>Applies the Single Responsibility Principle (SRP) by isolating console I/O, 
+ * Serves strictly as a presentation controller in accordance with GRASP
+ * principles. Manages user interaction, menu rendering, and input/output
+ * parsing, delegating all domain operations and orchestration tasks to
+ * specialized service classes.
+ *
+ * <p>
+ * Applies the Single Responsibility Principle (SRP) by isolating console I/O,
  * ensuring high cohesion and low coupling with business entities.</p>
  */
 public class GameZoneUI {
@@ -54,25 +57,28 @@ public class GameZoneUI {
     private final WarrantyService warrantyService;
 
     /**
-     * Constructs a {@code GameZoneUI} instance initializing console reader streams and injecting 
-     * required service dependencies.
-     * 
-     * <p>Applies Dependency Inversion (SOLID) by receiving service instances externally rather 
-     * than constructing them internally. Configures standard output and input streams to use UTF-8.</p>
+     * Constructs a {@code GameZoneUI} instance initializing console reader
+     * streams and injecting required service dependencies.
+     *
+     * <p>
+     * Applies Dependency Inversion (SOLID) by receiving service instances
+     * externally rather than constructing them internally. Configures standard
+     * output and input streams to use UTF-8.</p>
      *
      * @param saleService the service handling sale transactions
      * @param productService the service managing product catalog operations
      * @param personService the service handling client and seller records
      * @param accessoryService the service managing game accessories
      * @param promotionService the service orchestrating promotional discounts
-     * @param returnService the service processing product returns and financial balances
+     * @param returnService the service processing product returns and financial
+     * balances
      * @param warrantyService the service managing warranty certificates
      */
     public GameZoneUI(SaleService saleService, ProductService productService,
             PersonService personService, AccessoryService accessoryService,
             PromotionService promotionService, ReturnService returnService,
             WarrantyService warrantyService) {
-        
+
         try {
             System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8.name()));
         } catch (java.io.UnsupportedEncodingException e) {
@@ -80,7 +86,7 @@ public class GameZoneUI {
         }
 
         this.reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
-        
+
         this.saleService = saleService;
         this.productService = productService;
         this.personService = personService;
@@ -91,7 +97,7 @@ public class GameZoneUI {
     }
 
     /**
-     * Starts the main application menu loop, maintaining session lifecycle 
+     * Starts the main application menu loop, maintaining session lifecycle
      * until the user selects the exit option.
      */
     public void start() {
@@ -117,7 +123,6 @@ public class GameZoneUI {
     }
 
     // ================= I/O HELPER METHODS (SRP / GRASP) =================
-
     /**
      * Prompts the user and reads a raw string from standard input.
      *
@@ -136,7 +141,8 @@ public class GameZoneUI {
      * @param message prompt message to display
      * @return parsed integer value
      * @throws IOException if an I/O error occurs
-     * @throws NumberFormatException if the input cannot be parsed into an integer
+     * @throws NumberFormatException if the input cannot be parsed into an
+     * integer
      */
     private int promptInt(String message) throws IOException, NumberFormatException {
         System.out.print(message);
@@ -170,7 +176,6 @@ public class GameZoneUI {
     }
 
     // ================= MAIN MENU =================
-
     /**
      * Displays main navigation options to the console.
      */
@@ -206,28 +211,37 @@ public class GameZoneUI {
     }
 
     /**
-     * Routes the selected main menu option to its corresponding subsystem handler.
+     * Routes the selected main menu option to its corresponding subsystem
+     * handler.
      *
      * @param option selected menu option number
      */
     private void processMainMenuOption(int option) {
         switch (option) {
-            case 1 -> handleProductMenu();
-            case 2 -> handlePersonMenu();
-            case 3 -> handleSalesMenu();
-            case 4 -> handleAccessoryMenu();
-            case 5 -> handlePromotionMenu();
-            case 6 -> handleReturnMenu();
-            case 7 -> generateMonthlyBalance();
-            case 8 -> handleWarrantyMenu();
+            case 1 ->
+                handleProductMenu();
+            case 2 ->
+                handlePersonMenu();
+            case 3 ->
+                handleSalesMenu();
+            case 4 ->
+                handleAccessoryMenu();
+            case 5 ->
+                handlePromotionMenu();
+            case 6 ->
+                handleReturnMenu();
+            case 7 ->
+                generateMonthlyBalance();
+            case 8 ->
+                handleWarrantyMenu();
             case 0, -1 -> {
             }
-            default -> System.out.println("Opción inválida. Por favor, intente de nuevo.");
+            default ->
+                System.out.println("Opción inválida. Por favor, intente de nuevo.");
         }
     }
 
     // ================= PRODUCT SUBMENU =================
-
     /**
      * Manages the interactive product subsystem menu loop.
      */
@@ -243,18 +257,23 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerVideoGame();
-                case 2 -> registerConsole();
-                case 3 -> listProducts();
+                case 1 ->
+                    registerVideoGame();
+                case 2 ->
+                    registerConsole();
+                case 3 ->
+                    listProducts();
                 case 0 -> {
                 }
-                default -> System.out.println("Opción inválida.");
+                default ->
+                    System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Prompts for video game attributes and delegates registration to {@link ProductService}.
+     * Prompts for video game attributes and delegates registration to
+     * {@link ProductService}.
      */
     private void registerVideoGame() {
         try {
@@ -289,7 +308,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for gaming console details and delegates creation to {@link ProductService}.
+     * Prompts for gaming console details and delegates creation to
+     * {@link ProductService}.
      */
     private void registerConsole() {
         try {
@@ -345,7 +365,6 @@ public class GameZoneUI {
     }
 
     // ================= PERSON SUBMENU =================
-
     /**
      * Manages the person records subsystem menu loop.
      */
@@ -362,19 +381,25 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerClient();
-                case 2 -> registerSeller();
-                case 3 -> listClients();
-                case 4 -> listSellers();
+                case 1 ->
+                    registerClient();
+                case 2 ->
+                    registerSeller();
+                case 3 ->
+                    listClients();
+                case 4 ->
+                    listSellers();
                 case 0 -> {
                 }
-                default -> System.out.println("Opción inválida.");
+                default ->
+                    System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Prompts for client details and delegates insertion to {@link PersonService}.
+     * Prompts for client details and delegates insertion to
+     * {@link PersonService}.
      */
     private void registerClient() {
         try {
@@ -400,7 +425,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for seller details and delegates creation to {@link PersonService}.
+     * Prompts for seller details and delegates creation to
+     * {@link PersonService}.
      */
     private void registerSeller() {
         try {
@@ -469,7 +495,6 @@ public class GameZoneUI {
     }
 
     // ================= SALES SUBMENU =================
-
     /**
      * Manages the sales transaction subsystem menu loop.
      */
@@ -486,23 +511,30 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerSale();
-                case 2 -> listAllSales();
-                case 3 -> listSalesByClient();
-                case 4 -> listSalesBySeller();
+                case 1 ->
+                    registerSale();
+                case 2 ->
+                    listAllSales();
+                case 3 ->
+                    listSalesByClient();
+                case 4 ->
+                    listSalesBySeller();
                 case 0 -> {
                 }
-                default -> System.out.println("Opción inválida.");
+                default ->
+                    System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
      * Orchestrates interactive sale registration for multiple items.
-     * 
-     * <p><b>GRASP Refactoring Note:</b> Uses a unified facade method 
-     * ({@link ProductService#findSaleableItemById(String)}) to resolve products or accessories, 
-     * replacing sequential fallback exception catching from presentation code.</p>
+     *
+     * <p>
+     * <b>GRASP Refactoring Note:</b> Uses a unified facade method
+     * ({@link ProductService#findSaleableItemById(String)}) to resolve products
+     * or accessories, replacing sequential fallback exception catching from
+     * presentation code.</p>
      */
     private void registerSale() {
         try {
@@ -527,7 +559,7 @@ public class GameZoneUI {
                     System.out.println("Artículo añadido al carrito: " + item.getTitle());
 
                     if (item instanceof Console) {
-                        String extendedChoice = promptString("¿Desea agregar garantía extendida (+10% del costo) a la consola '" 
+                        String extendedChoice = promptString("¿Desea agregar garantía extendida (+10% del costo) a la consola '"
                                 + item.getTitle() + "'? (s/n): ");
                         if (extendedChoice.equalsIgnoreCase("s")) {
                             extendedWarrantyProductIds.add(item.getId());
@@ -624,7 +656,6 @@ public class GameZoneUI {
     }
 
     // ================= ACCESSORY SUBMENU =================
-
     /**
      * Manages the accessory subsystem menu loop.
      */
@@ -643,21 +674,29 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerController();
-                case 2 -> registerCable();
-                case 3 -> registerMemory();
-                case 4 -> listAllAccessories();
-                case 5 -> listAccessoriesByType();
-                case 6 -> consultCompatibleAccessories();
+                case 1 ->
+                    registerController();
+                case 2 ->
+                    registerCable();
+                case 3 ->
+                    registerMemory();
+                case 4 ->
+                    listAllAccessories();
+                case 5 ->
+                    listAccessoriesByType();
+                case 6 ->
+                    consultCompatibleAccessories();
                 case 0 -> {
                 }
-                default -> System.out.println("Opción inválida.");
+                default ->
+                    System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Prompts for controller details and delegates creation to {@link AccessoryService}.
+     * Prompts for controller details and delegates creation to
+     * {@link AccessoryService}.
      */
     private void registerController() {
         try {
@@ -692,7 +731,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for cable accessory attributes and delegates registration to {@link AccessoryService}.
+     * Prompts for cable accessory attributes and delegates registration to
+     * {@link AccessoryService}.
      */
     private void registerCable() {
         try {
@@ -728,7 +768,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for memory card specs and delegates creation to {@link AccessoryService}.
+     * Prompts for memory card specs and delegates creation to
+     * {@link AccessoryService}.
      */
     private void registerMemory() {
         try {
@@ -739,7 +780,7 @@ public class GameZoneUI {
             int stock = promptInt("Stock: ");
             int capacity = promptInt("Capacidad (GB): ");
             String type = promptString("Tipo de Memoria (ej., SD, microSD): ");
-            
+
             String consolesInput = promptString("IDs de Consolas Compatibles (separados por coma) [Dejar vacío si no hay]: ");
             List<String> compatibleConsoles = new ArrayList<>();
             if (!consolesInput.isBlank()) {
@@ -822,11 +863,10 @@ public class GameZoneUI {
         }
     }
 
-
 // ================= PROMOTION SUBMENU =================
-
     /**
-     * Date formatter for displaying dates in DD/MM/YYYY format in presentation layer.
+     * Date formatter for displaying dates in DD/MM/YYYY format in presentation
+     * layer.
      */
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -847,20 +887,27 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerPercentageDiscount();
-                case 2 -> registerCategoryDiscount();
-                case 3 -> registerBulkPurchaseDiscount();
-                case 4 -> listActivePromotions();
-                case 5 -> listAllPromotions();
+                case 1 ->
+                    registerPercentageDiscount();
+                case 2 ->
+                    registerCategoryDiscount();
+                case 3 ->
+                    registerBulkPurchaseDiscount();
+                case 4 ->
+                    listActivePromotions();
+                case 5 ->
+                    listAllPromotions();
                 case 0 -> {
                 }
-                default -> System.out.println("Opción inválida.");
+                default ->
+                    System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Prompts for percentage discount parameters and registers it in {@link PromotionService}.
+     * Prompts for percentage discount parameters and registers it in
+     * {@link PromotionService}.
      */
     private void registerPercentageDiscount() {
         try {
@@ -888,9 +935,11 @@ public class GameZoneUI {
 
     /**
      * Prompts for category discount attributes and registers the promotion.
-     * 
-     * <p><b>GRASP Refactoring Note:</b> Invokes {@link ProductService#getAvailableCategories()} 
-     * to obtain categories dynamically, removing reflection operations from presentation logic.</p>
+     *
+     * <p>
+     * <b>GRASP Refactoring Note:</b> Invokes
+     * {@link ProductService#getAvailableCategories()} to obtain categories
+     * dynamically, removing reflection operations from presentation logic.</p>
      */
     private void registerCategoryDiscount() {
         try {
@@ -922,7 +971,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for bulk purchase parameters and registers a bulk discount promotion.
+     * Prompts for bulk purchase parameters and registers a bulk discount
+     * promotion.
      */
     private void registerBulkPurchaseDiscount() {
         try {
@@ -950,7 +1000,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays currently active promotional discounts formatted with dd/MM/yyyy.
+     * Fetches and displays currently active promotional discounts formatted
+     * with dd/MM/yyyy.
      */
     private void listActivePromotions() {
         try {
@@ -981,7 +1032,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Fetches and displays all promotions (active and expired) formatted with dd/MM/yyyy and status label.
+     * Fetches and displays all promotions (active and expired) formatted with
+     * dd/MM/yyyy and status label.
      */
     private void listAllPromotions() {
         try {
@@ -1012,7 +1064,6 @@ public class GameZoneUI {
     }
 
     // ================= RETURN SUBMENU =================
-
     /**
      * Manages the product return subsystem menu loop.
      */
@@ -1029,19 +1080,25 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> registerReturn();
-                case 2 -> listAllReturns();
-                case 3 -> listReturnsByClient();
-                case 4 -> listReturnsBySale();
+                case 1 ->
+                    registerReturn();
+                case 2 ->
+                    listAllReturns();
+                case 3 ->
+                    listReturnsByClient();
+                case 4 ->
+                    listReturnsBySale();
                 case 0 -> {
                 }
-                default -> System.out.println("Opción inválida.");
+                default ->
+                    System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Prompts for sale and item information to register a product return via {@link ReturnService}.
+     * Prompts for sale and item information to register a product return via
+     * {@link ReturnService}.
      */
     private void registerReturn() {
         try {
@@ -1136,7 +1193,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for month and year parameters to compute and print monthly net income.
+     * Prompts for month and year parameters to compute and print monthly net
+     * income.
      */
     private void generateMonthlyBalance() {
         try {
@@ -1147,7 +1205,7 @@ public class GameZoneUI {
             double netBalance = returnService.generateMonthlyBalance(month, year);
             System.out.println(String.format("\n=== BALANCE MENSUAL (%02d/%d) ===", month, year));
             System.out.println(String.format("Balance Neto (Ventas - Devoluciones): $%.2f", netBalance));
-            
+
         } catch (BusinessRuleException e) {
             System.out.println("No se puede completar la operación: " + e.getMessage());
         } catch (InvalidDataException e) {
@@ -1162,7 +1220,6 @@ public class GameZoneUI {
     }
 
     // ================= WARRANTY SUBMENU =================
-
     /**
      * Manages the warranty certificates subsystem menu loop.
      */
@@ -1179,19 +1236,25 @@ public class GameZoneUI {
 
             option = readOption();
             switch (option) {
-                case 1 -> consultWarrantyByProductAndSale();
-                case 2 -> listAllWarranties();
-                case 3 -> listActiveWarranties();
-                case 4 -> listWarrantiesExpiringSoon();
+                case 1 ->
+                    consultWarrantyByProductAndSale();
+                case 2 ->
+                    listAllWarranties();
+                case 3 ->
+                    listActiveWarranties();
+                case 4 ->
+                    listWarrantiesExpiringSoon();
                 case 0 -> {
                 }
-                default -> System.out.println("Opción inválida.");
+                default ->
+                    System.out.println("Opción inválida.");
             }
         } while (option != 0);
     }
 
     /**
-     * Prompts for sale ID and product ID to display warranty certificate details via {@link WarrantyService}.
+     * Prompts for sale ID and product ID to display warranty certificate
+     * details via {@link WarrantyService}.
      */
     private void consultWarrantyByProductAndSale() {
         try {
@@ -1207,7 +1270,7 @@ public class GameZoneUI {
             Warranty warranty = warrantyService.findWarrantyByProduct(productId, saleId);
             if (warranty != null) {
                 System.out.println("\n--- CERTIFICADO DE GARANTÍA ---");
-                System.out.println(warranty.generateWarrantyCertificate());
+                System.out.println(WarrantyCertificatePrinter.generateWarrantyCertificate(warranty));
             } else {
                 System.out.println("No se encontró garantía para el ID de Producto '" + productId + "' en el ID de Venta '" + saleId + "'.");
             }
@@ -1261,7 +1324,8 @@ public class GameZoneUI {
     }
 
     /**
-     * Prompts for a day threshold and lists warranties expiring within that period.
+     * Prompts for a day threshold and lists warranties expiring within that
+     * period.
      */
     private void listWarrantiesExpiringSoon() {
         try {
@@ -1286,18 +1350,13 @@ public class GameZoneUI {
         }
     }
 
-    /**
-     * Formats and prints a collection of warranty certificate objects.
-     *
-     * @param warranties list of warranties to print
-     */
     private void printWarrantyList(List<Warranty> warranties) {
         if (warranties == null || warranties.isEmpty()) {
             System.out.println("No se encontraron garantías.");
         } else {
             for (Warranty w : warranties) {
                 System.out.println("------------------------------------------------------------------");
-                System.out.println(w.generateWarrantyCertificate());
+                System.out.println(WarrantyCertificatePrinter.generateWarrantyCertificate(w));
             }
             System.out.println("------------------------------------------------------------------");
         }

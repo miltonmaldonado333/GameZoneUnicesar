@@ -10,7 +10,6 @@ public abstract class Warranty {
     private LocalDate startDate;
     private LocalDate endDate;
 
-    
     public Warranty(String id, Product product, Sale sale, LocalDate startDate) {
         this.id = id;
         this.product = product;
@@ -49,25 +48,7 @@ public abstract class Warranty {
         return !date.isBefore(startDate) && !date.isAfter(endDate);
     }
 
-    /**
-     * Generates a formatted warranty certificate in Spanish.
-     *
-     * @return the formatted certificate string
-     */
-    public String generateWarrantyCertificate() {
-        StringBuilder certificate = new StringBuilder();
-        certificate.append("=== WARRABTY CERTIFICATE ===\n");
-        certificate.append("Warranty ID: ").append(this.id).append("\n");
-        certificate.append("Tipe: ").append(getWarrantyType()).append("\n");
-        certificate.append("Product: ").append(this.product.getTitle()).append("\n");
-        certificate.append("Sale ID: ").append(this.sale.getId()).append("\n");
-        certificate.append("Start Date: ").append(this.startDate).append("\n");
-        certificate.append("Finish Date: ").append(this.endDate).append("\n");
-        certificate.append("Additional value $: ").append(getAdditionalCost()).append("\n");
-        return certificate.toString();
-    }
-    
-// getersn and setters
+    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -87,5 +68,4 @@ public abstract class Warranty {
     public LocalDate getEndDate() {
         return endDate;
     }
-
 }
