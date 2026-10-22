@@ -150,3 +150,29 @@ Where the principle is correctly applied: each repository interface is small and
 - **Proposed solution:** remove the field, the assignment and the constructor parameter in each class, keeping the one-argument constructors.
 - **Other integrante's code:** Yes. `Main` (Technical Leader) builds both services and must be updated if it still passes those arguments.
 - **Note:** this is the same smell that the GRASP correction V-22 removed from `WarrantyService` (an unused `ProductService`); it came back with an unused `SaleRepository` after the sale lookup changed.
+
+## 5. Dependency Inversion Principle (DIP)
+
+**Verdict: violation** (V-06, V-07).
+
+Where the principle is correctly applied: each service depends on the interface of its repository, after the GRASP correction V-21 of Requirement 7: `PersonService` (line 22), `AccessoryService` (line 20), `PromotionService` (line 21), `ReturnService` (line 22) and `WarrantyService` (line 25). The validators are stateless static classes that hold rules and no collaborators, so they are not treated as dependencies on implementations.
+
+### V-06 - ReturnService depends on four concrete services
+
+- **Principle:** DIP (related: ISP)
+- **Module:** Returns (Requirement 3), adjusted in A4 and A7 (Requirement 5)
+- **Evidence:** `ReturnService.java` declares `SaleService` (line 23), `ProductService` (line 24), `AccessoryService` (line 25) and `WarrantyService` (line 26), all concrete classes, and uses a few operations of each: `findSaleById` (lines 67, 117) and `calculateMonthlyTotal` (line 189) of `SaleService`, `restoreStock` of `ProductService` and of `AccessoryService` (lines 96 and 94), and `cancelWarranties` of `WarrantyService` (line 85).
+- **Explanation:** the return workflow, a high-level policy, depends on whole implementations when it needs two or three operations from each.
+- **Consequence:** it cannot be checked or reused without building the whole service graph, and a change in the signature of any of those services reaches `ReturnService`.
+- **Proposed solution:** narrow interfaces owned by the consumer: one for the sale lookup and the monthly total (`SaleLookup`), one for cancelling warranties, and the `IStockService` contract of V-04 for restoring stock. The services implement them and `ReturnService` receives the interfaces.
+- **Other integrante's code:** Yes: `SaleService`, `ProductService` and `Main`.
+
+### V-07 - WarrantyService and SaleService depend on each other as concrete classes
+
+- **Principle:** DIP
+- **Module:** Warranties (Requirement 4), A2 (Requirement 5) and the change of the sale lookup made after the GRASP correction
+- **Evidence:** `WarrantyService.java` declares the concrete `SaleService` (line 27), receives it through `setSaleService` (line 51), and uses it to rebuild warranties (line 66) and to scan the sales (line 227). `SaleService.java` declares `WarrantyService` (line 29). The setter was added in commit `aa019bd` by Milton Andrés Maldonado Salcedo.
+- **Explanation:** two concrete high-level classes depend on each other, and the cycle is closed with a setter. Until the setter is called, `loadWarranties` skips every stored record (line 66) and `syncPastConsoleWarranties` returns without doing anything (line 220).
+- **Consequence:** the order of the wiring decides whether the warranties exist; a missing call silently hides them, and a later save would write the file without them.
+- **Proposed solution:** `WarrantyService` receives, at construction, a narrow `SaleLookup` abstraction implemented by a class that does not depend on `WarrantyService`, so the setter and the cycle disappear. It is the same abstraction proposed in V-06.
+- **Other integrante's code:** Yes: `SaleService` and `Main` (Technical Leader).
