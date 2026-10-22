@@ -108,3 +108,45 @@ Considered and not reported: the three `register...` methods of `AccessoryServic
 - **Consequence:** the return workflow, which is stable, changes whenever the inventory of a new kind of item is added.
 - **Proposed solution:** `ReturnService` restores stock through the `IStockService` contract, with an implementation that resolves the item and delegates to the right service, so the type test disappears.
 - **Other integrante's code:** Yes. The implementation that resolves the item belongs to the owners of `ProductService` and `Main`; making `AccessoryService` implement the contract is my part.
+
+## 3. Liskov Substitution Principle (LSP)
+
+**Verdict: correct.**
+
+- `Client` (class at line 8) and `Seller` (line 8) extend `Person` (line 9) only by adding attributes and calling `super(...)` (lines 21 and 23); they override nothing, so they can be used wherever a `Person` is expected, as `PersonService` does when it keeps both kinds in one list (line 23).
+- Each `File...Repository` implements its interface, marks its operations with `@Override` and keeps the documented behavior of returning an empty result when the file does not exist:
+
+| Implementation | Declared at line | Empty result when the file does not exist, at line |
+| --- | --- | --- |
+| `FilePersonRepository` | 22 | 50 |
+| `FileAccessoryRepository` | 23 | 53 |
+| `FilePromotionRepository` | 25 | 59 |
+| `FileReturnRepository` | 25 | 58 |
+| `FileWarrantyRepository` | 22 | 55 |
+
+Each interface has a single implementation, so substitution between implementations is not exercised yet.
+
+## 4. Interface Segregation Principle (ISP)
+
+**Verdict: violation** (V-05).
+
+Where the principle is correctly applied: each repository interface is small and its client uses all its operations.
+
+| Interface (declared at line) | Client | Operations used (first use at line) |
+| --- | --- | --- |
+| `PersonRepository` (12) | `PersonService` | `loadPersons` (33), `savePersons` (52) |
+| `AccessoryRepository` (11) | `AccessoryService` | `loadAll` (32), `saveAll` (74) |
+| `PromotionRepository` (11) | `PromotionService` | `loadAll` (29), `saveAll` (32) |
+| `ReturnRepository` (12) | `ReturnService` | `loadAll` (116), `saveAll` (102) |
+| `WarrantyRepository` (12) | `WarrantyService` | `loadAll` (65), `saveAll` (109) |
+
+### V-05 - Constructor dependencies that the class never uses
+
+- **Principle:** ISP (related: Low Coupling)
+- **Module:** Accessories (Requirement 1) and Warranties (Requirement 4)
+- **Evidence:** `AccessoryService.java` declares `ProductRepository productRepository` (line 21) and assigns it (line 44); no operation is ever called on it. `WarrantyService.java` declares `SaleRepository saleRepository` (line 26) and assigns it (line 48); no operation is ever called on it, because the sale lookup goes through `saleService`.
+- **Explanation:** each class depends on a whole contract (`ProductRepository`, `SaleRepository`) and uses none of its operations.
+- **Consequence:** the code that builds these services has to create and pass objects that they never use, and a change in those contracts reaches classes that do not need them.
+- **Proposed solution:** remove the field, the assignment and the constructor parameter in each class, keeping the one-argument constructors.
+- **Other integrante's code:** Yes. `Main` (Technical Leader) builds both services and must be updated if it still passes those arguments.
+- **Note:** this is the same smell that the GRASP correction V-22 removed from `WarrantyService` (an unused `ProductService`); it came back with an unused `SaleRepository` after the sale lookup changed.
