@@ -21,6 +21,7 @@ import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
 import com.gamezone.ui.WarrantyCertificatePrinter;
+import com.gamezone.ui.ReturnReceiptPrinter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -1096,7 +1097,7 @@ public class GameZoneUI {
         } while (option != 0);
     }
 
-    /**
+   /**
      * Prompts for sale and item information to register a product return via
      * {@link ReturnService}.
      */
@@ -1110,7 +1111,7 @@ public class GameZoneUI {
 
             Return processedReturn = returnService.registerReturn(saleId, productIds, reason);
             System.out.println("\n¡Devolución procesada exitosamente!");
-            System.out.println(processedReturn.generateReturnReceipt());
+            System.out.println(ReturnReceiptPrinter.generateReturnReceipt(processedReturn));
 
         } catch (ResourceNotFoundException e) {
             System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
@@ -1125,7 +1126,7 @@ public class GameZoneUI {
         }
     }
 
-    /**
+   /**
      * Formats and prints a collection of return receipts to the console.
      *
      * @param returns list of return transactions to display
@@ -1135,7 +1136,7 @@ public class GameZoneUI {
             System.out.println("No se encontraron registros de devoluciones.");
         } else {
             for (Return r : returns) {
-                System.out.println(r.generateReturnReceipt());
+                System.out.println(ReturnReceiptPrinter.generateReturnReceipt(r));
                 System.out.println("----------------------------------------");
             }
         }
