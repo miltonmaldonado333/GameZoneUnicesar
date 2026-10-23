@@ -3,8 +3,8 @@
 ## Overview
 - **Author**: Jesus Manuel Martinez Baute
 - **Role**: Developer 1 (Product Module)
-- **Assigned Module**: `com.gamezone` (`model`, `persistence`, `service` for Products, Exceptions, Validators, Promotions, Returns)
-- **Branch**: `feature/product-module`, `feature/accessory-category-discount` (A1), `fix/return-discounted-refund` (A5), `feature/exception-handling`, `feature/grasp-audit`, `feature/grasp-refactor`
+- **Assigned Module**: `com.gamezone` (`model`, `persistence`, `service` for Products, Exceptions, Validators, Promotions, Returns, Warranties)
+- **Branch**: `feature/product-module`, `feature/accessory-category-discount` (A1), `fix/return-discounted-refund` (A5), `feature/exception-handling`, `feature/grasp-audit`, `feature/grasp-refactor`, `feature/solid-refactor`
 
 ---
 
@@ -104,3 +104,24 @@
   - Delegating subtotal queries from `Return.java` to `Sale.java` (Information Expert - V-12).
   - Overloading `canBeReturned(LocalDate)` in `Sale.java` to decouple system clock dependencies (Protected Variations - V-14).
 - **Decision Taken**: Refactored the corresponding classes, verified compilation with `mvn clean compile`, and recorded changes in `docs/grasp-refactor-log.md`.
+
+### 16. Phase 1: SOLID Individual Audit (Req. 8)
+- **Date & Time**: October 22, 2026 at 04:15 PM COT
+- **Context / Prompt**: Seeking guidance on auditing assigned classes (`ProductService`, `CategoryDiscount`, `SaleValidator`, `Return`, `Warranty`) against the 5 SOLID principles (SRP, OCP, LSP, ISP, DIP).
+- **AI Response / Advice**: Explained detection rules for SOLID violations:
+  - Extracting interface contracts to satisfy ISP (`IProductService` - V-DEV1-01).
+  - Removing console debug outputs to fix SRP in domain logic (`CategoryDiscount` - V-DEV1-02).
+  - Evaluating trade-offs between DIP abstractions and domain-specific roles in `SaleValidator` (V-DEV1-03).
+  - Moving receipt and certificate formatting logic out of domain entities (`Return`, `Warranty`) into UI printers (V-DEV1-04, V-DEV1-05).
+- **Decision Taken**: Conducted the individual audit and documented findings in `docs/solid-audit/developer1-audit.md`.
+
+### 17. Phase 2: SOLID Refactoring & UI Decoupling (Req. 8)
+- **Date & Time**: October 22, 2026 at 09:30 PM COT
+- **Context / Prompt**: Implementing SOLID refactorings for assigned violations (V-DEV1-01 through V-DEV1-05), resolving UI compilation impacts, and analyzing DIP/LSP trade-offs in `SaleValidator`.
+- **AI Response / Advice**: Guided step-by-step refactoring:
+  - Extracted `IProductService` interface extending `IStockService` (ISP - V-DEV1-01).
+  - Cleaned console output from `CategoryDiscount.java` (SRP - V-DEV1-02).
+  - Analyzed `SaleValidator.java` and recommended keeping `Client` and `Seller` types to avoid LSP violations and preserve `getEmployeeCode()` access (DIP - V-DEV1-03 Justified).
+  - Extracted `WarrantyCertificatePrinter.java` and `ReturnReceiptPrinter.java` in `com.gamezone.ui` to isolate presentation concerns from `Warranty` and `Return` domain entities (SRP - V-DEV1-04, V-DEV1-05).
+  - Updated UI invocation points in menu handlers (`printWarrantyList`, `consultWarrantyByProductAndSale`, `printReturnList`, `registerReturn`).
+- **Decision Taken**: Refactored assigned classes, updated UI presentation callers, verified zero compilation errors, authored `docs/solid-refactor-log.md`, and executed Git commits pushing changes to `feature/solid-refactor`.
