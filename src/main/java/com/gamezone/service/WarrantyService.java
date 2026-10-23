@@ -17,7 +17,7 @@ import com.gamezone.persistence.WarrantyRepository;
  * warranties. Handles the creation, persistence, replacement, and retrieval of
  * basic and extended warranties.
  */
-public class WarrantyService {
+public class WarrantyService implements WarrantyCanceller {
 
     private final WarrantyRepository warrantyRepository;
     private final SaleLookup saleLookup;
@@ -233,6 +233,7 @@ public class WarrantyService {
      * @param saleId unique identifier of the sale the product was bought in
      * @return the refundable warranty cost, or 0.0 if no warranty was found
      */
+    @Override
     public double cancelWarranties(String productId, String saleId) {
         if (productId == null || saleId == null) {
             return 0.0;

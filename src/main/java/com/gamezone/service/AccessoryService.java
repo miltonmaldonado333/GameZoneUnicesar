@@ -16,7 +16,7 @@ import com.gamezone.persistence.AccessoryRepository;
  * memories). Acts as the intermediary between the user interface and the
  * accessory persistence layer.
  */
-public class AccessoryService implements StockHolder {
+public class AccessoryService implements StockHolder, AccessoryLookup {
 
     private AccessoryRepository accessoryRepository;
     private List<Accessory> accessories;
@@ -157,6 +157,7 @@ public class AccessoryService implements StockHolder {
      * @param id the identifier to search for
      * @return the matching accessory, or null if not found
      */
+    @Override
     public Accessory findById(String id) {
         for (Accessory accessory : accessories) {
             if (accessory.getId().equals(id)) {

@@ -20,7 +20,7 @@ import java.util.List;
  * promotion discounts, warranty assignments, and sales queries.
  * Adheres to Dependency Inversion Principle (DIP) by depending on ISaleRepository interface.
  */
-public class SaleService {
+public class SaleService implements SaleLookup, MonthlySales {
 
     /** Repository for sale persistence operations abstraction. */
     private final ISaleRepository saleRepository;
@@ -157,6 +157,7 @@ public class SaleService {
      *
      * @return a list of fully populated Sale objects
      */
+    @Override
     public List<Sale> getAllSales() {
         return saleRepository.findAll();
     }
@@ -168,6 +169,7 @@ public class SaleService {
      * @param year  the year to evaluate
      * @return the sum of sales totals for the specified month and year
      */
+    @Override
     public double calculateMonthlyTotal(int month, int year) {
         double total = 0.0;
         for (Sale sale : getAllSales()) {
@@ -185,6 +187,7 @@ public class SaleService {
      * @param saleId the unique identifier of the sale
      * @return the matching sale instance, or null if not found
      */
+    @Override
     public Sale findSaleById(String saleId) {
         for (Sale sale : getAllSales()) {
             if (String.valueOf(sale.getId()).equals(saleId)) {
