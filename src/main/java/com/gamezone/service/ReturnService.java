@@ -23,7 +23,7 @@ public class ReturnService {
     private ProductService productService;
     private AccessoryService accessoryService;
     private WarrantyService warrantyService;
-    private IStockService stockService;
+    private ItemStock stockService;
 
     /**
      * Constructs a ReturnService with all required dependencies.
@@ -40,7 +40,7 @@ public class ReturnService {
     public ReturnService(ReturnRepository returnRepository, SaleService saleService,
                           ProductService productService, AccessoryService accessoryService,
                           WarrantyService warrantyService,
-                          IStockService stockService) {
+                          ItemStock stockService) {
         this.returnRepository = returnRepository;
         this.saleService = saleService;
         this.productService = productService;
@@ -93,7 +93,7 @@ public class ReturnService {
 
         // Restore stock through the common stock contract
         for (Product product : returnedProducts) {
-            stockService.restoreStock(product.getId(), 1);
+            stockService.restoreStock(product, 1);
         }
 
         List<Return> returns = loadReturns();

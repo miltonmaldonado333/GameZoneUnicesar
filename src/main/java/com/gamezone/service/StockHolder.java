@@ -1,17 +1,21 @@
 package com.gamezone.service;
 
+import com.gamezone.model.Product;
+
 /**
- * Stock contract of a service that owns a set of items and can tell whether an
- * identifier belongs to it. It lets a resolver route a stock operation to the
- * service that holds the item without testing the type of the item.
+ * Stock contract of a service that owns a set of items and can tell whether it
+ * holds a given item. It lets a resolver route a stock operation to the service
+ * that holds the item without testing the type of the item.
  */
 public interface StockHolder extends IStockService {
 
     /**
-     * Tells whether the given identifier belongs to the items held by this service.
+     * Tells whether the given item is one of the items held by this service. The
+     * check is made on the item itself and not on its identifier, because a
+     * product and an accessory can share an identifier.
      *
-     * @param itemId the identifier of the item
-     * @return true if this service holds an item with that identifier
+     * @param item the item to look for
+     * @return true if this service holds that very item
      */
-    boolean holds(String itemId);
+    boolean holds(Product item);
 }

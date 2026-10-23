@@ -1,12 +1,15 @@
 package com.gamezone.service;
 
+import com.gamezone.model.Product;
+
 /**
- * Stock service that routes every operation to the service that holds the item,
- * so callers reduce or restore stock through the common IStockService contract
- * without testing the type of the item. Accessories are asked first; any other
- * identifier goes to the product stock, which keeps its own error for unknown ids.
+ * Stock service that routes every operation to the service that holds the item.
+ * The owner is decided by asking the accessory stock whether it holds the very
+ * item, and not by comparing identifiers, because a product and an accessory can
+ * share an identifier. Callers reduce or restore stock without testing the type
+ * of the item.
  */
-public class ItemStockService implements IStockService {
+public class ItemStockService implements ItemStock {
 
     private final IStockService productStock;
     private final StockHolder accessoryStock;
@@ -22,41 +25,29 @@ public class ItemStockService implements IStockService {
         this.accessoryStock = accessoryStock;
     }
 
-    private IStockService route(String itemId) {
-        return accessoryStock.holds(itemId) ? accessoryStock : productStock;
-    }
-
-    /**
-     * Checks the stock in the service that holds the item.
-     *
-     * @param productId         the identifier of the item
-     * @param requestedQuantity the quantity required
-     * @return true if the stock is greater than or equal to the requested quantity
-     */
-    @Override
-    public boolean hasSufficientStock(String productId, int requestedQuantity) {
-        return route(productId).hasSufficientStock(productId, requestedQuantity);
+    private IStockService ownerOf(Product item) {
+        return accessoryStock.holds(item) ? accessoryStock : productStock;
     }
 
     /**
      * Reduces the stock in the service that holds the item.
      *
-     * @param productId the identifier of the item
-     * @param quantity  the quantity to deduct
+     * @param item     the item whose stock is reduced
+     * @param quantity the quantity to deduct
      */
     @Override
-    public void reduceStock(String productId, int quantity) {
-        route(productId).reduceStock(productId, quantity);
+    public void reduceStock(Product item, int quantity) {
+        ownerOf(item).reduceStock(item.getId(), quantity);
     }
 
     /**
      * Restores the stock in the service that holds the item.
      *
-     * @param productId the identifier of the item
-     * @param quantity  the quantity to return to inventory
+     * @param item     the item whose stock is restored
+     * @param quantity the quantity to return to inventory
      */
     @Override
-    public void restoreStock(String productId, int quantity) {
-        route(productId).restoreStock(productId, quantity);
+    public void restoreStock(Product item, int quantity) {
+        ownerOf(item).restoreStock(item.getId(), quantity);
     }
 }

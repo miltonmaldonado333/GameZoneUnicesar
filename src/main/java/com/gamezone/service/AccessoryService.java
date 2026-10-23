@@ -8,6 +8,7 @@ import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.Controller;
 import com.gamezone.model.Memory;
+import com.gamezone.model.Product;
 import com.gamezone.persistence.AccessoryRepository;
 
 /**
@@ -233,13 +234,15 @@ public class AccessoryService implements StockHolder {
     }
 
     /**
-     * Tells whether the identifier belongs to a registered accessory.
+     * Tells whether the given item is one of the registered accessories. The
+     * check is made on the item itself and not on its identifier, because a
+     * product and an accessory can share an identifier.
      *
-     * @param itemId the identifier of the item
-     * @return true if an accessory with that identifier exists
+     * @param item the item to look for
+     * @return true if the item is one of the accessories held by this service
      */
     @Override
-    public boolean holds(String itemId) {
-        return findById(itemId) != null;
+    public boolean holds(Product item) {
+        return accessories.contains(item);
     }
 }
