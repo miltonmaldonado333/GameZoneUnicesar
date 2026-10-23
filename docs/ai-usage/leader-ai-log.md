@@ -261,3 +261,230 @@ This log records technical consultations, logic verifications, and syntax checks
 - **Response:** Formatted all 20 entries into the final Markdown log layout.
 - **Decision:** Saved directly to `docs/ai-usage/leader-ai-log.md`.
 - **Related Commit:** `docs: complete leader ai usage log for integration requirement`
+
+---
+
+### Entry 21
+
+- **Date:** 2026-10-02
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `fix/ui-input-handling`
+- **Objective:** Fix `InputMismatchException` in `Scanner` when reading numeric options in `GameZoneUI`.
+- **Query:** "How to prevent `Scanner.nextInt()` from skipping the next line when reading user inputs in a console menu?"
+- **Response:** Recommended reading inputs as `String` using `Scanner.nextLine()` and parsing with `Integer.parseInt()` inside a `try-catch` block.
+- **Decision:** Refactored console reader in `GameZoneUI` to use `nextLine()` and `try-catch` parsing.
+- **Related Commit:** `fix: resolve scanner buffer issues in UI menu input`
+
+---
+
+### Entry 22
+
+- **Date:** 2026-10-04
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `fix/csv-formatting-error`
+- **Objective:** Resolve `ArrayIndexOutOfBoundsException` while parsing CSV files containing empty trailing fields.
+- **Query:** "Why does `String.split(",")` ignore trailing empty strings and how to fix it in Java?"
+- **Response:** Explained that `split(",")` defaults to dropping empty trailing tokens and suggested using `split(",", -1)` to keep all fields.
+- **Decision:** Updated CSV reading logic across all file repository parsers to `split(",", -1)`.
+- **Related Commit:** `fix: preserve empty trailing columns in repository csv split`
+
+---
+
+### Entry 23
+
+- **Date:** 2026-10-06
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `refactor/date-formatter`
+- **Objective:** Standardize date string parsing across model and service classes.
+- **Query:** "How to safely parse `LocalDate` using a custom pattern like `yyyy-MM-dd` in Java 17?"
+- **Response:** Demonstrated using `DateTimeFormatter.ofPattern("yyyy-MM-dd")` and handling `DateTimeParseException`.
+- **Decision:** Added central `DateTimeFormatter` configuration for sale and return dates.
+- **Related Commit:** `refactor: standardize localdate formatting and parsing`
+
+---
+
+### Entry 24
+
+- **Date:** 2026-10-08
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `fix/maven-build-failure`
+- **Objective:** Fix Maven compilation error regarding source version compatibility.
+- **Query:** "How to configure `pom.xml` to enforce Java 17 source and target release in Maven Compiler Plugin?"
+- **Response:** Provided the `<maven.compiler.source>17</maven.compiler.source>` and `<maven.compiler.target>17</maven.compiler.target>` configuration properties.
+- **Decision:** Updated `pom.xml` build properties to explicitly target Java 17.
+- **Related Commit:** `build: set maven compiler plugin release version to 17`
+
+---
+
+### Entry 25
+
+- **Date:** 2026-10-10
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `fix/file-not-found-initialization`
+- **Objective:** Prevent runtime exceptions when persistence CSV files do not exist on initial run.
+- **Query:** "What is the best way to auto-create missing files and parent directories before reading in Java `File` API?"
+- **Response:** Showed `file.getParentFile().mkdirs()` followed by `file.createNewFile()`.
+- **Decision:** Added directory and file existence checks in repository initialization blocks.
+- **Related Commit:** `fix: auto-create storage directory and csv files on startup`
+
+---
+
+### Entry 26
+
+- **Date:** 2026-10-12
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `fix/null-pointer-product-lookup`
+- **Objective:** Resolve `NullPointerException` during product lookup by ID when case sensitivity differs.
+- **Query:** "How to compare two String variables in Java safely when one might be null?"
+- **Response:** Recommended using `Objects.equals(a, b)` or `stringA != null && stringA.equalsIgnoreCase(stringB)`.
+- **Decision:** Applied safe equals check in `ProductService.findProductById`.
+- **Related Commit:** `fix: add null safe string comparisons in product queries`
+
+---
+
+### Entry 27
+
+- **Date:** 2026-10-14
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `refactor/git-merge-conflict`
+- **Objective:** Cleanly resolve Git merge conflict between `feature/sale-module` and `develop`.
+- **Query:** "How to abort a git merge in progress if conflict resolution gets corrupted?"
+- **Response:** Provided `git merge --abort`.
+- **Decision:** Aborted corrupted merge, stashed local changes, and re-executed clean merge step-by-step.
+- **Related Commit:** `chore: resolve branch merge conflicts on develop`
+
+---
+
+### Entry 28
+
+- **Date:** 2026-10-15
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `fix/receipt-currency-format`
+- **Objective:** Format numeric sale totals into clean COP currency strings for receipts.
+- **Query:** "How to format a `double` as Colombian Pesos currency in Java without decimal cents?"
+- **Response:** Showed using `NumberFormat.getCurrencyInstance(new Locale("es", "CO"))` and setting maximum fraction digits to 0.
+- **Decision:** Used currency formatter in `Sale.generateReceipt()` and UI output screens.
+- **Related Commit:** `fix: format monetary values to standard COP currency representation`
+
+---
+
+### Entry 29
+
+- **Date:** 2026-10-16
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `fix/list-unmodifiable-exception`
+- **Objective:** Fix `UnsupportedOperationException` when adding items to list loaded from service.
+- **Query:** "Why does calling `.add()` on a list returned by `List.of()` throw `UnsupportedOperationException`?"
+- **Response:** Explained that `List.of()` returns an immutable list, and suggested wrapping it with `new ArrayList<>(List.of(...))`.
+- **Decision:** Returned modifiable `ArrayList` instances from service data query methods.
+- **Related Commit:** `fix: return modifiable list instances from service layers`
+
+---
+
+### Entry 30
+
+- **Date:** 2026-10-17
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 6 / `docs/ai-usage-finalization`
+- **Objective:** Verify proper Markdown code block escaping for terminal commands in documentation.
+- **Query:** "How to display raw markdown backticks inside a markdown code snippet block without breaking rendering?"
+- **Response:** Showed wrapping the outer block with four backticks ` ``` `.
+- **Decision:** Formatted terminal outputs in team documentation files accordingly.
+- **Related Commit:** `docs: fix markdown syntax escaping in documentation files`
+
+---
+
+### SECTION 1- PHASE 1 - AUDIT
+
+---
+
+### Entry 31
+
+- **Date:** 2026-10-21
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 1 / `feature/solid-audit`
+- **Objective:** Consult Git workflow commands and Markdown file structure requirements for Requirement 8 (Phase 1).
+- **Query:** "hagmos los archivos en la nueva rama, los necesarios como lo indica este taller"
+- **Response:** Provided Git terminal commands to create the required directory structure (`docs/solid-audit/`, `docs/ai-usage/`) and initialized blank files for `solid-analysis.md`, `leader-audit.md`, and `consolidated-audit.md`.
+- **Decision:** Created branch `feature/solid-audit` from updated `develop` and initialized all project Markdown files using terminal commands.
+- **Related Commit:** `docs: initialize solid audit documentation directory structure`
+
+---
+
+### Entry 32
+
+- **Date:** 2026-10-21
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 1 / `feature/solid-audit`
+- **Objective:** Request theoretical guidelines and classification criteria for evaluating SOLID principles in code analysis.
+- **Query:** "dame unos consejos para el analysis sencillos como definicion de principios para responder las preguntas"
+- **Response:** Provided concise definitions for SRP, OCP, LSP, ISP, and DIP, along with minimal evidence standards (line numbers, code snippets, and failure impact) required for classification.
+- **Decision:** Applied the classification criteria and definitions as the standard baseline to evaluate classes and answer team analysis questions in `solid-analysis.md`.
+- **Related Commit:** `docs: add solid classification criteria to analysis documentation`
+
+---
+
+## Section 2: Phase 2 — Refactoring
+
+### Entry 33
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Extract printing logic from the `Product` domain class to adhere to the Single Responsibility Principle.
+- **Query:** "How to extract console printing logic from the `Product` class to follow the Single Responsibility Principle?"
+- **Response:** Recommended moving all `System.out.println` statements to a dedicated `ProductView` or `ConsolePrinter` utility class.
+- **Decision:** Created a `ConsolePrinter` class to handle all UI outputs, keeping `Product` strictly for data.
+- **Related Commit:** `refactor: extract printing logic from product model`
+
+---
+
+### Entry 34
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Replace a hardcoded switch statement for discount types.
+- **Query:** "What is the simplest way to replace a large switch statement for different discount types in Java?"
+- **Response:** Suggested using the Strategy pattern by creating a `DiscountStrategy` interface and implementing separate classes for each discount type.
+- **Decision:** Implemented `DiscountStrategy` and refactored the promotion calculator.
+- **Related Commit:** `refactor: replace discount switch with strategy pattern`
+
+---
+
+### Entry 35
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Fix a Liskov Substitution Principle violation in the accessory hierarchy.
+- **Query:** "Why does throwing `UnsupportedOperationException` in a subclass override violate LSP?"
+- **Response:** Explained that subclasses must uphold the expected behavior of the base class; throwing unexpected runtime exceptions breaks base class contracts.
+- **Decision:** Restructured the class hierarchy using interfaces so subclasses only implement methods they actually support.
+- **Related Commit:** `refactor: fix lsp violation by restructuring inheritance`
+
+---
+
+### Entry 36
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Implement Dependency Inversion Principle for repository access.
+- **Query:** "How to inject a repository interface into a service class without using a framework like Spring?"
+- **Response:** Demonstrated manual constructor injection by passing the repository interface as a parameter in the service's constructor.
+- **Decision:** Applied constructor injection to `SaleService`, making it depend on the interface rather than the concrete CSV repository.
+- **Related Commit:** `refactor: apply constructor injection to services`
+
+---
+
+### Entry 37
+
+- **Date:** 2026-10-22
+- **Tool:** Gemini 2.5 Flash
+- **Phase & Branch:** Phase 2 / `feature/solid-refactor`
+- **Objective:** Keep the local refactoring branch updated with the main development line.
+- **Query:** "What is the git command to update my current feature branch with the latest changes from develop using rebase?"
+- **Response:** Provided the commands `git fetch origin` followed by `git rebase origin/develop`.
+- **Decision:** Rebased the local `feature/solid-refactor` branch to maintain a clean linear commit history.
+- **Related Commit:** `chore: rebase refactor branches onto develop`

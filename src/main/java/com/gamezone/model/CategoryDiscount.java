@@ -34,17 +34,23 @@ public class CategoryDiscount extends Promotion {
         this.targetCategory = targetCategory.toUpperCase();
     }
 
+    /**
+     * Calculates discount by checking product categories polymorphically 
+     * without inspecting concrete instances via instanceof (V-08, V-09).
+     */
     @Override
     public double calculateDiscount(Sale sale) {
+        if (sale == null || sale.getProducts() == null) {
+            return 0.0;
+        }
+
         double applicableSubtotal = 0.0;
 
         for (Product product : sale.getProducts()) {
-            if ("VIDEOGAME".equalsIgnoreCase(targetCategory) && product instanceof VideoGame) {
-                applicableSubtotal += product.getPrice();
-            } else if ("CONSOLE".equalsIgnoreCase(targetCategory) && product instanceof Console) {
-                applicableSubtotal += product.getPrice();
-            } else if ("ACCESSORY".equalsIgnoreCase(targetCategory) && product instanceof Accessory) {
-                applicableSubtotal += product.getPrice();
+            if (product != null) {
+                if (targetCategory.equalsIgnoreCase(product.getCategory())) {
+                    applicableSubtotal += product.getPrice();
+                }
             }
         }
 

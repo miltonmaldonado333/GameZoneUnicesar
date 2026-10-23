@@ -1,0 +1,46 @@
+# GRASP Refactor Log
+
+## Non-Regression Strategy
+
+To guarantee that the refactoring preserves external system behavior across all 10 menu operations, a baseline check was performed on `develop` prior to applying code modifications.
+
+### Verification Plan
+1. Compile the project using `mvn clean compile` before and after each refactoring activity.
+2. Execute test workflows for product registration, listings, stock updates, sale processing, returns, and warranty assignments.
+3. Ensure that identical inputs produce the exact same outputs, messages, and persisted data structure as before the refactor.
+
+---
+
+## Refactor Change Log - Developer 1
+
+| Class | Change Made | Violation ID | Applied Pattern | Commit / PR / Author |
+| :--- | :--- | :---: | :--- | :--- |
+| `Product` | Added `reduceStock()` and `addStock()` methods to encapsulate stock mutation state. | V-10 | Information Expert | `9086f2c` / Jesús Martínez |
+| `ProductValidator` | Added `validateUniqueProduct()` method to encapsulate product existence and duplicate assertions. | V-11 | High Cohesion / Pure Fabrication | `8d0224c` / Jesús Martínez |
+| `CategoryDiscount` | Refactored `calculateDiscount()` to use polymorphic `product.getCategory()` calls. | V-08, V-09 | Polymorphism / Information Expert | `3ec52a6` / Jesús Martínez |
+| `Return` | Refactored `calculateRefundAmount()` and `generateReturnReceipt()` to consume `originalSale.getSubtotal()`. | V-12 | Information Expert / Low Coupling | `6213435` / Jesús Martínez |
+| `ProductService` | Updated `updateStock()` and product registration to delegate to `Product` and `ProductValidator`. | V-10, V-11 | Information Expert / Pure Fabrication | `18cc37f` / Jesús Martínez |
+| `Sale` | Overloaded `canBeReturned(LocalDate evaluationDate)` to decouple policy checks from system clock reliance and preserved Javadocs. | V-14 | Protected Variations | `7c3ed9f` / Jesús Martínez |
+
+## Refactor Change Log - Developer 2
+
+| Class | Change Made | Violation ID | Applied Pattern | Commit / PR / Author |
+| :--- | :--- | :---: | :--- | :--- |
+| `WarrantyService` | Removed the unused `ProductService` field and constructor parameter. The matching call in `Main` was updated in the same commit (one line). | V-22 | Low Coupling | `0471c4d` / Luis Corzo |
+| `PromotionValidator`, `PromotionService` | Extracted the target category check into `PromotionValidator`, keeping the exception type and the Spanish message. | V-17 | Pure Fabrication / High Cohesion | `dea802a` / Luis Corzo |
+| `AccessoryService` | `updateStock` and `restoreStock` now call `Product.reduceStock` and `Product.addStock` instead of computing the stock outside the entity. | V-15 | Information Expert | `75571df` / Luis Corzo |
+| `AccessoryService` | `listAccessoriesByType` compares the requested type with `getCategory()` ignoring case instead of testing the concrete class. | V-16 | Polymorphism | `f822d12` / Luis Corzo |
+| `ReturnValidator` | New validator holding the return checks (sale exists and is inside the 30-day window, product belongs to the sale, units left to return), with the same exception type and messages. | V-18 | High Cohesion / Pure Fabrication | `7745bb0` / Luis Corzo |
+| `ReturnService` | `registerReturn` delegates its checks to `ReturnValidator` and keeps only the orchestration. | V-18 | High Cohesion / Controller | `d56cde0` / Luis Corzo |
+| `SaleService`, `ReturnService` | Added `SaleService.calculateMonthlyTotal` with the monthly sales loop. `ReturnService.calculateMonthlySales` keeps its signature and delegates to it. | V-19 | Information Expert | `fcf0a50` / Luis Corzo |
+| `SaleRepository`, `SaleService` | Added the sale lookup by id (`SaleRepository.findById` and `SaleService.findSaleById`). Classes owned by the Technical Leader, edited with his authorization. | V-20 | Information Expert / Low Coupling | `28b14ce` / Luis Corzo |
+| `ReturnService`, `ReturnRepository`, `WarrantyRepository` | Deleted the three private copies of `findSaleById` and used the shared lookup. | V-20 | Information Expert / Low Coupling | `013f9da` / Luis Corzo |
+| `ReturnRecord`, `WarrantyRecord` | New raw record classes that hold only identifiers and simple values read from the returns and warranties files. | V-04 | Low Coupling / Indirection | `a0d84b8` / Luis Corzo |
+| `ReturnRepository`, `ReturnService`, `Main` | `ReturnRepository` no longer receives services and loads raw `ReturnRecord` objects. `ReturnService.loadReturns` rebuilds each `Return`, skipping records whose sale is not found, as before. One line of `Main` updated. | V-04 | Low Coupling / Indirection | `4577aa1` / Luis Corzo |
+| `WarrantyRepository`, `WarrantyService`, `Main` | `WarrantyRepository` no longer receives services and loads raw `WarrantyRecord` objects. `WarrantyService.loadWarranties` rebuilds each `Warranty`, taking the product from its sale. One line of `Main` updated. | V-04 | Low Coupling / Indirection | `54657a0` / Luis Corzo |
+| `ReturnService` | Replaced `instanceof Console` with `Product.hasWarrantyCoverage()`, created by Developer 1 in `fa51543`. Only the warranty part of V-05: the `instanceof Accessory` that chooses the stock service stays until the common stock contract exists. | V-05 (part) | Polymorphism | `e3a3db2` / Luis Corzo |
+| `WarrantyService` | Replaced `instanceof Console` in `syncPastConsoleWarranties` with `Product.hasWarrantyCoverage()`. | V-05 (part) | Polymorphism | `50eff64` / Luis Corzo |
+| `AccessoryRepository`, `FileAccessoryRepository`, `Main` | Extracted the `AccessoryRepository` interface and renamed the implementation. `AccessoryService` already depends on the name, now the interface. | V-21 | Indirection / Protected Variations | `590d72c` / Luis Corzo |
+| `PromotionRepository`, `FilePromotionRepository`, `Main` | Extracted the `PromotionRepository` interface and renamed the implementation. | V-21 | Indirection / Protected Variations | `677abad` / Luis Corzo |
+| `ReturnRepository`, `FileReturnRepository`, `Main` | Extracted the `ReturnRepository` interface and renamed the implementation. | V-21 | Indirection / Protected Variations | `93af52f` / Luis Corzo |
+| `WarrantyRepository`, `FileWarrantyRepository`, `Main` | Extracted the `WarrantyRepository` interface and renamed the implementation. | V-21 | Indirection / Protected Variations | `b435f9c` / Luis Corzo |

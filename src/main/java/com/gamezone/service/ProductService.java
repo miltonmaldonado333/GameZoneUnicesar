@@ -1,81 +1,165 @@
 package com.gamezone.service;
 
+import com.gamezone.exceptions.BusinessRuleException;
 import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
 import com.gamezone.persistence.ProductRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service class handling product business logic.
+ * Service handling product catalog operations, stock updates, and entity registrations.
+ * Implements unified product service contracts following SOLID principles.
  */
-public class ProductService {
+public class ProductService implements IProductService, IStockService {
 
     private final ProductRepository productRepository;
-    private final List<Product> products;
-   // Constructor: Receives the repository and loads saved products into memory
+    private AccessoryService accessoryService;
+
+    /**
+     * Constructs a ProductService instance with the required repository.
+     *
+     * @param productRepository the persistence repository for managing product data
+     */
     public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
-        this.products = productRepository.loadProducts();
+    }
+
+    public void setAccessoryService(AccessoryService accessoryService) {
+        this.accessoryService = accessoryService;
+    }
+
+    @Override
+    public boolean hasSufficientStock(String productId, int requestedQuantity) {
+        Product product = productRepository.findById(productId);
+        if (product == null) {
+            return false;
+        }
+        return product.getStock() >= requestedQuantity;
+    }
+
+    @Override
+    public void reduceStock(String productId, int quantity) {
+        List<Product> products = productRepository.loadProducts();
+
+        Product targetProduct = null;
+        for (Product p : products) {
+            if (p.getId().equalsIgnoreCase(productId)) {
+                targetProduct = p;
+                break;
+            }
+        }
+
+        if (targetProduct == null) {
+            throw new BusinessRuleException("Producto no encontrado con ID: " + productId);
+        }
+        if (targetProduct.getStock() < quantity) {
+            throw new BusinessRuleException("Stock no suficiente para el producto con el ID: " + productId);
+        }
+
+        targetProduct.setStock(targetProduct.getStock() - quantity);
+        productRepository.saveProducts(products);
+    }
+
+    @Override
+    public void restoreStock(String productId, int quantity) {
+        List<Product> products = productRepository.loadProducts();
+
+        Product targetProduct = null;
+        for (Product p : products) {
+            if (p.getId().equalsIgnoreCase(productId)) {
+                targetProduct = p;
+                break;
+            }
+        }
+
+        if (targetProduct == null) {
+            throw new BusinessRuleException("Producto no encontrado con ID: " + productId);
+        }
+
+        targetProduct.setStock(targetProduct.getStock() + quantity);
+        productRepository.saveProducts(products);
+    }
+
+    @Override
+    public List<String> getAvailableCategories() {
+        List<Product> products = productRepository.loadProducts();
+
+        List<String> categories = new ArrayList<>();
+        if (products != null) {
+            for (Product p : products) {
+                String category = p.getCategory();
+                if (category != null && !categories.contains(category.toUpperCase())) {
+                    categories.add(category.toUpperCase());
+                }
+            }
+        }
+        return categories;
+    }
+
+    @Override
+    public boolean registerVideoGame(String platform, String genre, String ageRating,
+                                     String id, String title, double price, int stock) {
+        List<Product> products = productRepository.loadProducts();
+        if (products == null) {
+            products = new ArrayList<>();
+        }
+
+        for (Product p : products) {
+            if (p.getId().equalsIgnoreCase(id)) {
+                return false;
+            }
+        }
+
+        VideoGame game = new VideoGame(platform, genre, ageRating, id, title, price, stock);
+        products.add(game);
+
+        productRepository.saveProducts(products);
+        return true;
     }
 
     /**
-     * Finds a product by its unique ID.
+     * Registers a new Gaming Console entity in the product catalog.
+     *
+     * @param brand      manufacturer brand
+     * @param model      console model name
+     * @param generation console hardware generation
+     * @param id         unique product identifier
+     * @param title      display title
+     * @param price      unit retail price
+     * @param stock      available inventory stock
+     * @return true if successfully saved, false if product ID already exists
      */
-    public Product findProductById(String id) {
-        for (Product product : products) {
-            if (product.getId().equalsIgnoreCase(id)) {
-                return product;
+    @Override
+    public boolean registerConsole(String brand, String model, String generation,
+                                   String id, String title, double price, int stock) {
+        List<Product> products = productRepository.loadProducts();
+        if (products == null) {
+            products = new ArrayList<>();
+        }
+
+        for (Product p : products) {
+            if (p.getId().equalsIgnoreCase(id)) {
+                return false;
             }
         }
-        return null;
-    }
-    // Registers a new video game if the ID is unique and saves to file
-    public boolean registerVideoGame(String platform, String genre, String ageRating, String id, String title, double price, int stock) {
-        if (findProductById(id) != null) {
-            return false; // ID ALREADY EXIST
-        }
-        VideoGame game = new VideoGame(platform, genre, ageRating, id, title, price, stock);
-        products.add(game);
-        productRepository.saveProducts(products);
-        return true;
-    }
-    // Registers a new console if the ID is unique and saves to file
-    public boolean registerConsole(String brand, String model, String generation, String id, String title, double price, int stock) {
-        if (findProductById(id) != null) {
-            return false; //ID ALREADY EXIST
-        }
+
         Console console = new Console(brand, model, generation, id, title, price, stock);
         products.add(console);
+
         productRepository.saveProducts(products);
         return true;
     }
-    // Returns a copy of the complete product list
+
+    @Override
     public List<Product> getAllProducts() {
-        return new ArrayList<>(products);
+        return productRepository.findAll();
     }
 
-    // Deducts sold quantity from product stock and saves to file
-    public void updateStock(String productId, int quantitySold) {
-        Product product = findProductById(productId);
-        if (product != null) {
-            int newStock = product.getStock() - quantitySold;
-            if (newStock >= 0) {
-                product.setStock(newStock);
-                productRepository.saveProducts(products);
-            }
-        }
-    }
-    
-    // here it checks if the product exist in the stock and also adds to the stock 
-    public void restoreStock(String productId, int quantity){
-        Product product= findProductById(productId);
-        if(product != null){
-            product.setStock(product.getStock() + quantity);
-            productRepository.saveProducts(products);
-        }else{
-            throw new IllegalArgumentException("product not foun with ID: " + productId);
-        }
+    @Override
+    public Product findProductById(String id) {
+        return productRepository.findById(id);
     }
 }

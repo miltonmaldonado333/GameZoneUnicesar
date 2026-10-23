@@ -3,15 +3,19 @@ package com.gamezone.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Person;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.PersonRepository;
+import com.gamezone.validation.PersonValidator;
 
 /**
  * Provides the business rules for managing clients and sellers.
  * Acts as the intermediary between the user interface and the
- * person persistence layer.
+ * person persistence layer. Input and uniqueness checks are delegated
+ * to PersonValidator.
  */
 public class PersonService {
 
@@ -36,8 +40,13 @@ public class PersonService {
      * @param identification the client's identification number
      * @param phone          the client's contact phone number
      * @param email          the client's email address
+     * @throws InvalidDataException  if a required field is empty or the email format is invalid
+     * @throws BusinessRuleException if a person with the same identification already exists
      */
     public void registerClient(String name, String identification, String phone, String email) {
+        PersonValidator.validatePersonData(identification, name, email, phone);
+        PersonValidator.validateUniquePerson(persons, identification);
+
         Client client = new Client(name, identification, phone, email);
         persons.add(client);
         personRepository.savePersons(persons);
@@ -45,14 +54,18 @@ public class PersonService {
 
     /**
      * Registers a new seller and persists the updated list.
-     * 
+     * Sellers have no email, so only the uniqueness of the identification is checked.
+     *
      * @param name           the seller's full name
      * @param identification the seller's identification number
      * @param phone          the seller's contact phone number
      * @param employeeCode   the seller's employee code
      * @param workShift      the seller's work shift
+     * @throws BusinessRuleException if a person with the same identification already exists
      */
     public void registerSeller(String name, String identification, String phone, String employeeCode, String workShift) {
+        PersonValidator.validateUniquePerson(persons, identification);
+
         Seller seller = new Seller(name, identification, phone, employeeCode, workShift);
         persons.add(seller);
         personRepository.savePersons(persons);
@@ -90,13 +103,21 @@ public class PersonService {
 
     /**
      * Finds a client by their identification number.
+     * Insensitive to extra spaces and safely handles null values.
      *
      * @param id the identification number to search for
      * @return the matching client, or null if not found
      */
     public Client findClientById(String id) {
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+
+        String cleanId = id.trim();
+
         for (Client client : getAllClients()) {
-            if (client.getIdentification().equals(id)) {
+            if (client.getIdentification() != null &&
+                client.getIdentification().trim().equalsIgnoreCase(cleanId)) {
                 return client;
             }
         }
@@ -105,13 +126,21 @@ public class PersonService {
 
     /**
      * Finds a seller by their employee code.
+     * Insensitive to case differences (e.g. v005 vs V005) and extra spaces.
      *
      * @param code the employee code to search for
      * @return the matching seller, or null if not found
      */
     public Seller findSellerByCode(String code) {
+        if (code == null || code.isBlank()) {
+            return null;
+        }
+
+        String cleanCode = code.trim();
+
         for (Seller seller : getAllSellers()) {
-            if (seller.getEmployeeCode().equals(code)) {
+            if (seller.getEmployeeCode() != null &&
+                seller.getEmployeeCode().trim().equalsIgnoreCase(cleanCode)) {
                 return seller;
             }
         }

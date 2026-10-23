@@ -10,6 +10,7 @@ import com.gamezone.model.PercentageDiscount;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.persistence.PromotionRepository;
+import com.gamezone.validation.PromotionValidator;
 
 /**
  * Service class handling the business logic for managing promotions and
@@ -32,9 +33,7 @@ public class PromotionService {
     }
 
     public void registerCategoryDiscount(String id, String name, LocalDate startDate,LocalDate endDate, double percentage, String targetCategory) {
-        if (!"VIDEOGAME".equalsIgnoreCase(targetCategory)&& !"CONSOLE".equalsIgnoreCase(targetCategory)&& !"ACCESSORY".equalsIgnoreCase(targetCategory)) {
-            throw new IllegalArgumentException("La categoría objetivo debe ser VIDEOGAME, CONSOLE o ACCESSORY.");
-        }
+        PromotionValidator.validateTargetCategory(targetCategory);
 
         List<Promotion> promotions = promotionRepository.loadAll();
         // model: (percentage, targetCategory, id, name, startDate, endDate)

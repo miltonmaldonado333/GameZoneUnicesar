@@ -1,5 +1,6 @@
 package com.gamezone.model;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -59,7 +60,9 @@ public class Sale {
         double sum = 0.0;
         if (products != null) {
             for (Product product : products) {
-                sum += product.getPrice();
+                if (product != null) {
+                    sum += product.getPrice();
+                }
             }
         }
         return sum;
@@ -82,11 +85,11 @@ public class Sale {
      *
      * @return a formatted receipt string for user display
      */
-    public String generateReceipt() {
+   public String generateReceipt() {
         StringBuilder sb = new StringBuilder();
         sb.append("=========================================\n");
-        sb.append("           GAMEZONE UNICESAR             \n");
-        sb.append("           RECIBO DE VENTA               \n");
+        sb.append("            GAMEZONE UNICESAR            \n");
+        sb.append("            RECIBO DE VENTA              \n");
         sb.append("=========================================\n");
         sb.append("ID Venta: ").append(id).append("\n");
         sb.append("Fecha   : ").append(date).append("\n");
@@ -101,7 +104,9 @@ public class Sale {
 
         if (products != null) {
             for (Product item : products) {
-                sb.append(String.format("- %s ($%.2f)\n", item.getTitle(), item.getPrice()));
+                if (item != null) {
+                    sb.append(String.format("- %s ($%.2f)\n", item.getTitle(), item.getPrice()));
+                }
             }
         }
 
@@ -109,13 +114,17 @@ public class Sale {
         sb.append("-----------------------------------------\n");
         sb.append(String.format("Subtotal                : $%.2f\n", subtotal));
 
-        if (appliedPromotionName != null && !appliedPromotionName.isEmpty() && discountAmount > 0) {
-            sb.append(String.format("Descuento (%s) : -$%.2f\n", appliedPromotionName, discountAmount));
+        if (discountAmount > 0) {
+            if (appliedPromotionName != null && !appliedPromotionName.trim().isEmpty()) {
+                sb.append(String.format("Descuento (%s) : -$%.2f\n", appliedPromotionName, discountAmount));
+            } else {
+                sb.append(String.format("Descuento               : -$%.2f\n", discountAmount));
+            }
         } else {
             sb.append("Descuento               : -$0.00\n");
         }
 
-        sb.append(String.format("Garantías Extendidas    : +$%.2f\n", extendedWarrantyCost));
+        sb.append(String.format("Garantías Extendidas    : +$%.2f\n", getExtendedWarrantyCost()));
         sb.append("-----------------------------------------\n");
         sb.append(String.format("TOTAL FINAL             : $%.2f\n", total));
         sb.append("=========================================\n");
@@ -133,19 +142,30 @@ public class Sale {
     }
 
     /**
-     * Checks whether the sale transaction is eligible for a return based on the 30-day return policy.
+     * Evaluates return policy eligibility against an explicit reference date.
      * 
-     * @return true if the sale date is within 30 days of the current date; false otherwise
+     * GRASP Protected Variations (V-14): Decouples the 30-day policy rule from 
+     * direct system clock reliance.
+     *
+     * @param evaluationDate the date to compare against the sale date
+     * @return true if the sale is within 30 days of evaluationDate; false otherwise
      */
-    public boolean canBeReturned() {
-        if (this.date == null || this.date.isEmpty()) {
+    public boolean canBeReturned(LocalDate evaluationDate) {
+        if (this.date == null || this.date.trim().isEmpty() || evaluationDate == null) {
             return false;
         }
         
-        java.time.LocalDate saleDate = java.time.LocalDate.parse(this.date);
-        java.time.LocalDate currentDate = java.time.LocalDate.now();
-        
-        return !currentDate.isAfter(saleDate.plusDays(30));
+        LocalDate saleDate = LocalDate.parse(this.date.trim());
+        return !evaluationDate.isAfter(saleDate.plusDays(30));
+    }
+
+    /**
+     * Checks whether the sale transaction is eligible for a return based on current system date.
+     *
+     * @return true if the sale date is within 30 days of the current date; false otherwise
+     */
+    public boolean canBeReturned() {
+        return canBeReturned(LocalDate.now());
     }
 
     /**

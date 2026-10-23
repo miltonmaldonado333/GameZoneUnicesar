@@ -1,17 +1,19 @@
 # GameZone Unicesar - Information System
 
-GameZone Unicesar is a layered Java application designed for managing products, sales, customers, staff, commercial promotions, product warranties, and returns for a video game store located in Valledupar, Colombia[cite: 1]. The system provides persistent file-based data management, strict domain validation rules, and an interactive console interface[cite: 1].
+GameZone Unicesar is a robust, layered Java application designed for managing products, sales, customers, staff, commercial promotions, product warranties, returns, and custom exception handling for a video game store located in Valledupar, Colombia[cite: 1]. The system provides persistent file-based data management, strict domain validation rules, UTF-8 encoded terminal support, and an interactive console interface[cite: 1].
 
 ---
 
 ## Architecture & Design Principles
 
-The application is built using a **4-Layer Architecture** to enforce separation of concerns, maintainability, and clean code principles[cite: 1]:
+The application is built using a **5-Layer Architecture** following SOLID principles, GRASP design patterns, and clean code standards[cite: 1]:
 
-1. **Model Layer (`com.gamezone.model`):** Core domain entities (`Person`, `Client`, `Seller`, `Product`, `VideoGame`, `Console`, `Accessory`, `Controller`, `Cable`, `Memory`, `Sale`, `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`, `Warranty`, `BasicWarranty`, `ExtendedWarranty`, `Return`).
-2. **Persistence Layer (`com.gamezone.persistence`):** Handles file-based data reading and writing (`data/*.csv`, `data/*.txt`)[cite: 1].
-3. **Service Layer (`com.gamezone.service`):** Contains business logic, inventory updates, promotion/discount calculations, warranty lifecycle management, return processing, and transaction rules[cite: 1].
-4. **UI Layer (`com.gamezone.ui`):** Console-based user interface (`GameZoneUI`, `ConsoleMenu`)[cite: 1].
+1. **Model Layer (`com.gamezone.model`):** Core domain entities (`Person`, `Client`, `Seller`, `Product`, `VideoGame`, `Console`, `Accessory`, `Controller`, `Cable`, `Memory`, `Sale`, `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`, `Warranty`, `BasicWarranty`, `ExtendedWarranty`, `Return`)[cite: 1].
+2. **Exception Layer (`com.gamezone.exceptions`):** Custom domain-specific exception hierarchy (`GameZoneException`, `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`) for structured error propagation.
+3. **Validation Layer (`com.gamezone.validation`):** Centralized validation rules (`PersonValidator`, `ProductValidator`, `SaleValidator`) ensuring data integrity and enforcing business invariants prior to persistence or service processing.
+4. **Persistence Layer (`com.gamezone.persistence`):** Handles file-based data reading and writing (`data/*.csv`, `data/*.txt`) using UTF-8 encodings[cite: 1].
+5. **Service Layer (`com.gamezone.service`):** Contains core business logic, inventory updates, promotion engine, warranty lifecycle management, return processing, and transaction rules[cite: 1].
+6. **UI Layer (`com.gamezone.ui`):** Interactive presentation layer (`GameZoneUI`, `ConsoleMenu`) decoupled via helper methods (`promptString`, `promptInt`, `promptDouble`, `promptDate`) to fulfill the Single Responsibility Principle (SRP)[cite: 1].
 
 ---
 
@@ -36,11 +38,11 @@ The system manages video game accessories integrated into the existing product h
 
 ### Feature 2: Promotion & Discount Module (Requirement 2 & Adjustment A1)
 
-The system supports automated marketing campaigns and discount calculations applied during checkout[cite: 1, 3]:
+The system supports automated marketing campaigns and discount calculations applied during checkout[cite: 1]:
 
 - **Promotion Types:**
   - **Percentage Discount (`PercentageDiscount`):** Applies a global percentage discount across the entire sale total[cite: 1].
-  - **Category Discount (`CategoryDiscount`):** Applies a percentage discount exclusively to items belonging to a specific product category (`VIDEOGAME`, `CONSOLE`, or `ACCESSORY`)[cite: 1, 3].
+  - **Category Discount (`CategoryDiscount`):** Applies a percentage discount exclusively to items belonging to a specific product category (`VIDEOGAME`, `CONSOLE`, or `ACCESSORY`)[cite: 1].
   - **Bulk Purchase Discount (`BulkPurchaseDiscount`):** Applies a percentage discount when the total item count in a sale meets or exceeds a minimum threshold[cite: 1].
 - **Validity Check:** Promotions feature start and end dates (`LocalDate`), ensuring discounts are applied only when active on the transaction date[cite: 1].
 - **Automatic Best-Discount Engine:** When processing a sale, the system evaluates all active promotions and automatically applies the single campaign that yields the highest monetary savings for the customer (promotions are non-cumulative)[cite: 1].
@@ -48,7 +50,7 @@ The system supports automated marketing campaigns and discount calculations appl
 
 ### Feature 3: Warranty Module (Requirement 4 & Adjustment A2)
 
-The system manages formal warranty registration, extended coverage options, and expiration tracking[cite: 1, 3]:
+The system manages formal warranty registration, extended coverage options, and expiration tracking[cite: 1]:
 
 - **Warranty Types:**
   - **Basic Warranty (`BasicWarranty`):** Automatically assigned to all sold consoles[cite: 1]. Covers factory defects for 6 months from the sale date at no extra charge[cite: 1].
@@ -58,12 +60,19 @@ The system manages formal warranty registration, extended coverage options, and 
 
 ### Feature 4: Return & Monthly Balance Module (Requirement 3 & Adjustments A4–A7)
 
-The system handles partial or full item returns, inventory restorations, warranty cancellations, and monthly balance reports[cite: 4, 5]:
+The system handles partial or full item returns, inventory restorations, warranty cancellations, and monthly balance reports:
 
-- **Item Return Processing:** Processes returns for products and accessories, automatically restoring stock to inventory[cite: 4].
-- **Proportional Refund Engine:** Reimburses returned items taking into account original promotional discounts applied at checkout[cite: 4, 5].
-- **Automatic Warranty Cancellation:** Cancels active warranties associated with returned consoles and refunds extended warranty fees[cite: 5].
-- **Monthly Balance Reporting:** Calculates gross monthly sales, total refund deductions, and net store revenue[cite: 5].
+- **Item Return Processing:** Processes returns for products and accessories, automatically restoring stock to inventory.
+- **Proportional Refund Engine:** Reimburses returned items taking into account original promotional discounts applied at checkout.
+- **Automatic Warranty Cancellation:** Cancels active warranties associated with returned consoles and refunds extended warranty fees.
+- **Monthly Balance Reporting:** Calculates gross monthly sales, total refund deductions, and net store revenue.
+
+### Feature 5: Custom Exception Handling & Structural Validation
+
+- **Domain-Specific Hierarchy:** Replaces generic runtime exceptions with tailored domain exceptions (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`).
+- **Input & Domain Validation:** Uses dedicated validator classes (`PersonValidator`, `ProductValidator`, `SaleValidator`) to verify format requirements and business constraints before processing transactions.
+- **Graceful Error Recovery:** Catch blocks in `GameZoneUI` gracefully handle input or business rule violations without crashing the interactive loop.
+- **Console UTF-8 Encoding Support:** Explicitly configures `System.out` and `BufferedReader`/`InputStreamReader` to `StandardCharsets.UTF_8` to render special Spanish characters (tildes and 'ñ') correctly across all terminal environments.
 
 ---
 
@@ -71,9 +80,10 @@ The system handles partial or full item returns, inventory restorations, warrant
 
 - **Language:** Java 17+[cite: 1]
 - **Build Tool:** Apache Maven (`pom.xml`)[cite: 1]
-- **Version Control:** Git Flow (`main`, `develop`, `feature/*`, `fix/*`, `refactor/*`, `docs/*`)[cite: 1, 2, 3]
-- **Commit Standard:** Conventional Commits[cite: 1, 6]
-- **Data Storage:** Delimited CSV/text files in `data/` (`accessories.csv`, `promotions.csv`, `warranties.csv`, `returns.csv`, `persons.txt`, `products.txt`)[cite: 1, 3, 7]
+- **Version Control:** Git Flow (`main`, `develop`, `feature/*`, `fix/*`, `refactor/*`, `docs/*`)[cite: 1]
+- **Commit Standard:** Conventional Commits[cite: 1]
+- **Character Encoding:** UTF-8 (`StandardCharsets.UTF_8`)
+- **Data Storage:** Delimited CSV/text files in `data/` (`accessories.csv`, `promotions.csv`, `warranties.csv`, `returns.csv`, `persons.txt`, `products.txt`)[cite: 1]
 
 ---
 
@@ -96,6 +106,7 @@ GameZoneUnicesar/
 │   ├── return-class-diagram.md
 │   ├── integration-analysis.md
 │   ├── integrated-class-diagram.md
+│   ├── exception-analysis.md
 │   └── layers-diagram.md
 └── src/
     └── main/
@@ -110,6 +121,12 @@ GameZoneUnicesar/
             └── com/
                 └── gamezone/
                     ├── Main.java
+                    ├── exceptions/
+                    │   ├── GameZoneException.java
+                    │   ├── ResourceNotFoundException.java
+                    │   ├── BusinessRuleException.java
+                    │   ├── InvalidDataException.java
+                    │   └── PersistenceException.java
                     ├── model/
                     │   ├── Person.java
                     │   ├── Client.java
@@ -146,7 +163,11 @@ GameZoneUnicesar/
                     │   ├── PromotionService.java
                     │   ├── WarrantyService.java
                     │   └── ReturnService.java
-                    └── ui/
-                        ├── GameZoneUI.java
-                        └── ConsoleMenu.java
+                    ├── ui/
+                    │   ├── GameZoneUI.java
+                    │   └── ConsoleMenu.java
+                    └── validation/
+                        ├── PersonValidator.java
+                        ├── ProductValidator.java
+                        └── SaleValidator.java
 ```
