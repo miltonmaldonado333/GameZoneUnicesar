@@ -78,10 +78,11 @@ public class Main {
         ItemStock itemStock = new ItemStockService(productService, accessoryService);
         ReturnService returnService = new ReturnService(
                 returnRepository,
-                saleService,
+                saleService,        // sale lookup
+                saleService,        // monthly sales total
                 productService,
-                accessoryService,
-                warrantyService,
+                accessoryService,   // accessory lookup
+                warrantyService,    // warranty cancellation
                 itemStock
         );
 

@@ -7,46 +7,45 @@ import java.util.List;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
-import com.gamezone.persistence.ReturnRecord;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.validation.ReturnValidator;
 
 /**
  * Handles the business logic for managing product returns, including
- * deadline validation, ownership validation, stock restoration for both
- * products and accessories, and monthly balance reporting.
+ * deadline validation, ownership validation, stock restoration and warranty
+ * cancellation. It depends only on abstractions; rebuilding the stored returns
+ * and computing the monthly balance are delegated to helper classes.
  */
 public class ReturnService {
 
-    private ReturnRepository returnRepository;
-    private SaleService saleService;
-    private ProductService productService;
-    private AccessoryService accessoryService;
-    private WarrantyService warrantyService;
-    private ItemStock stockService;
+    private final ReturnRepository returnRepository;
+    private final SaleLookup saleLookup;
+    private final WarrantyCanceller warrantyCanceller;
+    private final ItemStock stockService;
+    private final ReturnRecordMapper recordMapper;
+    private final MonthlyBalanceCalculator balanceCalculator;
 
     /**
-     * Constructs a ReturnService with all required dependencies.
+     * Constructs a ReturnService with the abstractions it needs.
      *
      * @param returnRepository  the persistence repository for returns
-     * @param saleService       the service managing sales
-     * @param productService    the service managing products
-     * @param accessoryService  the service managing accessories, used to restore
-     *                          stock when a returned item is an accessory
-     * @param warrantyService   the service managing warranties, used to cancel
-     *                          the warranties of returned consoles
+     * @param saleLookup        the lookup used to find the original sale
+     * @param monthlySales      the source of the monthly sales total
+     * @param productService    the service used to resolve the returned products
+     * @param accessoryLookup   the lookup used to resolve the returned accessories
+     * @param warrantyCanceller the abstraction used to cancel the warranties of returned consoles
      * @param stockService      the stock contract used to restore the stock of the returned items
      */
-    public ReturnService(ReturnRepository returnRepository, SaleService saleService,
-                          ProductService productService, AccessoryService accessoryService,
-                          WarrantyService warrantyService,
+    public ReturnService(ReturnRepository returnRepository, SaleLookup saleLookup,
+                          MonthlySales monthlySales, IProductService productService,
+                          AccessoryLookup accessoryLookup, WarrantyCanceller warrantyCanceller,
                           ItemStock stockService) {
         this.returnRepository = returnRepository;
-        this.saleService = saleService;
-        this.productService = productService;
-        this.accessoryService = accessoryService;
-        this.warrantyService = warrantyService;
+        this.saleLookup = saleLookup;
+        this.warrantyCanceller = warrantyCanceller;
         this.stockService = stockService;
+        this.recordMapper = new ReturnRecordMapper(saleLookup, productService, accessoryLookup);
+        this.balanceCalculator = new MonthlyBalanceCalculator(monthlySales);
     }
 
     /**
@@ -67,7 +66,7 @@ public class ReturnService {
      *                                   available to return
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
-        Sale sale = saleService.findSaleById(saleId);
+        Sale sale = saleLookup.findSaleById(saleId);
         ReturnValidator.validateReturnableSale(sale, saleId);
 
         List<Return> previousReturns = viewReturnsBySale(saleId);
@@ -85,7 +84,7 @@ public class ReturnService {
         double warrantyRefund = 0.0;
         for (Product product : returnedProducts) {
             if (product.hasWarrantyCoverage()) {
-                warrantyRefund += warrantyService.cancelWarranties(product.getId(), saleId);
+                warrantyRefund += warrantyCanceller.cancelWarranties(product.getId(), saleId);
             }
         }
 
@@ -103,36 +102,8 @@ public class ReturnService {
         return returnRecord;
     }
 
-    /**
-     * Loads the stored returns and rebuilds each one from its raw record,
-     * resolving the sale, the products and the accessories through the services.
-     * A record whose sale cannot be found is skipped.
-     *
-     * @return the list of rebuilt returns
-     */
     private List<Return> loadReturns() {
-        List<Return> returns = new ArrayList<>();
-        for (ReturnRecord stored : returnRepository.loadAll()) {
-            Sale sale = saleService.findSaleById(stored.getSaleId());
-            if (sale == null) {
-                continue;
-            }
-
-            List<Product> products = new ArrayList<>();
-            for (String productId : stored.getProductIds()) {
-                Product product = productService.findProductById(productId);
-                if (product == null) {
-                    product = accessoryService.findById(productId);
-                }
-                if (product != null) {
-                    products.add(product);
-                }
-            }
-
-            returns.add(new Return(stored.getReturnId(), stored.getDate(), sale, products,
-                    stored.getReason(), stored.getWarrantyRefundAmount()));
-        }
-        return returns;
+        return recordMapper.toReturns(returnRepository.loadAll());
     }
 
     /**
@@ -185,7 +156,7 @@ public class ReturnService {
      * @return the total sales amount for that period
      */
     public double calculateMonthlySales(int month, int year) {
-        return saleService.calculateMonthlyTotal(month, year);
+        return balanceCalculator.calculateMonthlySales(month, year);
     }
 
     /**
@@ -197,14 +168,7 @@ public class ReturnService {
      * @return the total returns amount for that period
      */
     public double calculateMonthlyReturns(int month, int year) {
-        double totalReturns = 0.0;
-        for (Return returnRecord : loadReturns()) {
-            LocalDate returnDate = returnRecord.getDate();
-            if (returnDate.getMonthValue() == month && returnDate.getYear() == year) {
-                totalReturns += returnRecord.getRefundAmount();
-            }
-        }
-        return totalReturns;
+        return balanceCalculator.calculateMonthlyReturns(loadReturns(), month, year);
     }
 
     /**
@@ -216,7 +180,7 @@ public class ReturnService {
      * @return the net balance (total sales minus total returns) for that period
      */
     public double generateMonthlyBalance(int month, int year) {
-        return calculateMonthlySales(month, year) - calculateMonthlyReturns(month, year);
+        return balanceCalculator.generateMonthlyBalance(loadReturns(), month, year);
     }
 
     private Product findProductInSale(Sale sale, String productId) {
