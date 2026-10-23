@@ -9,7 +9,6 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
-import com.gamezone.persistence.WarrantyRecord;
 import com.gamezone.persistence.WarrantyRepository;
 
 /**
@@ -20,7 +19,8 @@ import com.gamezone.persistence.WarrantyRepository;
 public class WarrantyService implements WarrantyCanceller {
 
     private final WarrantyRepository warrantyRepository;
-    private final SaleLookup saleLookup;
+    private final WarrantyRecordMapper recordMapper;
+    private final WarrantyBackfill backfill;
 
     /**
      * Constructs a WarrantyService with the abstraction used to look up sales.
@@ -30,45 +30,18 @@ public class WarrantyService implements WarrantyCanceller {
      */
     public WarrantyService(WarrantyRepository warrantyRepository, SaleLookup saleLookup) {
         this.warrantyRepository = warrantyRepository;
-        this.saleLookup = saleLookup;
+        this.recordMapper = new WarrantyRecordMapper(saleLookup);
+        this.backfill = new WarrantyBackfill(saleLookup);
     }
 
     /**
-     * Loads the stored warranties and rebuilds each one from its raw record.
-     * The sale is resolved through the sale lookup and the product is taken
-     * from that sale. A record whose sale or product cannot be found, or whose
-     * type is unknown, is skipped.
+     * Loads the stored warranties and rebuilds each one from its raw record
+     * through the record mapper.
      *
      * @return the list of rebuilt warranties
      */
     private List<Warranty> loadWarranties() {
-        List<Warranty> warranties = new ArrayList<>();
-        for (WarrantyRecord stored : warrantyRepository.loadAll()) {
-            Sale sale = saleLookup.findSaleById(stored.getSaleId());
-            Product product = findProductInSale(sale, stored.getProductId());
-            if (sale == null || product == null) {
-                continue;
-            }
-
-            if ("EXTENDED".equalsIgnoreCase(stored.getType())) {
-                warranties.add(new ExtendedWarranty(stored.getId(), product, sale, stored.getStartDate()));
-            } else if ("BASIC".equalsIgnoreCase(stored.getType())) {
-                warranties.add(new BasicWarranty(stored.getId(), product, sale, stored.getStartDate()));
-            }
-        }
-        return warranties;
-    }
-
-    private Product findProductInSale(Sale sale, String productId) {
-        if (sale == null) {
-            return null;
-        }
-        for (Product item : sale.getProducts()) {
-            if (item.getId().equalsIgnoreCase(productId)) {
-                return item;
-            }
-        }
-        return null;
+        return recordMapper.toWarranties(warrantyRepository.loadAll());
     }
 
     /**
@@ -196,29 +169,7 @@ public class WarrantyService implements WarrantyCanceller {
      */
     public void syncPastConsoleWarranties() {
         List<Warranty> currentWarranties = loadWarranties();
-        boolean hasChanges = false;
-
-        for (Sale sale : saleLookup.getAllSales()) {
-            LocalDate saleDate = LocalDate.parse(sale.getDate());
-
-            for (Product item : sale.getProducts()) {
-                if (item.hasWarrantyCoverage()) {
-                    boolean alreadyHasWarranty = currentWarranties.stream().anyMatch(w
-                            -> w.getProduct().getId().equalsIgnoreCase(item.getId())
-                            && w.getSale().getId() == sale.getId()
-                    );
-
-                    if (!alreadyHasWarranty) {
-                        String warrantyId = "WAR" + String.format("%04d", currentWarranties.size() + 1);
-                        BasicWarranty basicWarranty = new BasicWarranty(warrantyId, item, sale, saleDate);
-                        currentWarranties.add(basicWarranty);
-                        hasChanges = true;
-                    }
-                }
-            }
-        }
-
-        if (hasChanges) {
+        if (backfill.addMissingBasicWarranties(currentWarranties)) {
             warrantyRepository.saveAll(currentWarranties);
         }
     }
