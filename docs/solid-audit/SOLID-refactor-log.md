@@ -346,3 +346,29 @@ The error where the PS5 (110011) received the video game discount and skipped th
 
 ---
 *Document prepared for technical study and architectural review of the GameZone Unicesar system.*
+
+## Refactor Change Log - Developer 2
+
+| Class / Interface | Change Made | Violation ID | Applied Principle | Commit / PR / Author |
+| :--- | :--- | :---: | :--- | :--- |
+| `WarrantyService`, `Main` | Removed the unused sale repository field and constructor; the matching `new` call in `Main` was updated. | V-DEV2-05 | ISP | `d5b64d8` / Luis Corzo |
+| `AccessoryService`, `Main` | Removed the unused product repository field and constructor; the matching `new` call in `Main` was updated. | V-DEV2-05 | ISP | `8c27dfa` / Luis Corzo |
+| `StockHolder`, `AccessoryService` | `AccessoryService` fulfils the common stock contract through the new `StockHolder` interface. | V-DEV2-04 | OCP | `7d63944` / Luis Corzo |
+| `ItemStockService`, `ReturnService`, `Main` | `ReturnService` restores stock through a resolver instead of testing `instanceof Accessory`. This first version routed by identifier. | V-DEV2-04 | OCP | `cef4f24`, `65595bc` / Luis Corzo |
+| `ItemStock`, `ItemStockService`, `StockHolder`, `AccessoryService`, `ReturnService`, `Main` | Fix of the previous change: product and accessory identifiers collide in the data files (1, 11 and c1), so the owner of the stock is decided by asking the accessory service whether it holds the very item. | V-DEV2-04 | OCP | `8ae3123` / Luis Corzo |
+| `SaleLookup`, `RepositorySaleLookup`, `WarrantyService`, `Main` | Added a narrow sale lookup over the repository abstraction and injected it into `WarrantyService` by constructor; the setter and the cycle with `SaleService` were removed. | V-DEV2-07 | DIP | `882427b`, `afa33cd` / Luis Corzo |
+| `WarrantyCanceller`, `MonthlySales`, `AccessoryLookup`, `SaleService`, `WarrantyService`, `AccessoryService` | Added three narrow interfaces for what the return workflow uses and made the services implement them. `SaleService` (Technical Leader's class) only received the `implements` clause and `@Override` annotations, with no change of logic. | V-DEV2-06 | DIP | `400a432` / Luis Corzo |
+| `ReturnRecordMapper`, `MonthlyBalanceCalculator` | Extracted the rebuilding of the stored returns and the monthly balance out of `ReturnService`. | V-DEV2-01 | SRP | `3ce1de6` / Luis Corzo |
+| `ReturnService`, `Main` | `ReturnService` depends only on abstractions and delegates to the two helpers; its public methods are unchanged. | V-DEV2-06, V-DEV2-01 | DIP, SRP | `32265d8` / Luis Corzo |
+| `WarrantyRecordMapper`, `WarrantyBackfill` | Extracted the rebuilding of the stored warranties and the historical backfill out of `WarrantyService`. | V-DEV2-02 | SRP | `5da1235` / Luis Corzo |
+| `WarrantyService` | `WarrantyService` delegates to the two helpers and keeps its constructor and public methods. | V-DEV2-02 | SRP | `a6bad3c` / Luis Corzo |
+| `SubtypeCodec`, `CodecRegistry` | Added the generic codec and registry that let a repository write and read each subtype without a chain of type tests. | V-DEV2-03 | OCP | `ceb3be8` / Luis Corzo |
+| `ClientCodec`, `SellerCodec`, `FilePersonRepository` | One codec per person role. | V-DEV2-03 | OCP | `2ec405d` / Luis Corzo |
+| `AccessoryCodec`, `ControllerCodec`, `CableCodec`, `MemoryCodec`, `FileAccessoryRepository` | One codec per accessory type. | V-DEV2-03 | OCP | `04e2f2f` / Luis Corzo |
+| `PromotionCodec` and the three promotion codecs, `FilePromotionRepository` | One codec per promotion type; the dates are still checked before the type. | V-DEV2-03 | OCP | `9cd7368` / Luis Corzo |
+| `WarrantyTypeRegistry`, `FileWarrantyRepository` | The stored type of a warranty is written through a registry. | V-DEV2-03 | OCP | `6dbab07` / Luis Corzo |
+| `WarrantyCreator`, `WarrantyRecordMapper` | The warranty subtype is rebuilt through registered creators. | V-DEV2-03 | OCP | `12937b6` / Luis Corzo |
+
+### Verification of Developer 2
+
+`mvn clean compile` passed after every commit and the menu was not run, so the equivalence of behaviour was argued by reading the code. Known differences, which only appear with damaged data: a line of an unknown type in the person and accessory files is skipped instead of failing on a later field, and writing a warranty class that has no registered type raises an error instead of storing it as BASIC. The routing of the stock relies on the accessories of a sale being the same objects that `AccessoryService` holds.
