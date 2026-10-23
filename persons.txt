@@ -1,6 +1,4 @@
-CLIENT;Ana Torres;1001001001;3001000001;ana.torres@correo.com
-CLIENT;Luis Perez;1001001002;3001000002;luis.perez@correo.com
-CLIENT;Maria Gomez;1001001003;3001000003;maria.gomez@correo.com
-SELLER;Carlos Rojas;2002002001;3101000001;V001;Morning
-SELLER;Diana Lopez;2002002002;3101000002;V002;Afternoon
-
+CLIENT;Milton Maldonado;1065129957;3107174052;mmaldonadosalcedo4@gmail.com
+SELLER;Jesus Martinez;1066282883;3244640370;V001;Mañana
+CLIENT;Jakson Martinez;49774354;3024038318;jacksonmartinez1102@gmail.com
+SELLER;Milton Maldonado Medina;5136860;maldonadomedinamilton@gmail.com;V002;Tarde

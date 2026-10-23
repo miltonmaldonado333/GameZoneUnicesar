@@ -118,9 +118,15 @@ public class GameZoneUI {
     
     // ================= I/O HELPER METHODS (SRP / GRASP) =================
     private String promptString(String message) throws IOException {
-        System.out.print(message);
-        return reader.readLine();
+    System.out.print(message);
+    String input = reader.readLine();
+    
+    while (input != null && input.trim().isEmpty()) {
+        input = reader.readLine();
     }
+    
+    return input != null ? input.trim() : "";
+}
 
     private int promptInt(String message) throws IOException, NumberFormatException {
         System.out.print(message);
@@ -153,16 +159,25 @@ public class GameZoneUI {
     }
 
     private int readOption() {
-        try {
-            return Integer.parseInt(reader.readLine());
-        } catch (NumberFormatException e) {
-            System.out.println("Error: Por favor, ingrese una opción numérica válida.");
-            return -1;
-        } catch (IOException e) {
-            System.out.println("Error leyendo la entrada: " + e.getMessage());
+    try {
+        String line = reader.readLine();
+        if (line == null) return -1;
+
+        String sanitizedLine = line.replaceAll("[^0-9\\-]", "").trim();
+
+        if (sanitizedLine.isEmpty()) {
             return -1;
         }
+
+        return Integer.parseInt(sanitizedLine);
+    } catch (NumberFormatException e) {
+        System.out.println("Error: Por favor, ingrese una opción numérica válida.");
+        return -1;
+    } catch (IOException e) {
+        System.out.println("Error leyendo la entrada: " + e.getMessage());
+        return -1;
     }
+}
 
     private void processMainMenuOption(int option) {
         switch (option) {
@@ -293,7 +308,12 @@ public class GameZoneUI {
             String phone = promptString("Teléfono: ");
             String email = promptString("Correo Electrónico: ");
 
-            personService.registerClient(name, id, phone, email);
+            personService.registerClient(
+                name.trim(), 
+                id.trim(), 
+                phone.trim(), 
+                email.trim()
+            );
             System.out.println("¡Cliente registrado exitosamente!");
         } catch (Exception e) {
             System.out.println("Error registrando cliente: " + e.getMessage());
@@ -309,7 +329,14 @@ public class GameZoneUI {
             String employeeCode = promptString("Código de Empleado: ");
             String workShift = promptString("Turno de Trabajo: ");
 
-            personService.registerSeller(name, identification, phone, employeeCode, workShift);
+            personService.registerSeller(
+                name.trim(), 
+                identification.trim(), 
+                phone.trim(), 
+                employeeCode.trim().toUpperCase(), 
+                workShift.trim()
+            );
+            
             System.out.println("¡Vendedor registrado exitosamente!");
         } catch (Exception e) {
             System.out.println("Error registrando vendedor: " + e.getMessage());
@@ -377,18 +404,26 @@ public class GameZoneUI {
             System.out.println("\n--- REGISTRAR NUEVA VENTA UNIFICADA ---");
 
             String clientId = promptString("Ingrese la Identificación del Cliente: ");
-            Client client = personService.findClientById(clientId);
+            Client client = personService.findClientById(clientId.trim());
+            if (client == null) {
+                System.out.println("Error: No existe un cliente registrado con la identificación '" + clientId + "'.");
+                return;
+            }
 
             String sellerCode = promptString("Ingrese el Código de Empleado del Vendedor: ");
-            Seller seller = personService.findSellerByCode(sellerCode);
+            Seller seller = personService.findSellerByCode(sellerCode.trim());
+            if (seller == null) {
+                System.out.println("Error: No existe un vendedor registrado con el código '" + sellerCode + "'.");
+                return;
+            }
 
             List<Product> products = new ArrayList<>();
             List<String> extendedWarrantyProductIds = new ArrayList<>();
             String addMore;
+
             do {
                 String itemId = promptString("Ingrese el ID del Producto o Accesorio a añadir: ");
-
-                Product item = productService.findProductById(itemId);
+                Product item = productService.findProductById(itemId.trim());
 
                 if (item != null) {
                     products.add(item);
@@ -397,7 +432,7 @@ public class GameZoneUI {
                     if (item.hasWarrantyCoverage()) {
                         String extendedChoice = promptString("¿Desea agregar garantía extendida (+10% del costo) al producto '"
                                 + item.getTitle() + "'? (s/n): ");
-                        if (extendedChoice.equalsIgnoreCase("s")) {
+                        if (extendedChoice != null && extendedChoice.trim().equalsIgnoreCase("s")) {
                             extendedWarrantyProductIds.add(String.valueOf(item.getId()));
                         }
                     }
@@ -406,7 +441,14 @@ public class GameZoneUI {
                 }
 
                 addMore = promptString("¿Agregar otro artículo? (s/n): ");
-            } while (addMore.equalsIgnoreCase("s"));
+                if (addMore == null) addMore = "n";
+
+            } while (addMore.trim().equalsIgnoreCase("s"));
+
+            if (products.isEmpty()) {
+                System.out.println("No se agregaron productos a la venta. Cancelando operación.");
+                return;
+            }
 
             Sale registeredSale = saleService.registerSale(client, seller, products, extendedWarrantyProductIds);
             System.out.println("\n¡Venta registrada exitosamente!");
@@ -430,9 +472,17 @@ public class GameZoneUI {
     private void listSalesByClient() {
         try {
             String searchClientId = promptString("Ingrese la Identificación del Cliente: ");
-            List<Sale> clientSales = saleService.getSalesByClient(searchClientId);
+            
+            if (searchClientId == null || searchClientId.isBlank()) {
+                System.out.println("Debe ingresar una identificación válida.");
+                return;
+            }
+
+            List<Sale> clientSales = saleService.getSalesByClient(searchClientId.trim());
+            
             System.out.println("\n--- HISTORIAL DE COMPRAS DEL CLIENTE ---");
             printSalesList(clientSales);
+
         } catch (Exception e) {
             System.out.println("Error consultando historial del cliente: " + e.getMessage());
         }
@@ -441,7 +491,13 @@ public class GameZoneUI {
     private void listSalesBySeller() {
         try {
             String searchSellerId = promptString("Ingrese el Código del Vendedor: ");
-            List<Sale> sellerSales = saleService.getSalesBySeller(searchSellerId);
+            
+            if (searchSellerId == null || searchSellerId.isBlank()) {
+                System.out.println("Debe ingresar un código de vendedor válido.");
+                return;
+            }
+
+            List<Sale> sellerSales = saleService.getSalesBySeller(searchSellerId.trim());
             System.out.println("\n--- HISTORIAL DE VENTAS DEL VENDEDOR ---");
             printSalesList(sellerSales);
         } catch (Exception e) {
@@ -458,7 +514,6 @@ public class GameZoneUI {
             }
         }
     }
-
     // ================= ACCESSORY SUBMENU =================
     private void handleAccessoryMenu() {
         int option = -1;

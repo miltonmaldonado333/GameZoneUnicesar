@@ -1,7 +1,5 @@
 package com.gamezone.service;
 
-import com.gamezone.exceptions.BusinessRuleException;
-import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
@@ -39,11 +37,11 @@ public class SaleService implements SaleLookup, MonthlySales {
      * Constructs a SaleService instance with all required abstractions and dependencies.
      *
      * @param saleRepository   the repository interface for managing sales records
-     * @param stockService      the service contract managing stock operations
+     * @param stockService     the service contract managing stock operations
      * @param promotionService the service evaluating promotions and discounts
      * @param warrantyService  the service managing product warranties
      * @param personService    the service looking up clients and sellers
-     * @param productService  the service looking up products
+     * @param productService   the service looking up products
      */
     public SaleService(ISaleRepository saleRepository,
                        IStockService stockService,
@@ -152,8 +150,7 @@ public class SaleService implements SaleLookup, MonthlySales {
     }
 
     /**
-     * Retrieves all sales by delegating to the repository or parsing raw lines
-     * with backward compatibility.
+     * Retrieves all sales by delegating to the repository.
      *
      * @return a list of fully populated Sale objects
      */
@@ -189,8 +186,12 @@ public class SaleService implements SaleLookup, MonthlySales {
      */
     @Override
     public Sale findSaleById(String saleId) {
+        if (saleId == null || saleId.isBlank()) {
+            return null;
+        }
+        String cleanId = saleId.trim();
         return getAllSales().stream()
-                .filter(sale -> String.valueOf(sale.getId()).equalsIgnoreCase(saleId))
+                .filter(sale -> String.valueOf(sale.getId()).equalsIgnoreCase(cleanId))
                 .findFirst()
                 .orElse(null);
     }
@@ -202,9 +203,17 @@ public class SaleService implements SaleLookup, MonthlySales {
      * @return a list of sales matching the given client identification
      */
     public List<Sale> getSalesByClient(String clientId) {
+        if (clientId == null || clientId.isBlank()) {
+            return List.of();
+        }
+
+        String cleanId = clientId.trim();
+
         return getAllSales().stream()
-                .filter(Sale -> Sale.getClient().getIdentification().equalsIgnoreCase(clientId)
-                ).toList();
+                .filter(sale -> sale.getClient() != null 
+                        && sale.getClient().getIdentification() != null 
+                        && sale.getClient().getIdentification().trim().equalsIgnoreCase(cleanId))
+                .toList();
     }
 
     /**
@@ -214,8 +223,16 @@ public class SaleService implements SaleLookup, MonthlySales {
      * @return a list of sales matching the given seller code
      */
     public List<Sale> getSalesBySeller(String sellerCode) {
+        if (sellerCode == null || sellerCode.isBlank()) {
+            return List.of();
+        }
+
+        String cleanCode = sellerCode.trim();
+
         return getAllSales().stream()
-                .filter(Sale -> Sale.getSeller().getIdentification().equalsIgnoreCase(sellerCode)
-                ).toList();
+                .filter(sale -> sale.getSeller() != null 
+                        && sale.getSeller().getEmployeeCode() != null 
+                        && sale.getSeller().getEmployeeCode().trim().equalsIgnoreCase(cleanCode))
+                .toList();
     }
 }

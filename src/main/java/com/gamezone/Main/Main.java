@@ -11,7 +11,7 @@ import com.gamezone.persistence.FilePromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.FileReturnRepository;
 import com.gamezone.persistence.ISaleRepository;
-import com.gamezone.persistence.FileSaleRepository;
+import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.persistence.FileWarrantyRepository;
 import com.gamezone.service.AccessoryService;
@@ -52,8 +52,11 @@ public class Main {
         AccessoryService accessoryService = new AccessoryService(accessoryRepository);
         PromotionService promotionService = new PromotionService(promotionRepository);
 
-        // Step 3: Initialize repositories for complex domain objects using ISaleRepository interface
-        ISaleRepository saleRepository = new FileSaleRepository("data/sales.csv");
+        // Step 3: Initialize SaleRepository and wire dependencies for entity reconstruction
+        SaleRepository concreteSaleRepository = new SaleRepository();
+        concreteSaleRepository.setDependencies(personService, productService);
+        ISaleRepository saleRepository = concreteSaleRepository;
+
         WarrantyRepository warrantyRepository = new FileWarrantyRepository();
 
         // Step 4: Initialize WarrantyService
