@@ -1,9 +1,7 @@
-VideoGame;PS5;Action;16+;1;GTA V;100.00;36
-VideoGame;xbox;action;19+;2;ReadRedRedemption;178.00;67
-Console;xbox;2020;2020;11;new;1789.00;56
-Console;ps5;2026;2026;c1;ps5;2000.00;13
-VideoGame;PS5;Accion;18+;101;GTA V;200.00;17
-VideoGame;SONY;2026;5;1011;PS5;200.00;29
-VideoGame;PS5;Accion;16+;110010;Far Cry 5;120.00;18
-VideoGame;SONY;5;5;110011;PS5;2009.00;7
-Console;XBOX;20;5;c2;Xbox;1500.00;11
+Console;PlayStation;PS5;2020;1.1.0.1;PlayStation 5;2200.00;10
+Console;Xbox;Series X;2020;1.2.0.1;Xbox Series X;2000.00;8
+Console;Nintendo;Switch;2017;1.3.0.1;Nintendo Switch;1500.00;6
+VideoGame;PS5;Action;18+;2.1.0.1;Spider Man 2;100.00;20
+VideoGame;PS5;Sports;E;2.1.0.2;FC 26;120.00;15
+VideoGame;Xbox;Racing;E;2.2.0.1;Forza Horizon 5;90.00;12
+VideoGame;Switch;Adventure;E;2.3.0.1;Zelda Tears of the Kingdom;110.00;10

@@ -1,6 +1,5 @@
-CLIENT;samuel canon;1065129957;929282928;maksmskks@gmai.com
-SELLER;jesus martinez;10927291;3107174052;21;1
-CLIENT;Jesika Maldonado;10909;3107174053;mmalsisgs@gmail.com
-SELLER;Milton Maldonado;109201;20292;22;2
-CLIENT;Jesika Maldonado;1065135771;3234863310;jesika.maldonado.94@gmail.com
-SELLER;Gyssel serrano;10902092;3156789876;23;1
+CLIENT;Ana Torres;1001001001;3001000001;ana.torres@correo.com
+CLIENT;Luis Perez;1001001002;3001000002;luis.perez@correo.com
+CLIENT;Maria Gomez;1001001003;3001000003;maria.gomez@correo.com
+SELLER;Carlos Rojas;2002002001;3101000001;V001;Morning
+SELLER;Diana Lopez;2002002002;3101000002;V002;Afternoon
