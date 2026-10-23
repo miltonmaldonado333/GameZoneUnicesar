@@ -3,6 +3,7 @@ package com.gamezone.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.gamezone.exceptions.BusinessRuleException;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.Controller;
@@ -14,7 +15,7 @@ import com.gamezone.persistence.AccessoryRepository;
  * memories). Acts as the intermediary between the user interface and the
  * accessory persistence layer.
  */
-public class AccessoryService {
+public class AccessoryService implements StockHolder {
 
     private AccessoryRepository accessoryRepository;
     private List<Accessory> accessories;
@@ -191,6 +192,7 @@ public class AccessoryService {
      * @param quantity the quantity to add to the current stock
      * @throws IllegalArgumentException if no accessory is found with the given ID
      */
+    @Override
     public void restoreStock(String accessoryId, int quantity) {
         Accessory accessory = findById(accessoryId);
         if (accessory == null) {
@@ -198,5 +200,46 @@ public class AccessoryService {
         }
         accessory.addStock(quantity);
         accessoryRepository.saveAll(accessories);
+    }
+
+    /**
+     * Checks whether an accessory with the given identifier exists and has at
+     * least the requested stock.
+     *
+     * @param productId         the identifier of the accessory
+     * @param requestedQuantity the quantity required
+     * @return true if the accessory exists and its stock is greater than or equal to the quantity
+     */
+    @Override
+    public boolean hasSufficientStock(String productId, int requestedQuantity) {
+        Accessory accessory = findById(productId);
+        return accessory != null && accessory.getStock() >= requestedQuantity;
+    }
+
+    /**
+     * Reduces the stock of an accessory through the common stock contract.
+     *
+     * @param productId the identifier of the accessory
+     * @param quantity  the quantity to deduct
+     * @throws BusinessRuleException if the accessory does not exist or has not enough stock
+     */
+    @Override
+    public void reduceStock(String productId, int quantity) {
+        if (!updateStock(productId, quantity)) {
+            Accessory accessory = findById(productId);
+            String name = (accessory != null) ? accessory.getTitle() : productId;
+            throw new BusinessRuleException("No se pudo actualizar el stock del accesorio: " + name);
+        }
+    }
+
+    /**
+     * Tells whether the identifier belongs to a registered accessory.
+     *
+     * @param itemId the identifier of the item
+     * @return true if an accessory with that identifier exists
+     */
+    @Override
+    public boolean holds(String itemId) {
+        return findById(itemId) != null;
     }
 }
