@@ -45,7 +45,7 @@ public class Main {
         // Step 2: Initialize base domain services
         ProductService productService = new ProductService(productRepository);
         PersonService personService = new PersonService(personRepository);
-        AccessoryService accessoryService = new AccessoryService(accessoryRepository, productRepository);
+        AccessoryService accessoryService = new AccessoryService(accessoryRepository);
         PromotionService promotionService = new PromotionService(promotionRepository);
 
         // Step 3: Initialize repositories for complex domain objects using ISaleRepository interface

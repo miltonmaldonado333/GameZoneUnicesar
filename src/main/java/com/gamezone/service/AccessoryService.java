@@ -8,7 +8,6 @@ import com.gamezone.model.Cable;
 import com.gamezone.model.Controller;
 import com.gamezone.model.Memory;
 import com.gamezone.persistence.AccessoryRepository;
-import com.gamezone.persistence.ProductRepository;
 
 /**
  * Provides the business rules for managing accessories (controllers, cables and
@@ -18,7 +17,6 @@ import com.gamezone.persistence.ProductRepository;
 public class AccessoryService {
 
     private AccessoryRepository accessoryRepository;
-    private ProductRepository productRepository;
     private List<Accessory> accessories;
 
     /**
@@ -29,19 +27,6 @@ public class AccessoryService {
      */
     public AccessoryService(AccessoryRepository accessoryRepository) {
         this.accessoryRepository = accessoryRepository;
-        this.accessories = accessoryRepository.loadAll();
-    }
-
-    /**
-     * Creates an AccessoryService backed by the given accessory repository and
-     * product repository.
-     *
-     * @param accessoryRepository the repository used to persist accessory data
-     * @param productRepository   the repository used to validate product/console data
-     */
-    public AccessoryService(AccessoryRepository accessoryRepository, ProductRepository productRepository) {
-        this.accessoryRepository = accessoryRepository;
-        this.productRepository = productRepository;
         this.accessories = accessoryRepository.loadAll();
     }
 
