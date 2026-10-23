@@ -186,12 +186,10 @@ public class SaleService {
      * @return the matching sale instance, or null if not found
      */
     public Sale findSaleById(String saleId) {
-        for (Sale sale : getAllSales()) {
-            if (String.valueOf(sale.getId()).equals(saleId)) {
-                return sale;
-            }
-        }
-        return null;
+        return getAllSales().stream()
+                .filter(sale -> String.valueOf(sale.getId()).equalsIgnoreCase(saleId))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -202,8 +200,8 @@ public class SaleService {
      */
     public List<Sale> getSalesByClient(String clientId) {
         return getAllSales().stream()
-                .filter(sale -> sale.getClient().getIdentification().equalsIgnoreCase(clientId))
-                .toList();
+                .filter(Sale -> Sale.getClient().getIdentification().equalsIgnoreCase(clientId)
+                ).toList();
     }
 
     /**
@@ -214,7 +212,7 @@ public class SaleService {
      */
     public List<Sale> getSalesBySeller(String sellerCode) {
         return getAllSales().stream()
-                .filter(sale -> sale.getSeller().getEmployeeCode().equalsIgnoreCase(sellerCode))
-                .toList();
+                .filter(Sale -> Sale.getSeller().getIdentification().equalsIgnoreCase(sellerCode)
+                ).toList();
     }
 }

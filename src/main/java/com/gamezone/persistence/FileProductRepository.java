@@ -46,13 +46,12 @@ public class FileProductRepository implements ProductRepository {
 
                 String[] parts = line.split(";");
                 if (parts.length < 8) {
-                    continue; // Omite líneas con formato incompleto
+                    continue; 
                 }
 
                 String type = parts[0].trim();
 
                 if (type.equalsIgnoreCase("Console")) {
-                    // Estructura esperada: Console;brand;model;generation;id;title;price;stock
                     String brand = parts[1].trim();
                     String model = parts[2].trim();
                     String generation = parts[3].trim();
@@ -64,7 +63,6 @@ public class FileProductRepository implements ProductRepository {
                     products.add(new Console(brand, model, generation, id, title, price, stock));
 
                 } else if (type.equalsIgnoreCase("VideoGame")) {
-                    // Estructura esperada: VideoGame;platform;genre;ageRating;id;title;price;stock
                     String platform = parts[1].trim();
                     String genre = parts[2].trim();
                     String ageRating = parts[3].trim();
@@ -88,13 +86,11 @@ public class FileProductRepository implements ProductRepository {
         try (PrintWriter pw = new PrintWriter(new FileWriter(filePath))) {
             for (Product p : products) {
                 if (p instanceof Console c) {
-                    // Guarda con discriminador Console y sus campos específicos
-                    pw.printf("Console;%s;%s;%s;%s;%s;%.2f;%d%n",
+                                     pw.printf("Console;%s;%s;%s;%s;%s;%.2f;%d%n",
                             c.getBrand(), c.getModel(), c.getGeneration(),
                             c.getId(), c.getTitle(), c.getPrice(), c.getStock());
                 } else if (p instanceof VideoGame g) {
-                    // Guarda con discriminador VideoGame y sus campos específicos
-                    pw.printf("VideoGame;%s;%s;%s;%s;%s;%.2f;%d%n",
+                                    pw.printf("VideoGame;%s;%s;%s;%s;%s;%.2f;%d%n",
                             g.getPlatform(), g.getGenre(), g.getAgeRating(),
                             g.getId(), g.getTitle(), g.getPrice(), g.getStock());
                 }

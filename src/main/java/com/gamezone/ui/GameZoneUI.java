@@ -88,7 +88,7 @@ public class GameZoneUI {
         this.returnService = returnService;
         this.warrantyService = warrantyService;
     }
-
+  
     /**
      * Starts the main application menu loop, maintaining session lifecycle
      * until the user selects the exit option.
@@ -112,9 +112,10 @@ public class GameZoneUI {
             reader.close();
         } catch (IOException e) {
             System.out.println("Error al cerrar el lector: " + e.getMessage());
-        }
+        }   
     }
 
+    
     // ================= I/O HELPER METHODS (SRP / GRASP) =================
     private String promptString(String message) throws IOException {
         System.out.print(message);
