@@ -9,20 +9,17 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
-import com.gamezone.persistence.ISaleRepository;
 import com.gamezone.persistence.WarrantyRecord;
 import com.gamezone.persistence.WarrantyRepository;
 
 /**
  * Service class responsible for managing the business logic of product
  * warranties. Handles the creation, persistence, replacement, and retrieval of
- * basic and extended warranties. Depends on ISaleRepository abstraction to comply
- * with Dependency Inversion Principle (DIP).
+ * basic and extended warranties.
  */
 public class WarrantyService {
 
     private final WarrantyRepository warrantyRepository;
-    private ISaleRepository saleRepository;
     private SaleService saleService;
 
     /**
@@ -33,17 +30,6 @@ public class WarrantyService {
      */
     public WarrantyService(WarrantyRepository warrantyRepository) {
         this.warrantyRepository = warrantyRepository;
-    }
-
-    /**
-     * Constructs a new WarrantyService with all required abstractions.
-     *
-     * @param warrantyRepository the persistence repository for warranties
-     * @param saleRepository the persistence repository abstraction for sales
-     */
-    public WarrantyService(WarrantyRepository warrantyRepository, ISaleRepository saleRepository) {
-        this.warrantyRepository = warrantyRepository;
-        this.saleRepository = saleRepository;
     }
 
     public void setSaleService(SaleService saleService) {

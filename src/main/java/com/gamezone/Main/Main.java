@@ -55,7 +55,7 @@ public class Main {
         WarrantyRepository warrantyRepository = new FileWarrantyRepository();
 
         // Step 4: Initialize WarrantyService
-        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository);
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository);
 
         // Step 5: Initialize SaleService with full dependency injection (DIP compliant)
         SaleService saleService = new SaleService(
