@@ -20,25 +20,22 @@ import com.gamezone.persistence.WarrantyRepository;
 public class WarrantyService {
 
     private final WarrantyRepository warrantyRepository;
-    private SaleService saleService;
+    private final SaleLookup saleLookup;
 
     /**
-     * Constructs a WarrantyService with only WarrantyRepository. Useful for
-     * standard initializations where full synchronization is not required.
+     * Constructs a WarrantyService with the abstraction used to look up sales.
      *
      * @param warrantyRepository the persistence repository for warranties
+     * @param saleLookup the lookup used to resolve the sales of the stored warranties
      */
-    public WarrantyService(WarrantyRepository warrantyRepository) {
+    public WarrantyService(WarrantyRepository warrantyRepository, SaleLookup saleLookup) {
         this.warrantyRepository = warrantyRepository;
-    }
-
-    public void setSaleService(SaleService saleService) {
-        this.saleService = saleService;
+        this.saleLookup = saleLookup;
     }
 
     /**
      * Loads the stored warranties and rebuilds each one from its raw record.
-     * The sale is resolved through the sale repository and the product is taken
+     * The sale is resolved through the sale lookup and the product is taken
      * from that sale. A record whose sale or product cannot be found, or whose
      * type is unknown, is skipped.
      *
@@ -47,7 +44,7 @@ public class WarrantyService {
     private List<Warranty> loadWarranties() {
         List<Warranty> warranties = new ArrayList<>();
         for (WarrantyRecord stored : warrantyRepository.loadAll()) {
-            Sale sale = (saleService != null) ? saleService.findSaleById(stored.getSaleId()) : null;
+            Sale sale = saleLookup.findSaleById(stored.getSaleId());
             Product product = findProductInSale(sale, stored.getProductId());
             if (sale == null || product == null) {
                 continue;
@@ -198,14 +195,10 @@ public class WarrantyService {
      * for any console product that does not already have a warranty assigned.
      */
     public void syncPastConsoleWarranties() {
-        if (saleService == null) {
-            return;
-        }
-
         List<Warranty> currentWarranties = loadWarranties();
         boolean hasChanges = false;
 
-        for (Sale sale : saleService.getAllSales()) {
+        for (Sale sale : saleLookup.getAllSales()) {
             LocalDate saleDate = LocalDate.parse(sale.getDate());
 
             for (Product item : sale.getProducts()) {

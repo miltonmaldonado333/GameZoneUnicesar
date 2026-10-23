@@ -20,6 +20,8 @@ import com.gamezone.service.ItemStockService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
+import com.gamezone.service.RepositorySaleLookup;
+import com.gamezone.service.SaleLookup;
 import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
@@ -55,7 +57,8 @@ public class Main {
         WarrantyRepository warrantyRepository = new FileWarrantyRepository();
 
         // Step 4: Initialize WarrantyService
-        WarrantyService warrantyService = new WarrantyService(warrantyRepository);
+        SaleLookup saleLookup = new RepositorySaleLookup(saleRepository);
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleLookup);
 
         // Step 5: Initialize SaleService with full dependency injection (DIP compliant)
         SaleService saleService = new SaleService(
@@ -67,8 +70,7 @@ public class Main {
                 productService      // Required for sale reconstruction
         );
 
-        // Step 6: Resolve circular dependency via setter injection and sync historical console warranties
-        warrantyService.setSaleService(saleService);
+        // Step 6: Sync historical console warranties
         warrantyService.syncPastConsoleWarranties();
 
         // Step 7: Initialize ReturnRepository and ReturnService
