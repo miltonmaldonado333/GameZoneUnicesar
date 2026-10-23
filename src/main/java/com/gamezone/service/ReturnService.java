@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.gamezone.model.Accessory;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
@@ -24,6 +23,7 @@ public class ReturnService {
     private ProductService productService;
     private AccessoryService accessoryService;
     private WarrantyService warrantyService;
+    private IStockService stockService;
 
     /**
      * Constructs a ReturnService with all required dependencies.
@@ -35,15 +35,18 @@ public class ReturnService {
      *                          stock when a returned item is an accessory
      * @param warrantyService   the service managing warranties, used to cancel
      *                          the warranties of returned consoles
+     * @param stockService      the stock contract used to restore the stock of the returned items
      */
     public ReturnService(ReturnRepository returnRepository, SaleService saleService,
                           ProductService productService, AccessoryService accessoryService,
-                          WarrantyService warrantyService) {
+                          WarrantyService warrantyService,
+                          IStockService stockService) {
         this.returnRepository = returnRepository;
         this.saleService = saleService;
         this.productService = productService;
         this.accessoryService = accessoryService;
         this.warrantyService = warrantyService;
+        this.stockService = stockService;
     }
 
     /**
@@ -88,13 +91,9 @@ public class ReturnService {
 
         Return returnRecord = new Return(returnId, LocalDate.now(), sale, returnedProducts, reason, warrantyRefund);
 
-        // Restore stock, delegating to the appropriate service depending on item type
+        // Restore stock through the common stock contract
         for (Product product : returnedProducts) {
-            if (product instanceof Accessory) {
-                accessoryService.restoreStock(product.getId(), 1);
-            } else {
-                productService.restoreStock(product.getId(), 1);
-            }
+            stockService.restoreStock(product.getId(), 1);
         }
 
         List<Return> returns = loadReturns();

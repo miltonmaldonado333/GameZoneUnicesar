@@ -15,6 +15,8 @@ import com.gamezone.persistence.FileSaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.persistence.FileWarrantyRepository;
 import com.gamezone.service.AccessoryService;
+import com.gamezone.service.IStockService;
+import com.gamezone.service.ItemStockService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
@@ -71,12 +73,14 @@ public class Main {
 
         // Step 7: Initialize ReturnRepository and ReturnService
         ReturnRepository returnRepository = new FileReturnRepository();
+        IStockService itemStockService = new ItemStockService(productService, accessoryService);
         ReturnService returnService = new ReturnService(
                 returnRepository,
                 saleService,
                 productService,
                 accessoryService,
-                warrantyService
+                warrantyService,
+                itemStockService
         );
 
         // Step 8: Inject AccessoryService into ProductService for unified search capability
