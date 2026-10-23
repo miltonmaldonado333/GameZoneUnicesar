@@ -1,13 +1,11 @@
 package com.gamezone.service;
 
-import com.gamezone.exceptions.BusinessRuleException;
-import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
-import com.gamezone.persistence.SaleRepository;
+import com.gamezone.persistence.ISaleRepository;
 import com.gamezone.validation.ProductValidator;
 import com.gamezone.validation.SaleValidator;
 
@@ -15,36 +13,42 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-// Service handling sales transaction business logic, stock validation,
-// promotion discounts, warranty assignments, and sales queries.
-public class SaleService {
+/**
+ * Service handling sales transaction business logic, stock validation,
+ * promotion discounts, warranty assignments, and sales queries.
+ * Adheres to Dependency Inversion Principle (DIP) by depending on ISaleRepository interface.
+ */
+public class SaleService implements SaleLookup, MonthlySales {
 
-    // Repository for sale persistence operations.
-    private final SaleRepository saleRepository;
-    // Service contract for stock and inventory validation/updates.
+    /** Repository for sale persistence operations abstraction. */
+    private final ISaleRepository saleRepository;
+    /** Service contract for stock and inventory validation/updates. */
     private final IStockService stockService;
-    // Service for evaluating active promotions and discounts.
+    /** Service for evaluating active promotions and discounts. */
     private final PromotionService promotionService;
-    // Service for managing basic and extended warranties.
+    /** Service for managing basic and extended warranties. */
     private final WarrantyService warrantyService;
-    // Service for looking up clients and sellers.
+    /** Service for looking up clients and sellers. */
     private final PersonService personService;
-    // Service for looking up product catalog entities.
+    /** Service for looking up product catalog entities. */
     private final ProductService productService;
 
-    // Constructs a SaleService instance with all required dependencies.
-    // @param saleRepository the repository for managing sales records
-    // @param stockService the service managing stock and inventory operations
-    // @param promotionService the service evaluating promotions and discounts
-    // @param warrantyService the service managing product warranties
-    // @param personService the service looking up clients and sellers
-    // @param productService the service looking up products
-    public SaleService(SaleRepository saleRepository,
-            IStockService stockService,
-            PromotionService promotionService,
-            WarrantyService warrantyService,
-            PersonService personService,
-            ProductService productService) {
+    /**
+     * Constructs a SaleService instance with all required abstractions and dependencies.
+     *
+     * @param saleRepository   the repository interface for managing sales records
+     * @param stockService     the service contract managing stock operations
+     * @param promotionService the service evaluating promotions and discounts
+     * @param warrantyService  the service managing product warranties
+     * @param personService    the service looking up clients and sellers
+     * @param productService   the service looking up products
+     */
+    public SaleService(ISaleRepository saleRepository,
+                       IStockService stockService,
+                       PromotionService promotionService,
+                       WarrantyService warrantyService,
+                       PersonService personService,
+                       ProductService productService) {
         this.saleRepository = saleRepository;
         this.stockService = stockService;
         this.promotionService = promotionService;
@@ -53,22 +57,28 @@ public class SaleService {
         this.productService = productService;
     }
 
-    // Overloaded registerSale method for transactions without extended warranties.
-    // @param client the purchasing customer
-    // @param seller the attending salesperson
-    // @param items the list of products included in the sale
-    // @return the processed and registered Sale instance
+    /**
+     * Overloaded registerSale method for transactions without extended warranties.
+     *
+     * @param client the purchasing customer
+     * @param seller the attending salesperson
+     * @param items  the list of products included in the sale
+     * @return the processed and registered Sale instance
+     */
     public Sale registerSale(Client client, Seller seller, List<Product> items) {
         return registerSale(client, seller, items, null);
     }
 
-    // Registers a new sale transaction following business validation, stock checks,
-    // promotion discounts, warranty assignments, stock reduction, and persistence.
-    // @param client the purchasing customer
-    // @param seller the attending salesperson
-    // @param items the list of products included in the sale
-    // @param extendedWarrantyProductIds the list of product IDs requesting extended warranty
-    // @return the processed and registered Sale instance
+    /**
+     * Registers a new sale transaction following business validation, stock checks,
+     * promotion discounts, warranty assignments, stock reduction, and persistence.
+     *
+     * @param client                     the purchasing customer
+     * @param seller                     the attending salesperson
+     * @param items                      the list of products included in the sale
+     * @param extendedWarrantyProductIds the list of product IDs requesting extended warranty
+     * @return the processed and registered Sale instance
+     */
     public Sale registerSale(Client client, Seller seller, List<Product> items, List<String> extendedWarrantyProductIds) {
 
         // Step 1: Input data validation
@@ -96,7 +106,6 @@ public class SaleService {
                 }
             }
         }
-        // Explicitly set calculated discount on Sale entity
         sale.setDiscountAmount(discountAmount);
 
         // Step 5: Polymorphic warranty management
@@ -108,13 +117,13 @@ public class SaleService {
 
             for (Product item : items) {
                 if (item.hasWarrantyCoverage()) {
-                    boolean wantsExtended = remainingExtendedIds.contains(item.getId());
+                    boolean wantsExtended = remainingExtendedIds.contains(String.valueOf(item.getId()));
                     if (wantsExtended) {
                         var warranty = warrantyService.assignExtendedWarranty(item, sale, saleDate);
                         if (warranty != null) {
                             totalExtendedWarrantyCost += warranty.getAdditionalCost();
                         }
-                        remainingExtendedIds.remove(item.getId());
+                        remainingExtendedIds.remove(String.valueOf(item.getId()));
                     } else {
                         warrantyService.assignBasicWarranty(item, sale, saleDate);
                     }
@@ -122,121 +131,42 @@ public class SaleService {
             }
         }
 
-// === ASIGNACIÓN CLAVE AGREGADA AQUÍ ===
         sale.setExtendedWarrantyCost(totalExtendedWarrantyCost);
 
-// Step 6: Final total calculation
+        // Step 6: Final total calculation
         double subtotal = sale.getSubtotal();
         double finalTotal = subtotal - discountAmount + totalExtendedWarrantyCost;
         sale.setTotal(finalTotal);
 
         // Step 7: Unified stock update
         for (Product item : items) {
-            stockService.reduceStock(item.getId(), 1);
+            stockService.reduceStock(String.valueOf(item.getId()), 1);
         }
 
-        // Step 8: Sale persistence
+        // Step 8: Sale persistence via abstraction
         saleRepository.save(sale);
 
         return sale;
     }
 
     /**
-     * Retrieves all sales by reading raw persistence lines and rebuilding
-     * associated Client, Seller, and Product objects with backward
-     * compatibility.
+     * Retrieves all sales by delegating to the repository.
      *
      * @return a list of fully populated Sale objects
      */
-    /**
-     * Retrieves all sales by reading raw persistence lines and rebuilding
-     * associated Client, Seller, and Product objects with backward
-     * compatibility.
-     *
-     * @return a list of fully populated Sale objects
-     */
+    @Override
     public List<Sale> getAllSales() {
-        List<Sale> sales = new ArrayList<>();
-        List<String> rawLines = saleRepository.readAllRawLines();
-
-        for (String line : rawLines) {
-            String[] parts = line.split(";");
-            if (parts.length < 5) {
-                continue;
-            }
-
-            try {
-                int id = Integer.parseInt(parts[0]);
-                String date = parts[1];
-
-                Client client = personService.findClientById(parts[2]);
-                Seller seller = personService.findSellerByCode(parts[3]);
-
-                double discountAmount = 0.0;
-                double extendedWarrantyCost = 0.0;
-                double total = 0.0;
-                int productStartIdx = 4;
-                boolean isNewFormat = false;
-
-                // Detect if the line uses the new format with extended warranty and discount
-                if (parts.length >= 8) {
-                    try {
-                        discountAmount = Double.parseDouble(parts[4]);
-                        extendedWarrantyCost = Double.parseDouble(parts[5]);
-                        total = Double.parseDouble(parts[6]);
-                        productStartIdx = 7;
-                        isNewFormat = true;
-                    } catch (NumberFormatException e) {
-                        try {
-                            discountAmount = Double.parseDouble(parts[4]);
-                            total = Double.parseDouble(parts[5]);
-                            productStartIdx = 6;
-                            isNewFormat = true;
-                        } catch (NumberFormatException ex) {
-                            productStartIdx = 4;
-                        }
-                    }
-                } else if (parts.length >= 7) {
-                    try {
-                        discountAmount = Double.parseDouble(parts[4]);
-                        total = Double.parseDouble(parts[5]);
-                        productStartIdx = 6;
-                        isNewFormat = true;
-                    } catch (NumberFormatException e) {
-                        productStartIdx = 4;
-                    }
-                }
-
-                List<Product> products = new ArrayList<>();
-                for (int i = productStartIdx; i < parts.length; i++) {
-                    Product p = productService.findProductById(parts[i]);
-                    if (p != null) {
-                        products.add(p);
-                    }
-                }
-
-                if (client != null && seller != null && !products.isEmpty()) {
-                    Sale sale = new Sale(id, date, client, seller, products);
-                    if (isNewFormat) {
-                        sale.setDiscountAmount(discountAmount);
-                        sale.setExtendedWarrantyCost(extendedWarrantyCost);
-                        sale.setTotal(total);
-                    } else {
-                        sale.calculateTotal();
-                    }
-                    sales.add(sale);
-                }
-            } catch (Exception e) {
-                // Skips any corrupt line without crashing the system
-            }
-        }
-        return sales;
+        return saleRepository.findAll();
     }
 
-    // Calculates the total sum of sales registered for a specific month and year.
-    // @param month the month to evaluate (1-12)
-    // @param year the year to evaluate
-    // @return the sum of sales totals for the specified month and year
+    /**
+     * Calculates the total sum of sales registered for a specific month and year.
+     *
+     * @param month the month to evaluate (1-12)
+     * @param year  the year to evaluate
+     * @return the sum of sales totals for the specified month and year
+     */
+    @Override
     public double calculateMonthlyTotal(int month, int year) {
         double total = 0.0;
         for (Sale sale : getAllSales()) {
@@ -248,33 +178,61 @@ public class SaleService {
         return total;
     }
 
-    // Finds a recorded sale by its unique identifier.
-    // @param saleId the unique identifier of the sale
-    // @return the matching sale instance, or null if not found
+    /**
+     * Finds a recorded sale by its unique identifier string.
+     *
+     * @param saleId the unique identifier of the sale
+     * @return the matching sale instance, or null if not found
+     */
+    @Override
     public Sale findSaleById(String saleId) {
-        for (Sale sale : getAllSales()) {
-            if (String.valueOf(sale.getId()).equals(saleId)) {
-                return sale;
-            }
+        if (saleId == null || saleId.isBlank()) {
+            return null;
         }
-        return null;
+        String cleanId = saleId.trim();
+        return getAllSales().stream()
+                .filter(sale -> String.valueOf(sale.getId()).equalsIgnoreCase(cleanId))
+                .findFirst()
+                .orElse(null);
     }
 
-    // Retrieves all sales associated with a specific client identification.
-    // @param clientId the customer identification number
-    // @return a list of sales matching the given client identification
+    /**
+     * Retrieves all sales associated with a specific client identification.
+     *
+     * @param clientId the customer identification number
+     * @return a list of sales matching the given client identification
+     */
     public List<Sale> getSalesByClient(String clientId) {
+        if (clientId == null || clientId.isBlank()) {
+            return List.of();
+        }
+
+        String cleanId = clientId.trim();
+
         return getAllSales().stream()
-                .filter(sale -> sale.getClient().getIdentification().equalsIgnoreCase(clientId))
+                .filter(sale -> sale.getClient() != null 
+                        && sale.getClient().getIdentification() != null 
+                        && sale.getClient().getIdentification().trim().equalsIgnoreCase(cleanId))
                 .toList();
     }
 
-    // Retrieves all sales handled by a specific seller employee code.
-    // @param sellerCode the employee code of the seller
-    // @return a list of sales matching the given seller code
+    /**
+     * Retrieves all sales handled by a specific seller employee code.
+     *
+     * @param sellerCode the employee code of the seller
+     * @return a list of sales matching the given seller code
+     */
     public List<Sale> getSalesBySeller(String sellerCode) {
+        if (sellerCode == null || sellerCode.isBlank()) {
+            return List.of();
+        }
+
+        String cleanCode = sellerCode.trim();
+
         return getAllSales().stream()
-                .filter(sale -> sale.getSeller().getEmployeeCode().equalsIgnoreCase(sellerCode))
+                .filter(sale -> sale.getSeller() != null 
+                        && sale.getSeller().getEmployeeCode() != null 
+                        && sale.getSeller().getEmployeeCode().trim().equalsIgnoreCase(cleanCode))
                 .toList();
     }
 }

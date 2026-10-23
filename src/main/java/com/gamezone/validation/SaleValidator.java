@@ -21,9 +21,10 @@ public class SaleValidator {
 
     /**
      * Validates client, seller, and product list for a sale transaction.
-     * @param client
-     * @param seller
-     * @param products
+     * 
+     * @param client   client entity acting as the buyer
+     * @param seller   seller entity acting as the seller
+     * @param products list of products included in the sale
      */
     public static void validateSaleData(Client client, Seller seller, List<Product> products) {
         if (client == null) {
@@ -39,6 +40,9 @@ public class SaleValidator {
 
     /**
      * Validates that a sale instance exists.
+     * 
+     * @param sale   the sale instance to validate
+     * @param saleId unique identifier of the sale
      */
     public static void validateSaleExists(Sale sale, String saleId) {
         if (sale == null) {

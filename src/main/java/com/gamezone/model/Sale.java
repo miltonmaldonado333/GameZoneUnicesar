@@ -114,7 +114,6 @@ public class Sale {
         sb.append("-----------------------------------------\n");
         sb.append(String.format("Subtotal                : $%.2f\n", subtotal));
 
-        // Renderizado flexible de descuento: muestra el valor real siempre que sea mayor a 0
         if (discountAmount > 0) {
             if (appliedPromotionName != null && !appliedPromotionName.trim().isEmpty()) {
                 sb.append(String.format("Descuento (%s) : -$%.2f\n", appliedPromotionName, discountAmount));
@@ -125,7 +124,6 @@ public class Sale {
             sb.append("Descuento               : -$0.00\n");
         }
 
-        // Renderizado de Garantías Extendidas utilizando el getter
         sb.append(String.format("Garantías Extendidas    : +$%.2f\n", getExtendedWarrantyCost()));
         sb.append("-----------------------------------------\n");
         sb.append(String.format("TOTAL FINAL             : $%.2f\n", total));

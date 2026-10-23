@@ -10,9 +10,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.gamezone.model.BulkPurchaseDiscount;
-import com.gamezone.model.CategoryDiscount;
-import com.gamezone.model.PercentageDiscount;
 import com.gamezone.model.Promotion;
 
 /**
@@ -20,6 +17,9 @@ import com.gamezone.model.Promotion;
  * <p>
  * Handles serialization and deserialization of promotion records to and from
  * a CSV file using a discriminator field to distinguish concrete promotion types.
+ * The stored format of each type is defined by its own codec, registered in a
+ * {@link CodecRegistry}, so a new promotion type is added with a new codec and
+ * without changing this class.
  * </p>
  */
 public class FilePromotionRepository implements PromotionRepository {
@@ -30,6 +30,9 @@ public class FilePromotionRepository implements PromotionRepository {
     /** Path to the target CSV persistence file. */
     private final String filePath;
 
+    /** Codec of each promotion type. */
+    private final CodecRegistry<Promotion> codecs;
+
     /**
      * Constructs a {@code PromotionRepository} using the default file path.
      */
@@ -38,12 +41,30 @@ public class FilePromotionRepository implements PromotionRepository {
     }
 
     /**
-     * Constructs a {@code PromotionRepository} with a custom file path.
+     * Constructs a {@code PromotionRepository} with a custom file path and the default codecs.
      *
      * @param filePath the file path where promotion data is saved and loaded
      */
     public FilePromotionRepository(String filePath) {
+        this(filePath, defaultCodecs());
+    }
+
+    /**
+     * Constructs a {@code PromotionRepository} with a custom file path and the given codecs.
+     *
+     * @param filePath the file path where promotion data is saved and loaded
+     * @param codecs   the registry with the codec of each promotion type
+     */
+    public FilePromotionRepository(String filePath, CodecRegistry<Promotion> codecs) {
         this.filePath = filePath;
+        this.codecs = codecs;
+    }
+
+    private static CodecRegistry<Promotion> defaultCodecs() {
+        return new CodecRegistry<Promotion>(true)
+                .register(new PercentageDiscountCodec())
+                .register(new CategoryDiscountCodec())
+                .register(new BulkPurchaseDiscountCodec());
     }
 
     /**
@@ -96,47 +117,19 @@ public class FilePromotionRepository implements PromotionRepository {
     }
 
     /**
-     * Serializes a {@link Promotion} instance into a formatted CSV record.
+     * Serializes a {@link Promotion} instance into a formatted CSV record using
+     * the codec of its type.
      *
      * @param promotion the promotion entity to format
      * @return a semi-colon delimited string representing the promotion record
      */
     private String toLine(Promotion promotion) {
-        if (promotion instanceof PercentageDiscount) {
-            PercentageDiscount pd = (PercentageDiscount) promotion;
-            return String.join(";",
-                    "PERCENTAGE",
-                    pd.getId(),
-                    pd.getName(),
-                    pd.getStartDate().toString(),
-                    pd.getEndDate().toString(),
-                    String.valueOf(pd.getPercentage()));
-        } else if (promotion instanceof CategoryDiscount) {
-            CategoryDiscount cd = (CategoryDiscount) promotion;
-            return String.join(";",
-                    "CATEGORY",
-                    cd.getId(),
-                    cd.getName(),
-                    cd.getStartDate().toString(),
-                    cd.getEndDate().toString(),
-                    String.valueOf(cd.getPercentage()),
-                    cd.getTargetCategory());
-        } else if (promotion instanceof BulkPurchaseDiscount) {
-            BulkPurchaseDiscount bd = (BulkPurchaseDiscount) promotion;
-            return String.join(";",
-                    "BULK",
-                    bd.getId(),
-                    bd.getName(),
-                    bd.getStartDate().toString(),
-                    bd.getEndDate().toString(),
-                    String.valueOf(bd.getMinQuantity()),
-                    String.valueOf(bd.getPercentage()));
-        }
-        return "";
+        return codecs.encode(promotion);
     }
 
     /**
-     * Deserializes a single line from the CSV file into a concrete {@link Promotion} object.
+     * Deserializes a single line from the CSV file into the promotion of the type
+     * named by its first field. Every line must carry valid dates, whatever its type.
      *
      * @param line a semi-colon delimited string from the data file
      * @return a reconstructed {@link Promotion} instance, or {@code null} if parsing fails
@@ -148,24 +141,10 @@ public class FilePromotionRepository implements PromotionRepository {
                 return null;
             }
 
-            String type = fields[0];
-            String id = fields[1];
-            String name = fields[2];
-            LocalDate startDate = LocalDate.parse(fields[3]);
-            LocalDate endDate = LocalDate.parse(fields[4]);
+            LocalDate.parse(fields[3]);
+            LocalDate.parse(fields[4]);
 
-            if ("PERCENTAGE".equalsIgnoreCase(type)) {
-                double percentage = Double.parseDouble(fields[5]);
-                return new PercentageDiscount(percentage, id, name, startDate, endDate);
-            } else if ("CATEGORY".equalsIgnoreCase(type)) {
-                double percentage = Double.parseDouble(fields[5]);
-                String targetCategory = fields[6];
-                return new CategoryDiscount(percentage, targetCategory, id, name, startDate, endDate);
-            } else if ("BULK".equalsIgnoreCase(type)) {
-                int minQuantity = Integer.parseInt(fields[5]);
-                double percentage = Double.parseDouble(fields[6]);
-                return new BulkPurchaseDiscount(minQuantity, percentage, id, name, startDate, endDate);
-            }
+            return codecs.decode(fields[0], fields);
         } catch (Exception e) {
             System.out.println("Error parsing line: " + line + " -> " + e.getMessage());
         }

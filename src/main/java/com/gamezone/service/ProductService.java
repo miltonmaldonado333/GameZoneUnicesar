@@ -1,18 +1,19 @@
 package com.gamezone.service;
 
 import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.model.Console;
 import com.gamezone.model.Product;
-import com.gamezone.persistence.ProductRepository;
 import com.gamezone.model.VideoGame;
-import java.util.ArrayList;
+import com.gamezone.persistence.ProductRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service handling product catalog operations and implementing the unified
- * stock management contract.
+ * Service handling product catalog operations, stock updates, and entity registrations.
+ * Implements unified product service contracts following SOLID principles.
  */
-public class ProductService implements IStockService {
+public class ProductService implements IProductService, IStockService {
 
     private final ProductRepository productRepository;
     private AccessoryService accessoryService;
@@ -20,12 +21,10 @@ public class ProductService implements IStockService {
     /**
      * Constructs a ProductService instance with the required repository.
      *
-     * @param productRepository the persistence repository for managing product
-     * data
+     * @param productRepository the persistence repository for managing product data
      */
     public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
-
     }
 
     public void setAccessoryService(AccessoryService accessoryService) {
@@ -45,7 +44,6 @@ public class ProductService implements IStockService {
     public void reduceStock(String productId, int quantity) {
         List<Product> products = productRepository.loadProducts();
 
-        //Here it's compare ids for found a product id
         Product targetProduct = null;
         for (Product p : products) {
             if (p.getId().equalsIgnoreCase(productId)) {
@@ -62,7 +60,6 @@ public class ProductService implements IStockService {
         }
 
         targetProduct.setStock(targetProduct.getStock() - quantity);
-
         productRepository.saveProducts(products);
     }
 
@@ -79,14 +76,14 @@ public class ProductService implements IStockService {
         }
 
         if (targetProduct == null) {
-            throw new BusinessRuleException("Producto no encontado con ID: " + productId);
+            throw new BusinessRuleException("Producto no encontrado con ID: " + productId);
         }
 
         targetProduct.setStock(targetProduct.getStock() + quantity);
-
         productRepository.saveProducts(products);
     }
 
+    @Override
     public List<String> getAvailableCategories() {
         List<Product> products = productRepository.loadProducts();
 
@@ -102,55 +99,67 @@ public class ProductService implements IStockService {
         return categories;
     }
 
-    // Registers a new VideoGame product in the inventory after checking for ID uniqueness.
-    // @param platform target gaming console or system platform
-    // @param genre game genre or category
-    // @param ageRating age classification rating
-    // @param id unique product identifier
-    // @param title display name of the video game
-    // @param price unit sale price
-    // @param stock initial quantity available in inventory
-    // @return true if successfully registered; false if a product with the same ID already exists
+    @Override
     public boolean registerVideoGame(String platform, String genre, String ageRating,
-            String id, String title, double price, int stock) {
+                                     String id, String title, double price, int stock) {
         List<Product> products = productRepository.loadProducts();
         if (products == null) {
             products = new ArrayList<>();
         }
 
-        // Check for duplicate ID
         for (Product p : products) {
             if (p.getId().equalsIgnoreCase(id)) {
                 return false;
             }
         }
 
-        // Create new VideoGame entity and add to catalog
         VideoGame game = new VideoGame(platform, genre, ageRating, id, title, price, stock);
         products.add(game);
 
-        // Save updated catalog to repository
         productRepository.saveProducts(products);
         return true;
     }
 
     /**
-     * Retrieves all products registered in the catalog.
+     * Registers a new Gaming Console entity in the product catalog.
      *
-     * @return a list containing all products
+     * @param brand      manufacturer brand
+     * @param model      console model name
+     * @param generation console hardware generation
+     * @param id         unique product identifier
+     * @param title      display title
+     * @param price      unit retail price
+     * @param stock      available inventory stock
+     * @return true if successfully saved, false if product ID already exists
      */
+    @Override
+    public boolean registerConsole(String brand, String model, String generation,
+                                   String id, String title, double price, int stock) {
+        List<Product> products = productRepository.loadProducts();
+        if (products == null) {
+            products = new ArrayList<>();
+        }
+
+        for (Product p : products) {
+            if (p.getId().equalsIgnoreCase(id)) {
+                return false;
+            }
+        }
+
+        Console console = new Console(brand, model, generation, id, title, price, stock);
+        products.add(console);
+
+        productRepository.saveProducts(products);
+        return true;
+    }
+
+    @Override
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
-    /**
-     * Finds a product by its unique identifier.
-     *
-     * @param id the unique identifier of the product
-     * @return the matching product instance, or null if not found
-     */
+    @Override
     public Product findProductById(String id) {
         return productRepository.findById(id);
     }
-
 }

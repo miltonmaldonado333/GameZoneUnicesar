@@ -7,36 +7,58 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.gamezone.model.Accessory;
-import com.gamezone.model.Cable;
-import com.gamezone.model.Controller;
-import com.gamezone.model.Memory;
 
 /**
  * File-based repository for Accessory objects (Controller, Cable, Memory).
- * Persists all accessories in a single CSV file using a type discriminator to
- * distinguish between the three concrete subtypes.
+ * Persists all accessories in a single CSV file using a type discriminator. The
+ * stored format of each type is defined by its own codec, registered in a
+ * CodecRegistry, so a new accessory type is added with a new codec and without
+ * changing this class.
  */
 public class FileAccessoryRepository implements AccessoryRepository {
 
-    private String filePath;
-
-    /**
-     * Creates a repository that reads from and writes to the given file path.
-     *
-     * @param filePath the path of the CSV file used to store accessory data
-     */
     private static final String DEFAULT_FILE_PATH = "data/accessories.csv";
 
+    private String filePath;
+    private final CodecRegistry<Accessory> codecs;
+
+    /**
+     * Creates a repository that uses the default file path (data/accessories.csv).
+     */
     public FileAccessoryRepository() {
         this(DEFAULT_FILE_PATH);
     }
 
+    /**
+     * Creates a repository that reads from and writes to the given file path,
+     * using the default codecs.
+     *
+     * @param filePath the path of the CSV file used to store accessory data
+     */
     public FileAccessoryRepository(String filePath) {
+        this(filePath, defaultCodecs());
+    }
+
+    /**
+     * Creates a repository that reads from and writes to the given file path,
+     * using the given codecs.
+     *
+     * @param filePath the path of the CSV file used to store accessory data
+     * @param codecs   the registry with the codec of each accessory type
+     */
+    public FileAccessoryRepository(String filePath, CodecRegistry<Accessory> codecs) {
         this.filePath = filePath;
+        this.codecs = codecs;
+    }
+
+    private static CodecRegistry<Accessory> defaultCodecs() {
+        return new CodecRegistry<Accessory>(false)
+                .register(new ControllerCodec())
+                .register(new CableCodec())
+                .register(new MemoryCodec());
     }
 
     /**
@@ -99,49 +121,18 @@ public class FileAccessoryRepository implements AccessoryRepository {
     }
 
     /**
-     * Converts a single accessory into its CSV line representation.
+     * Converts a single accessory into its CSV line representation using the
+     * codec of its type.
      *
      * @param accessory the accessory to convert
      * @return the text line representing the accessory
      */
     private String toLine(Accessory accessory) {
-        String compatibleConsoles = String.join(",", accessory.getCompatibleConsoleIds());
-
-        if (accessory instanceof Controller controller) {
-            return String.join(";",
-                    "CONTROLLER",
-                    controller.getId(),
-                    controller.getTitle(),
-                    String.valueOf(controller.getPrice()),
-                    String.valueOf(controller.getStock()),
-                    controller.getConnectionType(),
-                    compatibleConsoles);
-        } else if (accessory instanceof Cable cable) {
-            return String.join(";",
-                    "CABLE",
-                    cable.getId(),
-                    cable.getTitle(),
-                    String.valueOf(cable.getPrice()),
-                    String.valueOf(cable.getStock()),
-                    String.valueOf(cable.getLength()),
-                    cable.getConnectorType(),
-                    compatibleConsoles);
-        } else if (accessory instanceof Memory memory) {
-            return String.join(";",
-                    "MEMORY",
-                    memory.getId(),
-                    memory.getTitle(),
-                    String.valueOf(memory.getPrice()),
-                    String.valueOf(memory.getStock()),
-                    String.valueOf(memory.getCapacityGB()),
-                    memory.getStorageType(),
-                    compatibleConsoles);
-        }
-        return "";
+        return codecs.encode(accessory);
     }
 
     /**
-     * Parses a single CSV line back into the corresponding Accessory subtype.
+     * Parses a single CSV line into the accessory of the type named by its first field.
      *
      * @param line the text line to parse
      * @return the resulting Accessory, or null if the line has an unknown
@@ -149,43 +140,6 @@ public class FileAccessoryRepository implements AccessoryRepository {
      */
     private Accessory parseLine(String line) {
         String[] fields = line.split(";", -1);
-        String type = fields[0];
-        String id = fields[1];
-        String title = fields[2];
-        double price = Double.parseDouble(fields[3]);
-        int stock = Integer.parseInt(fields[4]);
-
-        List<String> compatibleConsoles;
-
-        if (type.equals("CONTROLLER")) {
-            String connectionType = fields[5];
-            compatibleConsoles = parseConsoleIds(fields[6]);
-            return new Controller(compatibleConsoles, id, title, price, stock, connectionType);
-        } else if (type.equals("CABLE")) {
-            double length = Double.parseDouble(fields[5]);
-            String connectorType = fields[6];
-            compatibleConsoles = parseConsoleIds(fields[7]);
-            return new Cable(compatibleConsoles, id, title, price, stock, length, connectorType);
-        } else if (type.equals("MEMORY")) {
-            int capacity = Integer.parseInt(fields[5]);
-            String storageType = fields[6];
-            compatibleConsoles = parseConsoleIds(fields[7]);
-            return new Memory(capacity, storageType, id, title, price, stock, compatibleConsoles);
-        }
-
-        return null;
-    }
-
-    /**
-     * Parses the comma-separated console IDs field into a list.
-     *
-     * @param field the raw field containing zero or more console IDs
-     * @return a list of console IDs, empty if the field is blank
-     */
-    private List<String> parseConsoleIds(String field) {
-        if (field == null || field.isBlank()) {
-            return new ArrayList<>();
-        }
-        return new ArrayList<>(Arrays.asList(field.split(",")));
+        return codecs.decode(fields[0], fields);
     }
 }

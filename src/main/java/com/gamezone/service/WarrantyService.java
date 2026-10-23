@@ -9,85 +9,39 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
-import com.gamezone.persistence.SaleRepository;
-import com.gamezone.persistence.WarrantyRecord;
 import com.gamezone.persistence.WarrantyRepository;
 
 /**
  * Service class responsible for managing the business logic of product
  * warranties. Handles the creation, persistence, replacement, and retrieval of
- * basic and extended warranties. Depends on SaleRepository (rather than
- * SaleService) to avoid a circular dependency, since SaleService itself depends
- * on WarrantyService.
+ * basic and extended warranties.
  */
-public class WarrantyService {
+public class WarrantyService implements WarrantyCanceller {
 
     private final WarrantyRepository warrantyRepository;
-    private SaleRepository saleRepository;
-    private SaleService saleService;
+    private final WarrantyRecordMapper recordMapper;
+    private final WarrantyBackfill backfill;
 
     /**
-     * Constructs a WarrantyService with only WarrantyRepository. Useful for
-     * standard initializations where full synchronization is not required.
+     * Constructs a WarrantyService with the abstraction used to look up sales.
      *
      * @param warrantyRepository the persistence repository for warranties
+     * @param saleLookup the lookup used to resolve the sales of the stored warranties
      */
-    public WarrantyService(WarrantyRepository warrantyRepository) {
+    public WarrantyService(WarrantyRepository warrantyRepository, SaleLookup saleLookup) {
         this.warrantyRepository = warrantyRepository;
+        this.recordMapper = new WarrantyRecordMapper(saleLookup);
+        this.backfill = new WarrantyBackfill(saleLookup);
     }
 
     /**
-     * Constructs a new WarrantyService with all required dependencies.
-     *
-     * @param warrantyRepository the persistence repository for warranties
-     * @param saleRepository the persistence repository for sales, used for
-     * historical sync
-     */
-    public WarrantyService(WarrantyRepository warrantyRepository, SaleRepository saleRepository) {
-        this.warrantyRepository = warrantyRepository;
-        this.saleRepository = saleRepository;
-    }
-    
-    public void setSaleService(SaleService saleService) {
-        this.saleService = saleService;
-    }
-
-    /**
-     * Loads the stored warranties and rebuilds each one from its raw record.
-     * The sale is resolved through the sale repository and the product is taken
-     * from that sale. A record whose sale or product cannot be found, or whose
-     * type is unknown, is skipped.
+     * Loads the stored warranties and rebuilds each one from its raw record
+     * through the record mapper.
      *
      * @return the list of rebuilt warranties
      */
     private List<Warranty> loadWarranties() {
-        List<Warranty> warranties = new ArrayList<>();
-        for (WarrantyRecord stored : warrantyRepository.loadAll()) {
-            Sale sale = (saleService != null) ? saleService.findSaleById(stored.getSaleId()) : null;
-            Product product = findProductInSale(sale, stored.getProductId());
-            if (sale == null || product == null) {
-                continue;
-            }
-
-            if ("EXTENDED".equalsIgnoreCase(stored.getType())) {
-                warranties.add(new ExtendedWarranty(stored.getId(), product, sale, stored.getStartDate()));
-            } else if ("BASIC".equalsIgnoreCase(stored.getType())) {
-                warranties.add(new BasicWarranty(stored.getId(), product, sale, stored.getStartDate()));
-            }
-        }
-        return warranties;
-    }
-
-    private Product findProductInSale(Sale sale, String productId) {
-        if (sale == null) {
-            return null;
-        }
-        for (Product item : sale.getProducts()) {
-            if (item.getId().equalsIgnoreCase(productId)) {
-                return item;
-            }
-        }
-        return null;
+        return recordMapper.toWarranties(warrantyRepository.loadAll());
     }
 
     /**
@@ -212,39 +166,10 @@ public class WarrantyService {
     /**
      * Scans all historical sales and automatically generates a basic warranty
      * for any console product that does not already have a warranty assigned.
-     * Uses the injected SaleRepository directly instead of receiving
-     * SaleService as a parameter, since SaleService is not available at this
-     * point in construction without causing a circular dependency.
      */
     public void syncPastConsoleWarranties() {
-        if (saleService == null) {
-            return;
-        }
-
         List<Warranty> currentWarranties = loadWarranties();
-        boolean hasChanges = false;
-
-        for (Sale sale : saleService.getAllSales()) {
-            LocalDate saleDate = LocalDate.parse(sale.getDate());
-
-            for (Product item : sale.getProducts()) {
-                if (item.hasWarrantyCoverage()) {
-                    boolean alreadyHasWarranty = currentWarranties.stream().anyMatch(w
-                            -> w.getProduct().getId().equalsIgnoreCase(item.getId())
-                            && w.getSale().getId() == sale.getId()
-                    );
-
-                    if (!alreadyHasWarranty) {
-                        String warrantyId = "WAR" + String.format("%04d", currentWarranties.size() + 1);
-                        BasicWarranty basicWarranty = new BasicWarranty(warrantyId, item, sale, saleDate);
-                        currentWarranties.add(basicWarranty);
-                        hasChanges = true;
-                    }
-                }
-            }
-        }
-
-        if (hasChanges) {
+        if (backfill.addMissingBasicWarranties(currentWarranties)) {
             warrantyRepository.saveAll(currentWarranties);
         }
     }
@@ -259,6 +184,7 @@ public class WarrantyService {
      * @param saleId unique identifier of the sale the product was bought in
      * @return the refundable warranty cost, or 0.0 if no warranty was found
      */
+    @Override
     public double cancelWarranties(String productId, String saleId) {
         if (productId == null || saleId == null) {
             return 0.0;

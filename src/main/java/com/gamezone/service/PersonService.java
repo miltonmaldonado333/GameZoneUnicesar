@@ -103,13 +103,21 @@ public class PersonService {
 
     /**
      * Finds a client by their identification number.
+     * Insensitive to extra spaces and safely handles null values.
      *
      * @param id the identification number to search for
      * @return the matching client, or null if not found
      */
     public Client findClientById(String id) {
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+
+        String cleanId = id.trim();
+
         for (Client client : getAllClients()) {
-            if (client.getIdentification().equals(id)) {
+            if (client.getIdentification() != null &&
+                client.getIdentification().trim().equalsIgnoreCase(cleanId)) {
                 return client;
             }
         }
@@ -118,13 +126,21 @@ public class PersonService {
 
     /**
      * Finds a seller by their employee code.
+     * Insensitive to case differences (e.g. v005 vs V005) and extra spaces.
      *
      * @param code the employee code to search for
      * @return the matching seller, or null if not found
      */
     public Seller findSellerByCode(String code) {
+        if (code == null || code.isBlank()) {
+            return null;
+        }
+
+        String cleanCode = code.trim();
+
         for (Seller seller : getAllSellers()) {
-            if (seller.getEmployeeCode().equals(code)) {
+            if (seller.getEmployeeCode() != null &&
+                seller.getEmployeeCode().trim().equalsIgnoreCase(cleanCode)) {
                 return seller;
             }
         }
