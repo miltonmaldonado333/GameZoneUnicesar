@@ -15,9 +15,13 @@ import com.gamezone.persistence.FileSaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.persistence.FileWarrantyRepository;
 import com.gamezone.service.AccessoryService;
+import com.gamezone.service.ItemStock;
+import com.gamezone.service.ItemStockService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
+import com.gamezone.service.RepositorySaleLookup;
+import com.gamezone.service.SaleLookup;
 import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
@@ -45,7 +49,7 @@ public class Main {
         // Step 2: Initialize base domain services
         ProductService productService = new ProductService(productRepository);
         PersonService personService = new PersonService(personRepository);
-        AccessoryService accessoryService = new AccessoryService(accessoryRepository, productRepository);
+        AccessoryService accessoryService = new AccessoryService(accessoryRepository);
         PromotionService promotionService = new PromotionService(promotionRepository);
 
         // Step 3: Initialize repositories for complex domain objects using ISaleRepository interface
@@ -53,7 +57,8 @@ public class Main {
         WarrantyRepository warrantyRepository = new FileWarrantyRepository();
 
         // Step 4: Initialize WarrantyService
-        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository);
+        SaleLookup saleLookup = new RepositorySaleLookup(saleRepository);
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleLookup);
 
         // Step 5: Initialize SaleService with full dependency injection (DIP compliant)
         SaleService saleService = new SaleService(
@@ -65,18 +70,20 @@ public class Main {
                 productService      // Required for sale reconstruction
         );
 
-        // Step 6: Resolve circular dependency via setter injection and sync historical console warranties
-        warrantyService.setSaleService(saleService);
+        // Step 6: Sync historical console warranties
         warrantyService.syncPastConsoleWarranties();
 
         // Step 7: Initialize ReturnRepository and ReturnService
         ReturnRepository returnRepository = new FileReturnRepository();
+        ItemStock itemStock = new ItemStockService(productService, accessoryService);
         ReturnService returnService = new ReturnService(
                 returnRepository,
-                saleService,
+                saleService,        // sale lookup
+                saleService,        // monthly sales total
                 productService,
-                accessoryService,
-                warrantyService
+                accessoryService,   // accessory lookup
+                warrantyService,    // warranty cancellation
+                itemStock
         );
 
         // Step 8: Inject AccessoryService into ProductService for unified search capability

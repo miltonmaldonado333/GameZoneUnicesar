@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Warranty;
 
 /**
@@ -24,6 +23,7 @@ public class FileWarrantyRepository implements WarrantyRepository {
     private static final String DEFAULT_FILE_PATH = "data/warranties.csv";
 
     private String filePath;
+    private final WarrantyTypeRegistry types;
 
     /**
      * Constructs a WarrantyRepository with the default file path.
@@ -38,7 +38,18 @@ public class FileWarrantyRepository implements WarrantyRepository {
      * @param filePath custom path to the CSV storage file
      */
     public FileWarrantyRepository(String filePath) {
+        this(filePath, WarrantyTypeRegistry.withDefaults());
+    }
+
+    /**
+     * Constructs a WarrantyRepository with a custom file path and the given types.
+     *
+     * @param filePath custom path to the CSV storage file
+     * @param types    the registry with the stored type of each warranty class
+     */
+    public FileWarrantyRepository(String filePath, WarrantyTypeRegistry types) {
         this.filePath = filePath;
+        this.types = types;
     }
 
     /**
@@ -99,7 +110,7 @@ public class FileWarrantyRepository implements WarrantyRepository {
     }
 
     private String toLine(Warranty warranty) {
-        String type = (warranty instanceof ExtendedWarranty) ? "EXTENDED" : "BASIC";
+        String type = types.typeOf(warranty);
 
         return String.join(";",
                 type,

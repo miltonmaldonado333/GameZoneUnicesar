@@ -1,0 +1,6 @@
+CLIENT;Ana Torres;1001001001;3001000001;ana.torres@correo.com
+CLIENT;Luis Perez;1001001002;3001000002;luis.perez@correo.com
+CLIENT;Maria Gomez;1001001003;3001000003;maria.gomez@correo.com
+SELLER;Carlos Rojas;2002002001;3101000001;V001;Morning
+SELLER;Diana Lopez;2002002002;3101000002;V002;Afternoon
+

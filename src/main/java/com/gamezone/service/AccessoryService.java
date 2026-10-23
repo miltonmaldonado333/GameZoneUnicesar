@@ -3,22 +3,22 @@ package com.gamezone.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.gamezone.exceptions.BusinessRuleException;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.Controller;
 import com.gamezone.model.Memory;
+import com.gamezone.model.Product;
 import com.gamezone.persistence.AccessoryRepository;
-import com.gamezone.persistence.ProductRepository;
 
 /**
  * Provides the business rules for managing accessories (controllers, cables and
  * memories). Acts as the intermediary between the user interface and the
  * accessory persistence layer.
  */
-public class AccessoryService {
+public class AccessoryService implements StockHolder, AccessoryLookup {
 
     private AccessoryRepository accessoryRepository;
-    private ProductRepository productRepository;
     private List<Accessory> accessories;
 
     /**
@@ -29,19 +29,6 @@ public class AccessoryService {
      */
     public AccessoryService(AccessoryRepository accessoryRepository) {
         this.accessoryRepository = accessoryRepository;
-        this.accessories = accessoryRepository.loadAll();
-    }
-
-    /**
-     * Creates an AccessoryService backed by the given accessory repository and
-     * product repository.
-     *
-     * @param accessoryRepository the repository used to persist accessory data
-     * @param productRepository   the repository used to validate product/console data
-     */
-    public AccessoryService(AccessoryRepository accessoryRepository, ProductRepository productRepository) {
-        this.accessoryRepository = accessoryRepository;
-        this.productRepository = productRepository;
         this.accessories = accessoryRepository.loadAll();
     }
 
@@ -170,6 +157,7 @@ public class AccessoryService {
      * @param id the identifier to search for
      * @return the matching accessory, or null if not found
      */
+    @Override
     public Accessory findById(String id) {
         for (Accessory accessory : accessories) {
             if (accessory.getId().equals(id)) {
@@ -206,6 +194,7 @@ public class AccessoryService {
      * @param quantity the quantity to add to the current stock
      * @throws IllegalArgumentException if no accessory is found with the given ID
      */
+    @Override
     public void restoreStock(String accessoryId, int quantity) {
         Accessory accessory = findById(accessoryId);
         if (accessory == null) {
@@ -213,5 +202,48 @@ public class AccessoryService {
         }
         accessory.addStock(quantity);
         accessoryRepository.saveAll(accessories);
+    }
+
+    /**
+     * Checks whether an accessory with the given identifier exists and has at
+     * least the requested stock.
+     *
+     * @param productId         the identifier of the accessory
+     * @param requestedQuantity the quantity required
+     * @return true if the accessory exists and its stock is greater than or equal to the quantity
+     */
+    @Override
+    public boolean hasSufficientStock(String productId, int requestedQuantity) {
+        Accessory accessory = findById(productId);
+        return accessory != null && accessory.getStock() >= requestedQuantity;
+    }
+
+    /**
+     * Reduces the stock of an accessory through the common stock contract.
+     *
+     * @param productId the identifier of the accessory
+     * @param quantity  the quantity to deduct
+     * @throws BusinessRuleException if the accessory does not exist or has not enough stock
+     */
+    @Override
+    public void reduceStock(String productId, int quantity) {
+        if (!updateStock(productId, quantity)) {
+            Accessory accessory = findById(productId);
+            String name = (accessory != null) ? accessory.getTitle() : productId;
+            throw new BusinessRuleException("No se pudo actualizar el stock del accesorio: " + name);
+        }
+    }
+
+    /**
+     * Tells whether the given item is one of the registered accessories. The
+     * check is made on the item itself and not on its identifier, because a
+     * product and an accessory can share an identifier.
+     *
+     * @param item the item to look for
+     * @return true if the item is one of the accessories held by this service
+     */
+    @Override
+    public boolean holds(Product item) {
+        return accessories.contains(item);
     }
 }
